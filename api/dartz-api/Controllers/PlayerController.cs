@@ -39,7 +39,7 @@ namespace Dartz_API.Controllers
         }
 
         [HttpPost("signup")]
-        public ActionResult<int> AddPlayer([FromForm] PlayerDto p)
+        public ActionResult<int> AddPlayer([FromForm] PlayerDTO p)
         {
             var tmp = _playerService.GetPlayerByUsername(p.Username);
             if (tmp != null)
@@ -55,7 +55,7 @@ namespace Dartz_API.Controllers
         }
 
         [HttpPost("login")]
-        public ActionResult<bool> LoginPlayer([FromForm] PlayerDto p)
+        public ActionResult<Player> LoginPlayer([FromForm] PlayerDTO p)
         {
             var user = _playerService.GetPlayerByUsername(p.Username);
             if (user == null)
@@ -63,7 +63,12 @@ namespace Dartz_API.Controllers
                 return BadRequest("User does not exist");
             }
             var success = _passwordService.Verify(p.Password, user.PasswordHash);
-            return Ok(success);
+            if (!success)
+            {
+                return Unauthorized("Wrong password");
+            }
+
+            return Ok(new FrontendPlayerDTO { Id = user.ID, Initial = user.Initial, Username = user.Username});
         }
     }
 }

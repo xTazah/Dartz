@@ -8,9 +8,10 @@ using System.Threading.Tasks;
 
 namespace Dartz.Model
 {
-    public class PlayerDTO
+    public class FrontendPlayerDTO
     {
+        public int Id { get; set; }
         public string Username { get; set; }
-        public string Password { get; set; }
+        public string Initial { get; set; }
     }
 }
