@@ -7,6 +7,10 @@
     padding:20px;
 }
 
+.navigation.collapsed {
+    width: fit-content;
+  }
+
 .navigationButton
 {
     width:100%;
@@ -16,7 +20,7 @@
     justify-content: left;
     align-items: center;
     gap:10px;
-    margin-bottom:20px;
+    margin-top:20px;
     font-weight: bold;
     transition:0.3s;
 
@@ -36,6 +40,6 @@
 }
 
 .Logo{
-    margin-bottom:50px;
+    margin-bottom:20px;
 }
 

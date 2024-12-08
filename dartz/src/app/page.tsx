@@ -6,7 +6,6 @@ export default function Home() {
   return (
     <main className="pb-7">
      <div>
-      <BackNavigation/>
       <Dashboard />
      </div>
     </main>
