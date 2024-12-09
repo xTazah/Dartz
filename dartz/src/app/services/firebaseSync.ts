@@ -1,6 +1,6 @@
 import { ref, set, onValue } from "firebase/database";
 import { database } from "./firebaseConfig";
-import { Lobby } from "../logic/game";
+import { Lobby } from "../utils/types"; 
 
 function syncLobby(lobbyId: string, state: Lobby) {
   const lobbyRef = ref(database, `Lobby_${lobbyId}`);

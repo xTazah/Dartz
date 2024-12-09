@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react'
-import Navigation from '../components/navigation/navigation'
-import LobbyComponent from '../components/lobby/lobby'
+import LobbyComponent from '../../components/lobby/lobby'
 
 export default function lobby() {
   return (

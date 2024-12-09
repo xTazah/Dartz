@@ -1,7 +1,8 @@
 import {Tabs, Tab} from "@nextui-org/react";
 import { ClockIcon, PlayIcon, Square2StackIcon } from '@heroicons/react/24/solid';
 import React from "react";
-import { GAME_MODES, GameMode } from "@/app/utils/constants";
+import { GAME_MODES } from "@/app/utils/constants";
+import { GameMode } from "@/app/utils/types";
 
 interface ModeSwapProps {
     selectedGameMode: GameMode;

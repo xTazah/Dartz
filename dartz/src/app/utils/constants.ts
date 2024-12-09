@@ -23,4 +23,9 @@ export const GAME_MODES = [
   },
 ] as const; //for type safety
 
-export type GameMode = (typeof GAME_MODES)[number];
+export const IconsMap = {
+  "test-mode": ArchiveBoxIcon,
+  "double-training":Square2StackIcon,
+  "501": PlayIcon,
+  "around-the-clock":ClockIcon
+};

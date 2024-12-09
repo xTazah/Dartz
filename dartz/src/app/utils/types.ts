@@ -1,0 +1,31 @@
+import { GAME_MODES } from "./constants";
+
+//user that is received by an api call
+export type User = {
+    id: number;
+    username: string;
+    initial: string;
+  } | null;
+
+//player that is used inside a lobby
+export type Player = {
+user: User;
+score: number;
+}
+
+export enum LobbyStatus{
+    Waiting,
+    Running,
+    Finished
+}
+
+export type Lobby = {
+id: string;
+players: Player[];
+owner: User;
+status: LobbyStatus
+currentPlayerIndex: number;
+gameMode: GameMode;
+}
+
+export type GameMode = (typeof GAME_MODES)[number];

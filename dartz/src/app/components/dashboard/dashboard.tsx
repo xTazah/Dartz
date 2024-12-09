@@ -1,25 +1,31 @@
 'use client'
 
-import React from 'react';
+import React, { useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '../../styles/dashboard.module.scss';
-import { ClockIcon, PlayIcon, Square2StackIcon } from '@heroicons/react/24/solid';
 import HistoryList from '../matchHistory/historyList';
 import Image from 'next/image';
 import Statistics from '../statistics/statistics';
 import ThemeSwitcher from '../themeSwitcher/themeSwitcher';
-import { GAME_MODES, GameMode } from '@/app/utils/constants' 
-import { Lobby, Player } from '@/app/logic/game';
+import { GAME_MODES } from '@/app/utils/constants' 
+import { Lobby, Player, GameMode } from '@/app/utils/types';
+import { createLobby } from '@/app/services/lobbyService';
+import { UserContext } from '../userProvider/userProvider';
 
 
 export default function Dashboard() {
   const router = useRouter();
+  const context = useContext(UserContext);
+
+  if (!context || !context.user) {
+    return <div>You must be logged in to view this page.</div>;
+  }
+
+  const { user } = context;
 
   const navigateToLobby = (id: string, gameMode: GameMode) => {
-    //lobby erstellen und in localStorage packen
-    const testPlayer: Player = {id: "Timinz", name:"Timinz", score: 0}
-    const lobby: Lobby = {id: "test", currentPlayerIndex : 0, gameMode: gameMode, isGameOver: false, players: [], owner: testPlayer}
-    localStorage.setItem(`Lobby_${lobby.id}`, JSON.stringify(lobby))
+
+    createLobby(id, user, gameMode)
 
     router.push(`/lobby?id=${id}`);
   };
@@ -67,7 +73,7 @@ export default function Dashboard() {
         <div
           key={gameMode.key}
           className={`${styles.tile} ${styles.modes} flex justify-center items-center flex-col`}
-          onClick={() => navigateToLobby("test", gameMode)}
+          onClick={() => navigateToLobby("myLobby", gameMode)}
         >
           <gameMode.Icon className="modeIcons" color="#6F7172" />
           {gameMode.name}

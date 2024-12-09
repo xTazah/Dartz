@@ -1,6 +1,6 @@
 import React from 'react'
-import Navigation from '../components/navigation/navigation';
-import FriendList from '../components/friendList/friendList';
+import FriendList from '@/app/components/friendList/friendList';
+import Navigation from '@/app/components/navigation/navigation';
 
 export default function profileLayout({
     children,

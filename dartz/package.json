@@ -13,6 +13,7 @@
     "@formkit/auto-animate": "^0.8.2",
     "@heroicons/react": "^2.1.5",
     "@nextui-org/react": "^2.4.8",
+    "@radix-ui/react-tabs": "^1.1.1",
     "axios": "^1.7.7",
     "firebase": "^11.0.2",
     "framer-motion": "^11.13.1",

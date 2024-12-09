@@ -1,80 +1,86 @@
 'use client'
 
-import { Toaster, toast } from 'sonner'
-import { useSearchParams  } from "next/navigation";
-import { useState, useEffect } from "react";
-import { Lobby, Player, handleThrow, addPlayer} from "@/app/logic/game";
-import { syncLobby, listenToLobby } from "@/app/services/firebaseSync";
+import { useState, useEffect, useContext } from "react";
+import { useSearchParams } from "next/navigation";
+import { toast } from 'sonner';
+import { Lobby, Player, GameMode } from '@/app/utils/types';
+import { joinLobby } from '@/app/services/lobbyService';
+import { listenToLobby } from '@/app/handlers/lobbyHandler'; 
 import GameModeSwitch from "./gameModeSwitch";
-import { GAME_MODES, GameMode } from "@/app/utils/constants";
+import { UserContext } from '../userProvider/userProvider';
+import { handleThrow } from "@/app/logic/game";
 
 const LobbyComponent = () => {
-    const searchParams = useSearchParams();
-    const id = searchParams.get("id");  
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+  
+  const context = useContext(UserContext); const { user } = context!;
 
-    var lobby: Lobby = {id: "Dummy", currentPlayerIndex: 0, gameMode: GAME_MODES[0], isGameOver: false, owner: {id: "dummy", name:"dummy", score: 0}, players: []};
-    var lobbyFromStorage = localStorage.getItem(`Lobby_${id}`);
-    if (lobbyFromStorage){
-      lobby = JSON.parse(lobbyFromStorage)
-      console.log("Found lobby in localStorage: " + lobby)
-    }
+  const [lobbyState, setLobbyState] = useState<Lobby | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    
-    // firebase sync
-    // if (lobbyId) {
-    //   listenToLobby(lobbyId, (state: Lobby) => setLobbyState(state));
-    // }
+  useEffect(() => {
+    if (!id) return;
 
-    const [lobbyState, setLobbyState] = useState<Lobby>(lobby);
-    
-    useEffect(() => {
-      localStorage.setItem(`Lobby_${lobbyState.id}`, JSON.stringify(lobbyState))
-      }, [lobbyState]);
+    const fetchLobby = async () => {
+      try {
+        console.error("Trying to join lobby with id " + id);
+        const lobby = await joinLobby(id, user);
+        setLobbyState(lobby);
 
-    useEffect(() => {
-      toast.info(<div>Game Mode changed to <span className='font-bold'>{lobbyState?.gameMode.name}</span></div>,{
-        duration: 3500,
-        // icon: <MyIcon />,
-      });
-      }, [lobbyState?.gameMode]);
+        listenToLobby(lobby.id, (state: Lobby) => setLobbyState(state));
+        toast.success("Joined lobby successfully!");
+      } catch (error) {
+        console.error("Error joining lobby:", error);
+        toast.error("Failed to join the lobby.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLobby();
+  }, [id, user]);
+
+  if (!id) {
+    return <div>No ID found in URL</div>;
+  }
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   const handleThrowAction = (points: number) => {
+    if (!lobbyState) return;
     const newState = handleThrow(lobbyState, points);
     setLobbyState(newState);
-
-    // firbase sync
-    // if (lobbyId) {
-    //   syncLobby(lobbyId, newState); // Syncs the lobby state to Firebase
-    // }
   };
 
-const setSelectedGameMode = (gameMode: GameMode) => {
-    setLobbyState(lobbyState => ({
+  const setSelectedGameMode = (gameMode: GameMode) => {
+    if (!lobbyState) return;
+    setLobbyState({
       ...lobbyState,
       gameMode: gameMode,
-    }));
+    });
   };
 
-  const handleAddPlayer = () => {
-    const newState = addPlayer(
-      lobbyState,
-      {id:"Timinz", name: "Timinz", score : 0}
-   );
-    setLobbyState(newState);
-    };
+  const handleAddPlayer = async () => {
+    if (lobbyState) {
+      setLobbyState(await joinLobby(id, user));
+    }
+  };
 
   return (
     <div>
       <h1>Lobby</h1>
-      <GameModeSwitch selectedGameMode={lobbyState.gameMode} setSelectedGameMode={setSelectedGameMode} />
+      {lobbyState && <GameModeSwitch selectedGameMode={lobbyState.gameMode} setSelectedGameMode={setSelectedGameMode} />}
       <div>
-        {lobbyState.players.map((player: Player, index: number) => (
-          <div key={player.id}>
-            {player.name}: {player.score} {index === lobbyState.currentPlayerIndex ? "(Your turn)" : ""}
+        {lobbyState?.players.map((player: Player, index: number) => (
+          <div key={player.user?.id}>
+            {player.user?.username}: {player.score} {index === lobbyState.currentPlayerIndex ? "(Your turn)" : ""}
           </div>
         ))}
       </div>
-      <button className="bg-gray-500" onClick={() => handleAddPlayer() }>
+      <button className="bg-gray-500" onClick={handleAddPlayer}>
         Add Player
       </button>
       <br />
@@ -84,5 +90,6 @@ const setSelectedGameMode = (gameMode: GameMode) => {
     </div>
   );
 };
+
 
 export default LobbyComponent;

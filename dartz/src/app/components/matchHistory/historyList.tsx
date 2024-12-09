@@ -15,7 +15,6 @@ export default function HistoryList() {
     {date:"01.10.2024",player:"Tazah, Timinz", win:true},
     {date:"24.09.2024",player:"Tazah, Bunkert, Jonas", win:false},
     {date:"01.11.2024",player:"Tazah, Timinz", win:true},
-    {date:"24.09.2024",player:"Tazah, Bunkert, Jonas", win:false},
     ];
 
   return (

@@ -68,7 +68,7 @@ namespace Dartz_API.Controllers
                 return Unauthorized("Wrong password");
             }
 
-            return Ok(new FrontendPlayerDTO { Id = user.ID, Initial = user.Initial, Username = user.Username});
+            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username});
         }
     }
 }
