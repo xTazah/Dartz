@@ -13,6 +13,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+});
+
 builder.Services.AddTransient<DataContext>();
 
 //Repositories
@@ -24,8 +32,6 @@ builder.Services.AddTransient<IGameSessionService, GameSessionService>();
 builder.Services.AddTransient<IPasswordService, PasswordService>();
 
 builder.Services.AddCors();
-
-
 
 var app = builder.Build();
 
@@ -42,9 +48,12 @@ app.UseCors(x => x
     .AllowAnyHeader()
     .SetIsOriginAllowed(origin => true) // allow any origin
                                         //.WithOrigins("https://localhost:44351")); // Allow only this origin can also have multiple origins separated with comma
-    .AllowCredentials()); // allow credentials
+    .AllowCredentials()// allow credentials
+    .WithExposedHeaders()); 
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<SessionMiddleware>();
 
 app.UseAuthorization();
 

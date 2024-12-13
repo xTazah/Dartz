@@ -1,35 +1,38 @@
-'use client'
+"use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../tabs/tabs";
-import {User} from '@/app/utils/types'
-import playerService from '@/app/services/playerService';
+import { User } from "@/app/utils/types";
+import PlayerService from "@/app/services/playerService";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { Checkbox } from "@nextui-org/react";
 
+import { UserContext } from "@/app/components/userProvider/userProvider";
+import { useRouter } from "next/navigation";
 
-interface LoginPageProps {
-  onLogin: (user: User) => void;
-}
-
-export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+export const LoginPage = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  
+  const router = useRouter();
+  const context = useContext(UserContext);
+
   const handleLogin = async () => {
-    const service = new playerService();
+    const service = new PlayerService();
     try {
-      const payload = { username, password };
+      const payload = { Username: username, Password: password };
       const response = await service.login(payload);
 
       if (response.status === 200) {
         const userData: User = response.data;
-        onLogin(userData);
+        context?.setUser(userData);
+        router.push("/");
       }
     } catch (err) {
-      toast('Invalid username or password.');
-      setError('Invalid username or password.');
+      toast("Invalid username or password.");
+      setError("Invalid username or password.");
     }
   };
 
@@ -58,6 +61,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 placeholder="Password"
                 className="w-full p-2 border rounded"
               />
+              <Checkbox isSelected={rememberMe} onValueChange={setRememberMe}>
+                Remember me?
+              </Checkbox>
             </div>
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
             <button
