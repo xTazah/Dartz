@@ -8,7 +8,6 @@ import { joinLobby } from '@/app/services/lobbyService';
 import { listenToLobby } from '@/app/handlers/lobbyHandler'; 
 import GameModeSwitch from "./gameModeSwitch";
 import { UserContext } from '../userProvider/userProvider';
-import { handleThrow } from "@/app/logic/game";
 
 const LobbyComponent = () => {
   const searchParams = useSearchParams();
@@ -51,7 +50,7 @@ const LobbyComponent = () => {
 
   const handleThrowAction = (points: number) => {
     if (!lobbyState) return;
-    const newState = handleThrow(lobbyState, points);
+    const newState = lobbyState.gameMode.logic.handleThrow(lobbyState, points)
     setLobbyState(newState);
   };
 
@@ -70,9 +69,17 @@ const LobbyComponent = () => {
   };
 
   return (
-    <div>
+    <>
       <h1>Lobby</h1>
       {lobbyState && <GameModeSwitch selectedGameMode={lobbyState.gameMode} setSelectedGameMode={setSelectedGameMode} />}
+      {lobbyState?.players[lobbyState.currentPlayerIndex].user == user && 
+      <>
+        <h2>Your Turn: </h2>
+        <button className="bg-gray-500" onClick={() => handleThrowAction(50)}>
+          Test Throw
+        </button>
+      </>
+      }
       <div>
         {lobbyState?.players.map((player: Player, index: number) => (
           <div key={player.user?.id}>
@@ -84,10 +91,8 @@ const LobbyComponent = () => {
         Add Player
       </button>
       <br />
-      <button className="bg-gray-500" onClick={() => handleThrowAction(50)}>
-        Test Throw
-      </button>
-    </div>
+      
+    </>
   );
 };
 

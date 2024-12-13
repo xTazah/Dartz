@@ -12,11 +12,11 @@
   "dependencies": {
     "@formkit/auto-animate": "^0.8.2",
     "@heroicons/react": "^2.1.5",
-    "@nextui-org/react": "^2.4.8",
+    "@nextui-org/react": "^2.6.7",
     "@radix-ui/react-tabs": "^1.1.1",
     "axios": "^1.7.7",
     "firebase": "^11.0.2",
-    "framer-motion": "^11.13.1",
+    "framer-motion": "^11.13.5",
     "heroicons": "^2.1.5",
     "next": "^14.2.16",
     "react": "^18",

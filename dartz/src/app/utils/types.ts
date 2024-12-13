@@ -29,3 +29,8 @@ gameMode: GameMode;
 }
 
 export type GameMode = (typeof GAME_MODES)[number];
+
+export interface GameLogic {
+  handleThrow: (state: Lobby, points: number) => Lobby;
+  checkWinCondition: (state: Lobby) => boolean;
+}

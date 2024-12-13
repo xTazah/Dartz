@@ -7,17 +7,26 @@ interface ApiResponse<T> {
 }
 
 class playerService {
-  // private baseURL = process.env.BASE_URL;
-  private baseURL = "https://localhost:7128/";
+  private baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 
   constructor() {
-    console.log(this.baseURL)
+
   }
 
   async getById<T>(id: number): Promise<ApiResponse<T>> {
     try {
       const response = await axios.get<T>(`${this.baseURL}player/${id}`);
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      this.handleError(error);
+      throw error; 
+    }
+  }
+
+  async login<T>(payload: T): Promise<ApiResponse<T>> {
+    try {
+      const response = await axios.post<T>(`${this.baseURL}login`, payload);
       return { data: response.data, status: response.status };
     } catch (error) {
       this.handleError(error);
