@@ -1,50 +1,41 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { LoginPage } from "../login/login";
 import { User } from "@/app/utils/types";
 import PlayerService from "@/app/services/playerService";
-import { useRouter } from "next/navigation";
 
 export const UserContext = React.createContext<{
-  user: User;
-  setUser: React.Dispatch<React.SetStateAction<User>>;
+  user: User | null;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 } | null>(null);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    //checks if the user can be logged in using cookies
     const checkSession = async () => {
+      const service = new PlayerService();
       try {
-        const service = new PlayerService();
-        const response = await service
-          .getUserBySession()
-          .then((response) => {
-            if (response.status === 200) {
-              setUser(response.data);
-              router.push("/");
-            }
-          })
-          .catch((response) => {
-            router.push("/login");
-          });
-      } catch (err) {
-        console.error("Error fetching user data:", err);
+        const response = await service.getUserBySession();
+        if (response.status === 200) {
+          setUser(response.data);
+        }
+      } catch {
+        setUser(null); // Explicitly set user to null
+      } finally {
+        setLoading(false);
       }
     };
 
     checkSession();
   }, []);
 
-  //handle logout
-  useEffect(() => {
-    if (user == null) router.push("/login");
-  }, [user]);
+  if (loading) {
+    return null; // Prevent rendering until session is checked
+  }
 
   return (
     <UserContext.Provider value={{ user, setUser }}>

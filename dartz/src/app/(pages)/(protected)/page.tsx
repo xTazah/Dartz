@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import BackNavigation from "../../components/backNavigation/backNavigation";
 import Dashboard from "../../components/dashboard/dashboard";
 import React from "react";
 

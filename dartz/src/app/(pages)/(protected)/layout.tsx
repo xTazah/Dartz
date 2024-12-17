@@ -1,3 +1,5 @@
+"use client";
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../../globals.css";
@@ -5,16 +7,11 @@ import { Toaster } from "sonner";
 import Navigation from "../../components/navigation/navigation";
 import FriendList from "../../components/friendList/friendList";
 import BackNavigation from "../../components/backNavigation/backNavigation";
-import { UserProvider } from "../../components/userProvider/userProvider";
+import { withAuth } from "@/app/components/withAuth";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "Dartz",
-  description: "Dartz by Timinz & xTazah",
-};
-
-export default function RootLayout({
+function ProtectedLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -44,3 +41,5 @@ export default function RootLayout({
     </>
   );
 }
+
+export default withAuth(ProtectedLayout);
