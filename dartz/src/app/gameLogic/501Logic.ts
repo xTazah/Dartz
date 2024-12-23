@@ -1,4 +1,4 @@
-import { Lobby, LobbyStatus,GameLogic } from "../utils/types";
+import { Lobby, GameStatus, GameLogic } from "../utils/types";
 
 export const fiveHundredOneLogic: GameLogic = {
   handleThrow: (state, points) => {

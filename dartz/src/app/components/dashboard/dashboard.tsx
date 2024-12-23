@@ -9,19 +9,17 @@ import Statistics from "../statistics/statistics";
 import ThemeSwitcher from "../themeSwitcher/themeSwitcher";
 import { GAME_MODES } from "@/app/utils/constants";
 import { Lobby, Player, GameMode } from "@/app/utils/types";
-import { createLobby } from "@/app/services/lobbyService";
 import { UserContext } from "../userProvider/userProvider";
 
 export default function Dashboard() {
   const router = useRouter();
-  const context = useContext(UserContext);
 
+  const context = useContext(UserContext);
   const { user } = context!;
 
-  const navigateToLobby = (id: string, gameMode: GameMode) => {
-    createLobby(id, user, gameMode);
-
-    router.push(`/lobby?id=${id}`);
+  const navigateToLobby = (gameMode: GameMode) => {
+    console.log("navigate to lobby clicked");
+    router.push(`/lobby?mode=${gameMode.key}`);
   };
 
   return (
@@ -72,7 +70,7 @@ export default function Dashboard() {
           <div
             key={gameMode.key}
             className={`${styles.tile} ${styles.modes} flex justify-center items-center flex-col`}
-            onClick={() => navigateToLobby("myLobby", gameMode)}
+            onClick={() => navigateToLobby(gameMode)}
           >
             <gameMode.Icon className="modeIcons" color="#6F7172" />
             {gameMode.name}
