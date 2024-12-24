@@ -8,6 +8,7 @@ import { useContext, useState } from "react";
 import { UserContext } from "@/app/components/userProvider/userProvider";
 import { useRouter } from "next/navigation";
 import { Button } from "@nextui-org/button";
+import Image from "next/image";
 
 export const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -73,7 +74,13 @@ export const LoginPage = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-[rgb(var(--background-start-rgb))] to-[rgb(var(--background-end-rgb))]">
-      <div className="w-[400px] p-6 shadow-lg rounded bg-[var(--component-background)] text-[var(--font-color)]">
+      <div className="w-[400px] p-6 flex flex-col items-center justify-center shadow-lg rounded bg-[var(--component-background)] text-[var(--font-color)]">
+        <Image
+          src="/images/DartsLogo.png"
+          width={200}
+          height={100}
+          alt="Dartz Logo"
+        />
         <Tabs defaultValue="login">
           <TabsList className="flex justify-center mb-4">
             <TabsTrigger value="login" className="px-4 py-2">
