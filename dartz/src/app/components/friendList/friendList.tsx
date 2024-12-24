@@ -13,6 +13,7 @@ import ThemeSwitcher from "../themeSwitcher/themeSwitcher";
 import PlayerService from "@/app/services/playerService";
 import { UserContext } from "../userProvider/userProvider";
 import { Button } from "@nextui-org/react";
+import { SettingsDropdown } from "../settingsDropdown/settingsDropdown";
 
 export default function FriendList() {
   const [selected, setSelected] = useState(1);
@@ -31,20 +32,13 @@ export default function FriendList() {
           </div>
           <div>{user?.username}</div>
         </div>
-        <Cog6ToothIcon className={`size-5 ${styles.icon}`} color="#6F7172" />
+          <SettingsDropdown/>
       </div>
       <div className={` ${styles.list} `}>
         <p className="title">Friend List</p>
         {names.map((name) => (
           <Friend key={name} name={name} />
         ))}
-        <Button
-          onClick={() =>
-            playerService.logout().then(() => {
-              context?.setUser(null);
-            })
-          }
-        ></Button>
       </div>
     </div>
   );

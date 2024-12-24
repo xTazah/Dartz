@@ -1,0 +1,23 @@
+.settingsItem{
+    &:hover{
+        background-color:var(--component-background-hover);
+    }
+}
+
+.icon{
+    transition:0.3s;
+
+    &:hover{
+        cursor: pointer;
+        color:white; 
+    }
+}
+
+.settingsBackground{
+    background-color:var(--background);
+    border-color:var(--component-background-hover);
+}
+
+.settingsSeperator{
+    background-color:var(--component-background-hover);
+}
