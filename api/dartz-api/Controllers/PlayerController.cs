@@ -51,7 +51,20 @@ namespace Dartz_API.Controllers
                 Username=p.Username,
                 PasswordHash= p.Password
             };
-            return Ok(_playerService.AddPlayer(player));
+
+            _playerService.AddPlayer(player);
+
+            //"auto" login the user by creating a session and appending a cookie to the response
+            var sessionId = SessionMiddleware.CreateSession(player.Username);
+            Response.Cookies.Append("SessionId", sessionId, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.MaxValue
+            });
+
+            return Ok(new FrontendUser { Id = player.ID, Initial = player.Initial, Username = player.Username });
         }
 
         [HttpPost("login")]
