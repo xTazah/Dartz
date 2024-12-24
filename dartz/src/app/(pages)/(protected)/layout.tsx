@@ -19,9 +19,6 @@ function ProtectedLayout({
   return (
     <>
       <div className="grid grid-cols-12 gap-7 relative">
-        <div className="absolute">
-          <Toaster closeButton />
-        </div>
 
         <div className="col-span-2">
           <Navigation />
