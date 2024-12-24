@@ -13,13 +13,18 @@ export const withAuth = (WrappedComponent: React.FC<any>) => {
 
     useEffect(() => {
       if (!userContext?.user) {
-        router.replace("/login"); // Redirect to login if no user
+        router.replace("/login"); // redirect to login if no user
       }
-      setLoading(false); // Session check complete
+      setLoading(false); // session check complete
     }, [userContext?.user, router]);
 
     if (loading || !userContext?.user) {
-      return <Spinner color="warning" label="Loading..." />;
+      return (
+        <div className="flex flex-col items-center justify-center h-screen">
+          <Spinner color="success" label="Loading..." />
+          <h4>Loading...</h4>
+        </div>
+      );
     }
 
     return <WrappedComponent {...props} />;
