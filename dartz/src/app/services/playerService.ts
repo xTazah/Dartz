@@ -43,6 +43,16 @@ class PlayerService {
     }
   }
 
+  async signup<T>(payload: T): Promise<ApiResponse<T>> {
+    try {
+      const response = await axios.post<T>(`${this.baseURL}signup`, payload);
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      this.handleError(error);
+      throw error;
+    }
+  }
+
   async getUserBySession<T>(): Promise<ApiResponse<T>> {
     try {
       const response = await axios.post<T>(

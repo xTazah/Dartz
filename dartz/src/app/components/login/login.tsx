@@ -5,24 +5,29 @@ import { User } from "@/app/utils/types";
 import PlayerService from "@/app/services/playerService";
 import { toast } from "sonner";
 import { useContext, useState } from "react";
-import { Checkbox } from "@nextui-org/react";
-
 import { UserContext } from "@/app/components/userProvider/userProvider";
 import { useRouter } from "next/navigation";
+import { Button } from "@nextui-org/button";
 
 export const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
+
+  const [signupUsername, setSignupUsername] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupError, setSignupError] = useState<string | null>(null);
+  const [isSignupLoading, setIsSignupLoading] = useState(false);
 
   const router = useRouter();
   const context = useContext(UserContext);
 
   const handleLogin = async () => {
     const service = new PlayerService();
+    setIsLoginLoading(true);
     try {
-      const payload = { Username: username, Password: password };
+      const payload = { username, password };
       const response = await service.login(payload);
 
       if (response.status === 200) {
@@ -33,48 +38,122 @@ export const LoginPage = () => {
     } catch (err) {
       toast("Invalid username or password.");
       setError("Invalid username or password.");
+    } finally {
+      setIsLoginLoading(false);
+    }
+  };
+
+  const handleSignup = async () => {
+    const service = new PlayerService();
+    setIsSignupLoading(true);
+    try {
+      const payload = { username: signupUsername, password: signupPassword };
+      const response = await service.signup(payload);
+
+      if (response.status === 200) {
+        toast("Account created successfully!");
+        const userData: User = response.data;
+        console.log(userData);
+        context?.setUser(userData);
+        router.push("/");
+      }
+    } catch (err) {
+      toast("Failed to create account.");
+      setSignupError("Failed to create account.");
+    } finally {
+      setIsSignupLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
+    if (e.key === "Enter") {
+      action();
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="w-[400px] p-6 bg-white shadow-lg rounded">
-        <Tabs defaultValue="account">
-          <TabsList>
-            <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="password">Password</TabsTrigger>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-[rgb(var(--background-start-rgb))] to-[rgb(var(--background-end-rgb))]">
+      <div className="w-[400px] p-6 shadow-lg rounded bg-[var(--component-background)] text-[var(--font-color)]">
+        <Tabs defaultValue="login">
+          <TabsList className="flex justify-center mb-4">
+            <TabsTrigger value="login" className="px-4 py-2">
+              Login
+            </TabsTrigger>
+            <TabsTrigger value="signup" className="px-4 py-2">
+              Sign-Up
+            </TabsTrigger>
           </TabsList>
-          <TabsContent value="account">
-            <p>Login to your account here.</p>
+          <TabsContent value="login">
             <div className="mt-4">
               <input
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  setError(null);
+                }}
+                onKeyDown={(e) => handleKeyDown(e, handleLogin)}
                 placeholder="Username"
-                className="w-full p-2 border rounded mb-2"
+                className="w-full p-2 mb-3 border rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
               />
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError(null);
+                }}
+                onKeyDown={(e) => handleKeyDown(e, handleLogin)}
                 placeholder="Password"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
               />
-              <Checkbox isSelected={rememberMe} onValueChange={setRememberMe}>
-                Remember me?
-              </Checkbox>
             </div>
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-            <button
+            <Button
+              className="mt-4 w-full bg-[var(--primary)]"
               onClick={handleLogin}
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+              isLoading={isLoginLoading}
+              color="primary"
             >
               Login
-            </button>
+            </Button>
           </TabsContent>
-          <TabsContent value="password">
-            <p>Change your password here.</p>
+          <TabsContent value="signup">
+            <div className="mt-4">
+              <input
+                type="text"
+                value={signupUsername}
+                onChange={(e) => {
+                  setSignupUsername(e.target.value);
+                  setSignupError(null);
+                }}
+                onKeyDown={(e) => handleKeyDown(e, handleSignup)}
+                placeholder="Username"
+                className="w-full p-2 mb-3 border rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+              />
+              <input
+                type="password"
+                value={signupPassword}
+                onChange={(e) => {
+                  setSignupPassword(e.target.value);
+                  setSignupError(null);
+                }}
+                onKeyDown={(e) => handleKeyDown(e, handleSignup)}
+                placeholder="Password"
+                className="w-full p-2 border rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+              />
+            </div>
+            {signupError && (
+              <p className="text-red-500 text-sm mt-2">{signupError}</p>
+            )}
+            <Button
+              className="mt-4 w-full bg-[var(--primary)]"
+              onClick={handleSignup}
+              isLoading={isSignupLoading}
+              color="primary"
+            >
+              Sign Up
+            </Button>
           </TabsContent>
         </Tabs>
       </div>
