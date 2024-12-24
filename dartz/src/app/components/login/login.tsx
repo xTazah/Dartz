@@ -73,7 +73,7 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-[rgb(var(--background-start-rgb))] to-[rgb(var(--background-end-rgb))]">
+    <div className="flex items-center justify-center min-h-screen bg-[(var(--background))]">
       <div className="w-[400px] p-6 flex flex-col items-center justify-center shadow-lg rounded bg-[var(--component-background)] text-[var(--font-color)]">
         <Image
           src="/images/DartsLogo.png"
