@@ -2,6 +2,8 @@
 
 *.env
 
+api/dartz-api/out
+
 # dependencies
 /dartz/node_modules
 /dartz/.pnp
