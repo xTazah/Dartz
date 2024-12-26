@@ -18,20 +18,6 @@ namespace Dartz.Business
         public DbSet<PlayerThrow> PlayerThrows { get; set; }
         public DbSet<DBThrow> Throws { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            DotEnv.Load();
-
-            var server = Environment.GetEnvironmentVariable("DB_SERVER");
-            var port = Environment.GetEnvironmentVariable("DB_PORT");
-            var database = Environment.GetEnvironmentVariable("DB_NAME");
-            var user = Environment.GetEnvironmentVariable("DB_USER");
-            var password = Environment.GetEnvironmentVariable("DB_PASSWORD");
-            var trustCert = Environment.GetEnvironmentVariable("DB_TRUST_CERT");
-
-            var connectionString = $"Server={server}; Port={port}; Database={database}; User Id={user}; Password={password}; Trust Server Certificate={trustCert};";
-
-            optionsBuilder.UseNpgsql(connectionString);
-        }
+        public DataContext(DbContextOptions<DataContext> options) : base(options) { }
     }
 }

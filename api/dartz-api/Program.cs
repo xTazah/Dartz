@@ -2,6 +2,7 @@ using Dartz.Business;
 using Dartz.Business.Interfaces;
 using Dartz.Service;
 using Dartz.Service.Interfaces;
+using dotenv.net;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,7 +22,21 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
 });
 
-builder.Services.AddTransient<DataContext>();
+// Render.com puts the .env variables into the Configuration when running a Docker container. Use the standard .env approach we used previously for local development
+DotEnv.Load();
+
+var server = builder.Configuration["DB_SERVER"] ?? Environment.GetEnvironmentVariable("DB_SERVER");
+var port = builder.Configuration["DB_PORT"] ?? Environment.GetEnvironmentVariable("DB_PORT");
+var database = builder.Configuration["DB_NAME"] ?? Environment.GetEnvironmentVariable("DB_NAME");
+var user = builder.Configuration["DB_USER"] ?? Environment.GetEnvironmentVariable("DB_USER");
+var password = builder.Configuration["DB_PASSWORD"] ?? Environment.GetEnvironmentVariable("DB_PASSWORD");
+var trustCert = builder.Configuration["DB_TRUST_CERT"] ?? Environment.GetEnvironmentVariable("DB_TRUST_CERT");
+
+var connectionString = $"Server={server}; Port={port}; Database={database}; User Id={user}; Password={password}; Trust Server Certificate={trustCert};";
+
+
+builder.Services.AddDbContext<DataContext>(options =>
+    options.UseNpgsql(connectionString));
 
 //Repositories
 builder.Services.AddTransient<IPlayerRepository, PlayerRepository>();
