@@ -26,11 +26,19 @@ export type Lobby = {
   gameStatus: GameStatus;
   currentPlayerIndex: number;
   gameMode: GameMode;
+  customData?: Record<string, any>; // game-specific data
 };
 
 export type GameMode = (typeof GAME_MODES)[number];
 
 export interface GameLogic {
-  handleThrow: (state: Lobby, points: number) => Lobby;
-  checkWinCondition: (state: Lobby) => boolean;
+  /**
+   * Initialize the game-specific logic in the lobby.
+   */
+  initialize(lobby: Lobby): Lobby;
+
+  /**
+   * Process a player's turn and update the lobby state.
+   */
+  processTurn(lobby: Lobby, player: Player, score: number): Lobby;
 }

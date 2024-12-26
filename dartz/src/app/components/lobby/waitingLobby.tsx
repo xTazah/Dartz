@@ -19,10 +19,7 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
   };
 
   const startGame = () => {
-    const updatedLobby = LobbyHandler.changeGameStatus(
-      lobby,
-      GameStatus.Running
-    );
+    const updatedLobby = LobbyHandler.startGame(lobby);
     setLobby(updatedLobby);
   };
 

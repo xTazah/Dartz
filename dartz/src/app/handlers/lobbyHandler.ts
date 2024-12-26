@@ -1,8 +1,9 @@
 "use client";
 import { syncLobby, loadLobby, listenToLobby } from "../services/lobbyService";
 import { LobbyNotFoundError, MissingLobbyDataError } from "../utils/errors";
-import { GameMode, Lobby, GameStatus, User } from "../utils/types";
+import { GameMode, Lobby, GameStatus, User, Player } from "../utils/types";
 import IdGenerator from "../utils/idGenerator";
+import { GAME_MODES } from "../utils/constants";
 
 class LobbyHandler {
   static createLobby(user: User, gameMode: GameMode): Lobby {
@@ -43,6 +44,26 @@ class LobbyHandler {
       return updatedLobby;
     }
     return lobby; // No changes if player already exists
+  }
+
+  static startGame(lobby: Lobby): Lobby {
+    const gameModeLogic = GAME_MODES.find(
+      (gm) => gm.key === lobby.gameMode.key
+    )?.logic;
+    if (!gameModeLogic) throw new Error("Game mode logic not found!");
+
+    let updatedLobby = gameModeLogic.initialize(lobby);
+
+    return this.changeGameStatus(updatedLobby, GameStatus.Running);
+  }
+
+  static handlePlayerScore(lobby: Lobby, player: Player, score: number): Lobby {
+    const gameModeLogic = GAME_MODES.find(
+      (gm) => gm.key === lobby.gameMode.key
+    )?.logic;
+    if (!gameModeLogic) throw new Error("Game mode logic not found!");
+
+    return gameModeLogic.processTurn(lobby, player, score);
   }
 
   static changeGameMode(lobby: Lobby, gameMode: GameMode): Lobby {
