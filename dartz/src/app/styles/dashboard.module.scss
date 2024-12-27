@@ -11,9 +11,19 @@
     padding:20px;
 }
 
+.joinTitle
+{
+    font-size:20px;
+    text-align: center;
+    color: var(--primary);
+    font-weight: bold;
+    margin-bottom: 1em;
+    //text-shadow: 0px 0px 10px var(--primary);
+}
+
 .banner
 {
-    background:var(--primary);
+    background:var(--component-background);
     overflow: hidden;
 //     box-shadow: 0px 0px 10px var(--primary);
 }

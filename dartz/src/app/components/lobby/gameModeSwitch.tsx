@@ -2,6 +2,7 @@ import { Tabs, Tab } from "@nextui-org/react";
 import React from "react";
 import { GAME_MODES } from "@/app/utils/constants";
 import { GameMode } from "@/app/utils/types";
+import styles from "@/app/styles/lobby.module.scss"
 
 interface ModeSwapProps {
   selectedGameMode: GameMode;
@@ -33,12 +34,13 @@ export default function GameModeSwitch({
   isOwner,
 }: ModeSwapProps) {
   return (
-    <div className="flex w-full flex-col">
+    <div className="flex w-full flex-col ">
       <Tabs
+        className={styles.tabs+ ' flex justify-center'}
         isDisabled={!isOwner}
         aria-label="Game Modes"
-        color="secondary"
-        variant="bordered"
+        color="primary"
+        variant="solid"
         selectedKey={selectedGameMode.key}
         onSelectionChange={(key) => {
           const newMode = GAME_MODES.find(

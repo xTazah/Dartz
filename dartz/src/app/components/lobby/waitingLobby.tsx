@@ -6,6 +6,7 @@ import GameModeSwitch from "./gameModeSwitch";
 import { UserContext } from "../userProvider/userProvider";
 import React, { useEffect } from "react";
 import { Button } from "@nextui-org/react";
+import Friend from "../friendList/friend";
 
 interface WaitingLobbyProps {
   lobby: Lobby;
@@ -33,7 +34,7 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
 
   return (
     <div>
-      <h1>Lobby</h1>
+      <h1 className="text-xl mb-3 text-center">Lobby</h1>
       {lobby && (
         <GameModeSwitch
           selectedGameMode={lobby.gameMode}
@@ -42,11 +43,9 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
         />
       )}
       <div>
+        <h2 className="text-lg mb-3">Player</h2>
         {lobby.players?.map((player) => (
-          <div key={player.user?.id}>
-            {player.user?.username}
-            {player.user?.id == lobby.owner?.id && " (Owner)"}
-          </div>
+          <Friend key={player.user?.id} name={(player.user?.username == undefined ? "": player.user?.username) + (player.user?.id == lobby.owner?.id && " (Owner)")} />
         ))}
       </div>
       <Button className="text-black" onClick={startGame}>

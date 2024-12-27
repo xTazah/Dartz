@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "../../styles/dashboard.module.scss";
 import HistoryList from "../matchHistory/historyList";
@@ -10,6 +10,7 @@ import ThemeSwitcher from "../themeSwitcher/themeSwitcher";
 import { GAME_MODES } from "@/app/utils/constants";
 import { Lobby, Player, GameMode } from "@/app/utils/types";
 import { UserContext } from "../userProvider/userProvider";
+import { Button } from "@nextui-org/button";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -17,9 +18,18 @@ export default function Dashboard() {
   const context = useContext(UserContext);
   const { user } = context!;
 
+  const [lobbyKey, setLobbyKey] = useState("");
+  const [isLobbyLoading, setIsLobbyLoading] = useState(false);
+
   const navigateToLobby = (gameMode: GameMode) => {
     console.log("navigate to lobby clicked");
     router.push(`/lobby?mode=${gameMode.key}`);
+  };
+
+  const handleLobbyJoin =  () => {
+    setIsLobbyLoading(true);
+    if(lobbyKey!="")
+    router.push(`/lobby?id=${lobbyKey}`);
   };
 
   return (
@@ -27,27 +37,41 @@ export default function Dashboard() {
       <div
         className={
           styles.tile +
-          " row-span-2 col-span-2 flex justify-center items-center " +
+          " row-span-2 col-span-2 flex flex-col justify-center items-center " +
           styles.banner
         }
       >
-        <ThemeSwitcher />
         <Image
           className={styles.Logo}
           src="/images/DartsLogo.png"
-          width={200}
+          width={150}
           height={100}
           alt="Logo"
         />
-        <p className={styles.x}>x</p>
-        <Image
-          className={styles.Logo}
-          src="/images/next.png"
-          width={200}
-          height={100}
-          color="#FFFFFF"
-          alt="Logo"
-        />
+        <div>
+          {/* <h1 className={styles.joinTitle}>Join via code</h1> */}
+          <p className="text-[var(--secondary)] text-center mb-2">Enter a custom lobby code to join a lobby</p>
+          <div>
+            <input
+                  type="text"
+                  value={lobbyKey}
+                  onChange={(e) => {
+                    setLobbyKey(e.target.value);
+                  }}
+                  placeholder="Code"
+                  className="focus:outline outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                />
+              <Button
+                className="mt-4 w-full bg-[var(--primary)]"
+                onClick={handleLobbyJoin}
+                disabled={(lobbyKey=="")}
+                isLoading={isLobbyLoading}
+                color="primary"
+              >Join Lobby</Button>
+          </div>
+
+        </div>
+
       </div>
       <div className={"row-span-2 col-span-1 flex flex-col gap-5"}>
         <div className={styles.tile + " flex justify-around " + styles.score}>

@@ -90,7 +90,7 @@ export const LoginPage = () => {
               Sign-Up
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="login">
+          <TabsContent value="login" >
             <div className="mt-4">
               <input
                 type="text"
@@ -101,7 +101,7 @@ export const LoginPage = () => {
                 }}
                 onKeyDown={(e) => handleKeyDown(e, handleLogin)}
                 placeholder="Username"
-                className="w-full p-2 mb-3 border rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                className="focus:outline outline-[var(--component-outline)] w-full p-2 mb-4 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
               />
               <input
                 type="password"
@@ -112,7 +112,7 @@ export const LoginPage = () => {
                 }}
                 onKeyDown={(e) => handleKeyDown(e, handleLogin)}
                 placeholder="Password"
-                className="w-full p-2 border rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                className="focus:outline outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
               />
             </div>
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
@@ -136,7 +136,7 @@ export const LoginPage = () => {
                 }}
                 onKeyDown={(e) => handleKeyDown(e, handleSignup)}
                 placeholder="Username"
-                className="w-full p-2 mb-3 border rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                className="focus:outline outline-[var(--component-outline)] w-full p-2 mb-4 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
               />
               <input
                 type="password"
@@ -147,7 +147,7 @@ export const LoginPage = () => {
                 }}
                 onKeyDown={(e) => handleKeyDown(e, handleSignup)}
                 placeholder="Password"
-                className="w-full p-2 border rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                className="focus:outline outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
               />
             </div>
             {signupError && (

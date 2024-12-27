@@ -20,16 +20,16 @@ export const GAME_MODES = [
     Icon: Square2StackIcon,
     logic: fiveHundredOneLogic,
   },
-  {
-    key: "test-mode",
-    name: "Test Mode",
-    Icon: ArchiveBoxIcon,
-    logic: fiveHundredOneLogic,
-  },
+  // {
+  //   key: "test-mode",
+  //   name: "Test Mode",
+  //   Icon: ArchiveBoxIcon,
+  //   logic: fiveHundredOneLogic,
+  // },
 ] as const; //for type safety
 
 export const IconsMap = {
-  "test-mode": ArchiveBoxIcon,
+  // "test-mode": ArchiveBoxIcon,
   "double-training":Square2StackIcon,
   "501": PlayIcon,
   "around-the-clock":ClockIcon
