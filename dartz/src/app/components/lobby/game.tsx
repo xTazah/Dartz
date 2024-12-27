@@ -4,6 +4,7 @@ import { Lobby } from "@/app/utils/types";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
 import React, { useState } from "react";
 import { Button } from "@nextui-org/react";
+import getCheckoutPath from "@/app/handlers/checkoutHandler";
 
 interface GameProps {
   lobby: Lobby;
@@ -38,7 +39,8 @@ const Game = ({ lobby, setLobby }: GameProps) => {
         <h2 className="text-xl">
           Current Player: {currentPlayer.user?.username}
         </h2>
-        <p>Remaining Score: {lobby.players[currentPlayer.user!.id].score}</p>
+        <p>Remaining Score: {lobby.players[lobby.currentPlayerIndex]?.score}</p>
+        <p>Checkout: {getCheckoutPath(lobby.players[lobby.currentPlayerIndex]?.score)}</p>
       </div>
 
       <div>
