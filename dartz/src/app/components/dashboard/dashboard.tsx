@@ -11,8 +11,13 @@ import { GAME_MODES } from "@/app/utils/constants";
 import { Lobby, Player, GameMode } from "@/app/utils/types";
 import { UserContext } from "../userProvider/userProvider";
 import { Button } from "@nextui-org/button";
-import { ClipboardDocumentIcon } from "@heroicons/react/24/solid";
+import {
+  ClipboardDocumentIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/solid";
 import { Tooltip } from "@nextui-org/react";
+import LobbyHandler from "@/app/handlers/lobbyHandler";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -28,9 +33,26 @@ export default function Dashboard() {
     router.push(`/lobby?mode=${gameMode.key}`);
   };
 
-  const handleLobbyJoin = () => {
+  const handleLobbyJoin = async () => {
     setIsLobbyLoading(true);
-    if (lobbyKey != "") router.push(`/lobby?id=${lobbyKey}`);
+    if (lobbyKey != "") {
+      const lobby = await LobbyHandler.getLobbyExists(lobbyKey);
+      if (!lobby) {
+        toast(
+          <>
+            <ExclamationTriangleIcon className="size-6" />
+            <div>
+              Lobby with code <span className="font-bold"> {lobbyKey} </span>{" "}
+              does not exist.
+            </div>
+          </>,
+          {
+            duration: 5000,
+          }
+        );
+        setIsLobbyLoading(false);
+      } else router.push(`/lobby?id=${lobbyKey}`);
+    }
   };
 
   return (

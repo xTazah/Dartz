@@ -3,6 +3,7 @@ import { database } from "./firebaseConfig";
 import { Lobby, GameMode } from "../utils/types";
 import { IconsMap } from "../utils/constants";
 import { LobbyNotFoundError } from "../utils/errors";
+import { reject } from "lodash";
 
 //persistence and syncing logic
 
@@ -72,17 +73,29 @@ function listenToLobby(
   return () => off(lobbyRef, "value", callback);
 }
 
+async function getLobbySnapshot(lobbyId: string): Promise<Lobby | null> {
+  try {
+    const lobbyRef = ref(database, `Lobby_${lobbyId}`);
+    const snapshot = await get(lobbyRef);
+
+    if (snapshot.exists()) {
+      return snapshot.val() as Lobby;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching lobby snapshot:", error);
+    return null;
+  }
+}
+
 function loadLobby(lobbyId: string): Promise<Lobby> {
   return new Promise(async (resolve, reject) => {
     try {
       // Check Firebase for the lobby
-      const lobbyRef = ref(database, `Lobby_${lobbyId}`);
-      console.log("Getting lobbyRef from firebase ", lobbyRef);
-      const snapshot = await get(lobbyRef);
-      console.log("Got lobbyRef from firebase");
+      const firebaseLobby = await getLobbySnapshot(lobbyId);
 
-      if (snapshot.exists()) {
-        const firebaseLobby: Lobby = snapshot.val();
+      if (firebaseLobby) {
         if (!firebaseLobby.players) firebaseLobby.players = [];
         // Save to localStorage for offline access
         saveLobbyToLocal(lobbyId, firebaseLobby);
@@ -103,4 +116,4 @@ function loadLobby(lobbyId: string): Promise<Lobby> {
   });
 }
 
-export { syncLobby, listenToLobby, loadLobby };
+export { syncLobby, listenToLobby, loadLobby, getLobbySnapshot };
