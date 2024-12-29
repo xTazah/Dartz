@@ -1,7 +1,7 @@
 "use client";
 import { syncLobby, loadLobby, listenToLobby } from "../services/lobbyService";
 import { LobbyNotFoundError, MissingLobbyDataError } from "../utils/errors";
-import { GameMode, Lobby, GameStatus, User, Player } from "../utils/types";
+import { GameMode, Lobby, GameStatus, User, Player, Throw } from "../utils/types";
 import IdGenerator from "../utils/idGenerator";
 import { GAME_MODES } from "../utils/constants";
 
@@ -37,7 +37,7 @@ class LobbyHandler {
     if (!lobby.players.find((player) => player.user?.id === user?.id)) {
       const updatedLobby = {
         ...lobby,
-        players: [...lobby.players, { user, score: 0 }],
+        players: [...lobby.players, { user, score: 0, throws:[] }],
       };
 
       syncLobby(updatedLobby.id, updatedLobby);
@@ -57,13 +57,17 @@ class LobbyHandler {
     return this.changeGameStatus(updatedLobby, GameStatus.Running);
   }
 
-  static handlePlayerScore(lobby: Lobby, player: Player, score: number): Lobby {
+  static handlePlayerScore(lobby: Lobby, player: Player, score: Throw): Lobby {
     const gameModeLogic = GAME_MODES.find(
       (gm) => gm.key === lobby.gameMode.key
     )?.logic;
     if (!gameModeLogic) throw new Error("Game mode logic not found!");
 
-    return gameModeLogic.processTurn(lobby, player, score);
+    const updatedLobby = gameModeLogic.processTurn(lobby, player, score);
+
+    syncLobby(updatedLobby.id, updatedLobby);
+
+    return updatedLobby;
   }
 
   static changeGameMode(lobby: Lobby, gameMode: GameMode): Lobby {

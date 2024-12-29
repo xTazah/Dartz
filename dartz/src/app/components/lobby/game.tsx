@@ -1,10 +1,12 @@
 "use client";
 
-import { Lobby } from "@/app/utils/types";
+import { Lobby, Multiplier, Throw } from "@/app/utils/types";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { Button } from "@nextui-org/react";
 import getCheckoutPath from "@/app/handlers/checkoutHandler";
+import { UserContext } from "../userProvider/userProvider";
+import MultiplierTabs from "../multiplierTabs/multiplierTabs";
 
 interface GameProps {
   lobby: Lobby;
@@ -12,24 +14,45 @@ interface GameProps {
 }
 
 const Game = ({ lobby, setLobby }: GameProps) => {
-  const [playerScore, setPlayerScore] = useState<number | "">("");
+  const context = useContext(UserContext);
+  const user = context?.user;
+  const [playerScore1, setPlayerScore1] = useState<number | "">("");
+  const [playerScore2, setPlayerScore2] = useState<number | "">("");
+  const [playerScore3, setPlayerScore3] = useState<number | "">("");
+
+  const [multiplier1, setMultiplier1] = useState<Multiplier>(Multiplier.Single);
+  const [multiplier2, setMultiplier2] = useState<Multiplier >(Multiplier.Single);
+  const [multiplier3, setMultiplier3] = useState<Multiplier>(Multiplier.Single);
 
   const currentPlayer = lobby.players[lobby.currentPlayerIndex];
 
   const handleSubmitScore = () => {
-    if (playerScore === "") return;
+    if (playerScore1 === "" ||playerScore2 === ""|| playerScore3 === "") return;
+    else if (playerScore1 > 20 || playerScore2 > 20 || playerScore3 > 20 ) return;
+    else if (playerScore1 < 0 || playerScore2 < 0  || playerScore3 < 0  ) return;
+
+    let score : Throw = { 
+      score1 : playerScore1,
+      multiplier1: multiplier1,
+      score2 : playerScore2,
+      multiplier2: multiplier2,
+      score3 : playerScore3, 
+      multiplier3: multiplier3
+  }  
 
     const updatedLobby = LobbyHandler.handlePlayerScore(
       lobby,
       currentPlayer,
-      Number(playerScore)
+      score
     );
     setLobby(updatedLobby);
-    setPlayerScore(""); // reset input
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPlayerScore(Number(e.target.value) || "");
+    //reset States
+    setPlayerScore1("");
+    setPlayerScore2("");
+    setPlayerScore3("");
+    setMultiplier1(Multiplier.Single);
+    setMultiplier2(Multiplier.Single);
+    setMultiplier3(Multiplier.Single); 
   };
 
   return (
@@ -44,16 +67,43 @@ const Game = ({ lobby, setLobby }: GameProps) => {
       </div>
 
       <div>
-        {lobby.owner?.id === currentPlayer.user?.id ? (
+        {user?.id === currentPlayer.user?.id ? (
           <div>
             <h3 className="mb-2">Enter your score:</h3>
-            <div className="flex gap-2 items-center">
-              <input
-                type="number"
-                className="p-2 rounded-md text-black"
-                value={playerScore}
-                onChange={handleInputChange}
-              />
+            <div className="flex flex-col gap-2 items-center">
+              <div className="flex gap-2 items-center">
+                <input
+                  type="number"
+                  className="p-2 rounded-md text-black"
+                  value={playerScore1}
+                  onChange={(e) => {
+                    setPlayerScore1(Number(e.target.value));
+                  }}
+                />
+                <MultiplierTabs selectedMultiplier={multiplier1} setSelectedMultiplier={setMultiplier1}/>
+              </div>
+              <div className="flex gap-2 items-center">
+                <input
+                    type="number"
+                    className="p-2 rounded-md text-black"
+                    value={playerScore2}
+                    onChange={(e) => {
+                      setPlayerScore2(Number(e.target.value));
+                    }}
+                  />
+                  <MultiplierTabs selectedMultiplier={multiplier2} setSelectedMultiplier={setMultiplier2}/>
+              </div>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="number"
+                  className="p-2 rounded-md text-black"
+                  value={playerScore3}
+                  onChange={(e) => {
+                    setPlayerScore3(Number(e.target.value));
+                  }}
+                />
+                <MultiplierTabs selectedMultiplier={multiplier3} setSelectedMultiplier={setMultiplier3}/>
+              </div>
               <Button
                 className="mt-4 w-full bg-[var(--primary)]"
                 onClick={handleSubmitScore}

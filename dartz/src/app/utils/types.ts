@@ -7,16 +7,33 @@ export type User = {
   initial: string;
 } | null;
 
+//Player Throws
+export type Throw = {
+  score1: number;
+  multiplier1: Multiplier;
+  score2: number;
+  multiplier2: Multiplier;
+  score3: number;
+  multiplier3: Multiplier;
+};
+
 //player that is used inside a lobby
 export type Player = {
   user: User;
   score: number;
+  throws: Throw[];
 };
 
 export enum GameStatus {
   Waiting,
   Running,
   Finished,
+}
+
+export enum Multiplier {
+  Single = 1,
+  Double = 2,
+  Tripple = 3,
 }
 
 export type Lobby = {
@@ -40,5 +57,5 @@ export interface GameLogic {
   /**
    * Process a player's turn and update the lobby state.
    */
-  processTurn(lobby: Lobby, player: Player, score: number): Lobby;
+  processTurn(lobby: Lobby, player: Player, score: Throw): Lobby;
 }
