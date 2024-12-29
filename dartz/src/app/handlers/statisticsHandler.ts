@@ -6,7 +6,7 @@ const calculateAverage = (throws: Throw[]): number => {
     throws.forEach((throws)=>{
         sum += throws.score1*throws.multiplier1+throws.score2*throws.multiplier2+throws.score3*throws.multiplier3;
     })
-    let dartCount = throws.length*3;
+    let dartCount = throws.length;
 
     return sum/dartCount;    
 }
@@ -33,4 +33,12 @@ const calculateHighestScore = (throws: Throw[]): number => {
     return score;    
 }
 
-export {calculateAverage, calculate100Plus, calculateHighestScore};
+const calculateLastScore = (throws: Throw[]): number => {
+
+    let last = throws[throws.length-1];
+    let sum = last.score1*last.multiplier1+last.score2*last.multiplier2+last.score3*last.multiplier3;
+
+    return sum;    
+}
+
+export {calculateAverage, calculate100Plus, calculateHighestScore,calculateLastScore};

@@ -12,6 +12,7 @@ import {
   calculateAverage,
   calculate100Plus,
   calculateHighestScore,
+  calculateLastScore,
 } from "@/app/handlers/statisticsHandler";
 
 interface GameProps {
@@ -83,7 +84,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
                   <div className="flex gap-2 items-center">
                     <input
                       type="number"
-                      className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] pr-10"
+                      className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
                       value={playerScore1}
                       onChange={(e) => {
                         setPlayerScore1(Number(e.target.value));
@@ -97,7 +98,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
                   <div className="flex gap-2 items-center">
                     <input
                       type="number"
-                      className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] pr-10"
+                      className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] "
                       value={playerScore2}
                       onChange={(e) => {
                         setPlayerScore2(Number(e.target.value));
@@ -111,7 +112,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
                   <div className="flex gap-2 items-center">
                     <input
                       type="number"
-                      className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] pr-10"
+                      className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
                       value={playerScore3}
                       onChange={(e) => {
                         setPlayerScore3(Number(e.target.value));
@@ -142,6 +143,9 @@ const Game = ({ lobby, setLobby }: GameProps) => {
                       </p>
                       <p className="mb-2">
                         Highest Score: {calculateHighestScore(player?.throws)}
+                      </p>
+                      <p className="mb-2 text-2xl text-center mt-6">
+                        {calculateLastScore(player?.throws)}
                       </p>
                     </div>
                   ) : (
