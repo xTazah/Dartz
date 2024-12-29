@@ -109,6 +109,7 @@ function loadLobby(lobbyId: string): Promise<Lobby> {
 
       if (firebaseLobby) {
         if (!firebaseLobby.players) firebaseLobby.players = [];
+        if (!firebaseLobby.spectators) firebaseLobby.spectators = [];
 
         // Save to localStorage for offline access
         saveLobbyToLocal(lobbyId, firebaseLobby);
