@@ -1,4 +1,4 @@
-import { GameLogic, GameStatus, Lobby, Player } from "@/app/utils/types";
+import { GameLogic, GameStatus, Lobby, Player, Throw } from "@/app/utils/types";
 
 export const fiveHundredOneLogic: GameLogic = {
   initialize(lobby) {
@@ -9,7 +9,7 @@ export const fiveHundredOneLogic: GameLogic = {
     return updatedLobby;
   },
 
-  processTurn(lobby: Lobby, player: Player, score: number) {
+  processTurn(lobby: Lobby, player: Player, throws: Throw) {
     //toDo: score is not a number but DartThrowObject
     const updatedLobby = { ...lobby };
 
@@ -19,6 +19,8 @@ export const fiveHundredOneLogic: GameLogic = {
     ) {
       throw new Error("Invalid turn");
     }
+
+    let score = throws.score1*throws.multiplier1+throws.score2*throws.multiplier2+throws.score3*throws.multiplier3;
 
     // calc new score
     const newScore =
@@ -30,6 +32,9 @@ export const fiveHundredOneLogic: GameLogic = {
       // Bust: do nothing
     } else {
       updatedLobby.players[updatedLobby.currentPlayerIndex].score = newScore;
+      if(!updatedLobby.players[updatedLobby.currentPlayerIndex].throws)
+        updatedLobby.players[updatedLobby.currentPlayerIndex].throws = []
+      updatedLobby.players[updatedLobby.currentPlayerIndex].throws.push(throws);
     }
 
     // next player

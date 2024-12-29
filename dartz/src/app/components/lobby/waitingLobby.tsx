@@ -44,7 +44,7 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
       <div>
         <h2 className="text-lg mb-3">Player</h2>
         {lobby.players?.map((player) => (
-          <Friend key={player.user?.id} name={(player.user?.username == undefined ? "": player.user?.username) + (player.user?.id == lobby.owner?.id && " (Owner)")} />
+          <Friend key={player.user?.id} name={(player.user?.username == undefined ? "": player.user?.username) + (player.user?.id == lobby.owner?.id ? " (Owner)" : "")} />
         ))}
       </div>
       <Button className="text-black" onClick={startGame}>

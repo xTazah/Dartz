@@ -7,7 +7,7 @@ import {
   getLobbySnapshot,
 } from "../services/lobbyService";
 import { LobbyNotFoundError, MissingLobbyDataError } from "../utils/errors";
-import { GameMode, Lobby, GameStatus, User, Player } from "../utils/types";
+import { GameMode, Lobby, GameStatus, User, Player, Throw } from "../utils/types";
 import IdGenerator from "../utils/idGenerator";
 import { GAME_MODES } from "../utils/constants";
 import { toast } from "sonner";
@@ -81,7 +81,7 @@ class LobbyHandler {
     } else {
       updatedLobby = {
         ...lobby,
-        players: [...lobby.players, { user, score: 0, connected: true }],
+        players: [...lobby.players, { user, score: 0, throws: [], connected: true}],
       };
     }
     //sync and return updated lobby if something changed (updatedLobby is undefined otherwise )
@@ -105,13 +105,17 @@ class LobbyHandler {
     return this.changeGameStatus(updatedLobby, GameStatus.Running);
   }
 
-  static handlePlayerScore(lobby: Lobby, player: Player, score: number): Lobby {
+  static handlePlayerScore(lobby: Lobby, player: Player, score: Throw): Lobby {
     const gameModeLogic = GAME_MODES.find(
       (gm) => gm.key === lobby.gameMode.key
     )?.logic;
     if (!gameModeLogic) throw new Error("Game mode logic not found!");
 
-    return gameModeLogic.processTurn(lobby, player, score);
+    const updatedLobby = gameModeLogic.processTurn(lobby, player, score);
+
+    syncLobby(updatedLobby.id, updatedLobby);
+
+    return updatedLobby;
   }
 
   static changeGameMode(lobby: Lobby, gameMode: GameMode): Lobby {
