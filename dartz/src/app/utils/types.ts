@@ -18,12 +18,16 @@ export type Throw = {
 };
 
 //player that is used inside a lobby
-export type Player = {
-  user: User;
+export type Player = ConnectedPlayer & {
   score: number;
   throws: Throw[];
+};
+
+export type ConnectedPlayer = {
+  user: User;
   connected: boolean; //in case someone disconnects he doesnt get kicked out of lobby but remains as disconnected
 };
+
 export enum GameStatus {
   Waiting,
   Running,
@@ -39,7 +43,7 @@ export enum Multiplier {
 export type Lobby = {
   id: string;
   players: Player[]; //actual players
-  spectators: User[]; //spectators that join while game is already running
+  spectators: ConnectedPlayer[]; //spectators that join while game is already running
   owner: User;
   gameStatus: GameStatus;
   currentPlayerIndex: number;

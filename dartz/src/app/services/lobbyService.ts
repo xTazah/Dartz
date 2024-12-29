@@ -79,18 +79,15 @@ function setUserConnected(
   isSpectator: boolean,
   connected: boolean = true
 ) {
+  let playerRef;
   if (!isSpectator) {
-    const userRef = ref(
-      database,
-      `Lobby_${lobbyId}/players/${index}/connected`
-    );
-    set(userRef, connected);
-    if (connected) {
-      onDisconnect(userRef).set(false); //mark user as disconnected when firebase detects a disconnect
-    }
+    playerRef = ref(database, `Lobby_${lobbyId}/players/${index}/connected`);
   } else {
-    const specRef = ref(database, `Lobby_${lobbyId}/spectators/${index}`);
-    onDisconnect(specRef).set(null); //remove spectator
+    playerRef = ref(database, `Lobby_${lobbyId}/spectators/${index}/connected`);
+  }
+  set(playerRef, connected);
+  if (connected) {
+    onDisconnect(playerRef).set(false); //mark user as disconnected when firebase detects a disconnect
   }
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Lobby, Multiplier, Throw } from "@/app/utils/types";
+import { ConnectedPlayer, Lobby, Multiplier, Throw } from "@/app/utils/types";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
 import React, { useContext, useState } from "react";
 import { Button } from "@nextui-org/react";
@@ -184,14 +184,17 @@ const Game = ({ lobby, setLobby }: GameProps) => {
       <div className="absolute bottom-0 left-0 w-full bg-opacity-50 bg-[(var(--background))] p-4">
         <h3 className="text-center text-white mb-3">Spectators</h3>
         <ul className="flex justify-center gap-4">
-          {lobby.spectators?.map((spectator) => (
-            <li
-              key={spectator?.id}
-              className="text-white text-opacity-50 text-lg"
-            >
-              {spectator?.username}
-            </li>
-          ))}
+          {lobby.spectators?.map(
+            (spectator: ConnectedPlayer) =>
+              spectator.connected && (
+                <li
+                  key={spectator?.user?.id}
+                  className="text-white text-opacity-50 text-lg"
+                >
+                  {spectator?.user?.username}
+                </li>
+              )
+          )}
         </ul>
       </div>
     </div>

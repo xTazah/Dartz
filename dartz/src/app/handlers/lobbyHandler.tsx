@@ -14,6 +14,7 @@ import {
   User,
   Player,
   Throw,
+  ConnectedPlayer,
 } from "../utils/types";
 import IdGenerator from "../utils/idGenerator";
 import { GAME_MODES } from "../utils/constants";
@@ -58,34 +59,64 @@ class LobbyHandler {
   static addPlayer(lobby: Lobby, user: User): Lobby {
     let updatedLobby;
     var isSpectator = false;
+
     // check if player already exists (/was disconnected)
-    if (lobby.players?.find((player) => player.user?.id === user?.id)) {
+    const existingPlayer = lobby.players?.find(
+      (player) => player.user?.id === user?.id
+    );
+    const existingSpectator = lobby.spectators?.find(
+      (spectator) => spectator?.user?.id === user?.id
+    );
+
+    // If player was disconnected, reconnect them
+    if (existingPlayer) {
       updatedLobby = {
         ...lobby,
         players: lobby.players.map((player) =>
           player.user?.id === user?.id
-            ? { ...player, connected: true } //update connected status to true of this player
+            ? { ...player, connected: true } // update connected status to true for the player
             : player
         ),
       };
-      toast("Reconnected", {
+      toast("Reconnected as Player", {
         duration: 3000,
         icon: <ArrowPathRoundedSquareIcon />,
       });
-    } //join as spector if already running
+    }
+    // If spectator, reconnect as a spectator
+    else if (existingSpectator) {
+      updatedLobby = {
+        ...lobby,
+        spectators: lobby.spectators.map((spectator) =>
+          spectator.user?.id === user?.id
+            ? { ...spectator, connected: true } // update connected status for the spectator
+            : spectator
+        ),
+      };
+      toast("Reconnected as Spectator", {
+        duration: 3000,
+        icon: <ArrowPathRoundedSquareIcon />,
+      });
+      isSpectator = true;
+    }
+    // If game is running, join as a spectator
     else if (
       lobby.gameStatus == GameStatus.Running ||
       lobby.gameStatus == GameStatus.Finished
     ) {
-      if (!lobby.spectators?.find((spectator) => spectator?.id === user?.id)) {
+      if (
+        !lobby.spectators?.find((spectator) => spectator?.user?.id === user?.id)
+      ) {
         updatedLobby = {
           ...lobby,
-          spectators: [...lobby.spectators, user],
+          spectators: [...lobby.spectators, { user } as ConnectedPlayer],
         };
         toast.info("Game is already running. You are now spectating.");
         isSpectator = true;
       }
-    } else {
+    }
+    // If game is not running, join as a player
+    else {
       updatedLobby = {
         ...lobby,
         players: [
@@ -94,18 +125,20 @@ class LobbyHandler {
         ],
       };
     }
-    //sync and return updated lobby if something changed (updatedLobby is undefined otherwise )
+
+    // Sync and return updated lobby if something changed
     if (updatedLobby) {
       let index;
       if (isSpectator) index = updatedLobby.spectators.length - 1;
       else index = updatedLobby.players.length - 1;
 
-      setUserConnected(updatedLobby.id, index, isSpectator);
       syncLobby(updatedLobby.id, updatedLobby);
+      setUserConnected(updatedLobby.id, index, isSpectator);
       return updatedLobby;
     }
 
-    return lobby; // No changes if player already exists
+    // Return original lobby if no updates
+    return lobby;
   }
 
   static startGame(lobby: Lobby): Lobby {
