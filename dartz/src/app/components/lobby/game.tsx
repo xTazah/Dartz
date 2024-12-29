@@ -14,6 +14,8 @@ import {
   calculateHighestScore,
 } from "@/app/handlers/statisticsHandler";
 
+import { SignalSlashIcon } from "@heroicons/react/24/solid";
+
 interface GameProps {
   lobby: Lobby;
   setLobby: (updatedLobby: Lobby) => void;
@@ -70,7 +72,17 @@ const Game = ({ lobby, setLobby }: GameProps) => {
 
       <div className="grid grid-cols-3 gap-5">
         {lobby.players?.map((player) => (
-          <div key={player.user?.id}>
+          <div className="relative" key={player.user?.id}>
+            {!player.connected && (
+              <div className="z-10 rounded-md cursor-not-allowed absolute w-full h-full bg-[var(--component-background-low-opacity)] flex flex-col justify-center items-center">
+                <SignalSlashIcon className="w-1/3 h-1/3 opacity-100 mb-4" />
+                <div className="text-l">
+                  <span className="font-bold">{player.user?.username}</span> is
+                  disconnected
+                </div>
+              </div>
+            )}
+
             <div className={styles.score}>{player?.score}</div>
             <div className={styles.player + ""}>
               <h2 className="text-xl text-center mb-3">
@@ -163,6 +175,20 @@ const Game = ({ lobby, setLobby }: GameProps) => {
             })()}
           </div>
         ))}
+      </div>
+
+      <div className="absolute bottom-0 left-0 w-full bg-opacity-50 bg-[(var(--background))] p-4">
+        <h3 className="text-center text-white mb-3">Spectators</h3>
+        <ul className="flex justify-center gap-4">
+          {lobby.spectators?.map((spectator) => (
+            <li
+              key={spectator?.id}
+              className="text-white text-opacity-50 text-lg"
+            >
+              {spectator?.username}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

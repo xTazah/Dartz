@@ -4,28 +4,28 @@
 
 :root {
   --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
 
-  --component-background:#222325;
-  --component-background-hover:#343537;
-  --component-outline:#4b4b4b;
-  --background:#17181A;
+  --component-background: #222325;
+  --component-background-low-opacity: #222325eb;
+  --component-background-hover: #343537;
+  --component-outline: #4b4b4b;
+  --background: #17181a;
 
-  --font-color:#78797B;
+  --font-color: #78797b;
 
-  --primary:rgb(3, 176, 118);
-  --secondary:#6F7172;
+  --primary: rgb(3, 176, 118);
+  --secondary: #6f7172;
 
-  --nextui-primary:160 97% 35%;
+  --nextui-primary: 160 97% 35%;
   --nextui-default-100: 220 4% 14%;
 }
 
 body {
   min-height: 100vh;
   color: rgb(var(--foreground-rgb));
-  background:var(--background);
-
+  background: var(--background);
 }
 
 @layer utilities {
@@ -34,28 +34,28 @@ body {
   }
 }
 
-.title{
-  color:var(--font-color);
-  margin-bottom:10px;
+.title {
+  color: var(--font-color);
+  margin-bottom: 10px;
 }
 
 /* ===== Scrollbar CSS ===== */
-  /* Firefox */
-  * {
-    scrollbar-width: auto;
-    scrollbar-color: var(--component-background);
-  }
+/* Firefox */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: var(--component-background);
+}
 
-  /* Chrome, Edge, and Safari */
-  *::-webkit-scrollbar {
-    width: 15px;
-  }
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 15px;
+}
 
-  *::-webkit-scrollbar-track {
-    background: var(--component-background);
-  }
+*::-webkit-scrollbar-track {
+  background: var(--component-background);
+}
 
-  *::-webkit-scrollbar-thumb {
-    background-color: var(--component-background-hover);
-    border-radius: 10px;
-  }
+*::-webkit-scrollbar-thumb {
+  background-color: var(--component-background-hover);
+  border-radius: 10px;
+}
