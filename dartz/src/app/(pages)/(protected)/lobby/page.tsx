@@ -48,7 +48,12 @@ export default function LobbyPage() {
             <span>
               Code: <span className="font-bold">{lobby.id}</span>
             </span>
-            <Tooltip className="text-black" content="Copy to Clipboard">
+            <Tooltip
+              closeDelay={0}
+              showArrow
+              className="text-black"
+              content="Copy to Clipboard"
+            >
               <DocumentDuplicateIcon
                 className="size-5 cursor-pointer transition-colors hover:[color:var(--primary)]"
                 onClick={() => {

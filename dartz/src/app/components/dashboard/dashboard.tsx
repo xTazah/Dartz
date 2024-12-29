@@ -87,7 +87,12 @@ export default function Dashboard() {
               placeholder="Code"
               className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] pr-10"
             />
-            <Tooltip className="text-black" content="Paste">
+            <Tooltip
+              closeDelay={0}
+              showArrow
+              className="text-black"
+              content="Paste"
+            >
               <ClipboardDocumentIcon
                 className="absolute top-1/2 right-3 -translate-y-1/2 h-5 w-5 cursor-pointer text-[var(--secondary)] hover:text-[var(--primary)]"
                 onClick={async () => {
