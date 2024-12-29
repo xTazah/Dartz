@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { User } from "@/app/utils/types";
 import PlayerService from "@/app/services/playerService";
+import { LoadingSpinner } from "../loadingSpinner/loadingSpinner";
 
 export const UserContext = React.createContext<{
   user: User | null;
@@ -15,26 +16,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const service = new PlayerService();
-      try {
-        const response = await service.getUserBySession();
-        if (response.status === 200) {
-          setUser(response.data);
-        }
-      } catch {
-        setUser(null); // Explicitly set user to null
-      } finally {
-        setLoading(false);
-      }
-    };
+  const service = new PlayerService();
 
-    checkSession();
+  useEffect(() => {
+    try {
+      service
+        .getUserBySession()
+        .then((response) => {
+          if (response.status === 200) {
+            setUser(response.data);
+          }
+        })
+        .catch(() => setUser(null))
+        .finally(() => setLoading(false));
+    } catch {
+      setUser(null); // Explicitly set user to null
+      setLoading(false);
+    }
   }, []);
 
   if (loading) {
-    return null; // Prevent rendering until session is checked
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <LoadingSpinner label="Waiting for API... (this may take up to a minute)" />
+      </div>
+    );
   }
 
   return (

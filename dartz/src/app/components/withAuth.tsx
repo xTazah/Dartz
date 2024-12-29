@@ -2,8 +2,7 @@
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "./userProvider/userProvider";
 import { useRouter } from "next/navigation";
-
-import { Spinner } from "@nextui-org/react";
+import { LoadingSpinner } from "./loadingSpinner/loadingSpinner";
 
 export const withAuth = (WrappedComponent: React.FC<any>) => {
   return function WithAuth(props: any) {
@@ -21,8 +20,7 @@ export const withAuth = (WrappedComponent: React.FC<any>) => {
     if (loading || !userContext?.user) {
       return (
         <div className="flex flex-col items-center justify-center h-screen">
-          <Spinner color="success" label="Loading..." />
-          <h4>Loading...</h4>
+          <LoadingSpinner />
         </div>
       );
     }
