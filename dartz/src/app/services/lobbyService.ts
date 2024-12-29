@@ -1,4 +1,4 @@
-import { ref, set, get, onValue, off } from "firebase/database";
+import { ref, set, get, onValue, off, onDisconnect } from "firebase/database";
 import { database } from "./firebaseConfig";
 import { Lobby, GameMode } from "../utils/types";
 import { IconsMap } from "../utils/constants";
@@ -73,6 +73,18 @@ function listenToLobby(
   return () => off(lobbyRef, "value", callback);
 }
 
+function setUserConnected(
+  lobbyId: string,
+  index: number,
+  connected: boolean = true
+) {
+  const userRef = ref(database, `Lobby_${lobbyId}/players/${index}/connected`);
+  set(userRef, connected);
+  if (connected) {
+    onDisconnect(userRef).set(false); //mark user as disconnected when firebase detects a disconnect
+  }
+}
+
 async function getLobbySnapshot(lobbyId: string): Promise<Lobby | null> {
   try {
     const lobbyRef = ref(database, `Lobby_${lobbyId}`);
@@ -116,4 +128,10 @@ function loadLobby(lobbyId: string): Promise<Lobby> {
   });
 }
 
-export { syncLobby, listenToLobby, loadLobby, getLobbySnapshot };
+export {
+  syncLobby,
+  listenToLobby,
+  setUserConnected,
+  loadLobby,
+  getLobbySnapshot,
+};

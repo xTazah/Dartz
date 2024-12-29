@@ -3,12 +3,15 @@ import {
   syncLobby,
   loadLobby,
   listenToLobby,
+  setUserConnected,
   getLobbySnapshot,
 } from "../services/lobbyService";
 import { LobbyNotFoundError, MissingLobbyDataError } from "../utils/errors";
 import { GameMode, Lobby, GameStatus, User, Player } from "../utils/types";
 import IdGenerator from "../utils/idGenerator";
 import { GAME_MODES } from "../utils/constants";
+import { toast } from "sonner";
+import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/solid";
 
 class LobbyHandler {
   static createLobby(user: User, gameMode: GameMode): Lobby {
@@ -18,6 +21,7 @@ class LobbyHandler {
       gameMode,
       gameStatus: GameStatus.Waiting,
       players: [],
+      spectators: [],
       owner: user,
     };
 
@@ -45,15 +49,48 @@ class LobbyHandler {
   }
 
   static addPlayer(lobby: Lobby, user: User): Lobby {
-    if (!lobby.players.find((player) => player.user?.id === user?.id)) {
-      const updatedLobby = {
-        ...lobby,
-        players: [...lobby.players, { user, score: 0 }],
-      };
+    let updatedLobby;
 
+    //join as spector if already running
+    if (
+      lobby.gameStatus == GameStatus.Running ||
+      lobby.gameStatus == GameStatus.Finished
+    ) {
+      if (!lobby.spectators.find((spectator) => spectator?.id === user?.id)) {
+        updatedLobby = {
+          ...lobby,
+          spectators: [...lobby.spectators, user],
+        };
+        toast.info("Game is already running. You are now spectating.");
+      }
+    }
+    // check if player already exists (/was disconnected)
+    else if (lobby.players.find((player) => player.user?.id === user?.id)) {
+      updatedLobby = {
+        ...lobby,
+        players: lobby.players.map((player) =>
+          player.user?.id === user?.id
+            ? { ...player, connected: true } //update connected status to true of this player
+            : player
+        ),
+      };
+      toast("Reconnected", {
+        duration: 3000,
+        icon: <ArrowPathRoundedSquareIcon />,
+      });
+    } else {
+      updatedLobby = {
+        ...lobby,
+        players: [...lobby.players, { user, score: 0, connected: true }],
+      };
+    }
+    //sync and return updated lobby if something changed (updatedLobby is undefined otherwise )
+    if (updatedLobby) {
+      setUserConnected(updatedLobby.id, updatedLobby.players.length - 1);
       syncLobby(updatedLobby.id, updatedLobby);
       return updatedLobby;
     }
+
     return lobby; // No changes if player already exists
   }
 

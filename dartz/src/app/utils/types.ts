@@ -11,6 +11,7 @@ export type User = {
 export type Player = {
   user: User;
   score: number;
+  connected: boolean; //in case someone disconnects he doesnt get kicked out of lobby but remains as disconnected
 };
 
 export enum GameStatus {
@@ -21,7 +22,8 @@ export enum GameStatus {
 
 export type Lobby = {
   id: string;
-  players: Player[];
+  players: Player[]; //actual players
+  spectators: User[]; //spectators that join while game is already running
   owner: User;
   gameStatus: GameStatus;
   currentPlayerIndex: number;
