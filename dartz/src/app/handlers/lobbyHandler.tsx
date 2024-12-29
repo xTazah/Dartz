@@ -7,7 +7,14 @@ import {
   getLobbySnapshot,
 } from "../services/lobbyService";
 import { LobbyNotFoundError, MissingLobbyDataError } from "../utils/errors";
-import { GameMode, Lobby, GameStatus, User, Player, Throw } from "../utils/types";
+import {
+  GameMode,
+  Lobby,
+  GameStatus,
+  User,
+  Player,
+  Throw,
+} from "../utils/types";
 import IdGenerator from "../utils/idGenerator";
 import { GAME_MODES } from "../utils/constants";
 import { toast } from "sonner";
@@ -51,21 +58,8 @@ class LobbyHandler {
   static addPlayer(lobby: Lobby, user: User): Lobby {
     let updatedLobby;
 
-    //join as spector if already running
-    if (
-      lobby.gameStatus == GameStatus.Running ||
-      lobby.gameStatus == GameStatus.Finished
-    ) {
-      if (!lobby.spectators.find((spectator) => spectator?.id === user?.id)) {
-        updatedLobby = {
-          ...lobby,
-          spectators: [...lobby.spectators, user],
-        };
-        toast.info("Game is already running. You are now spectating.");
-      }
-    }
     // check if player already exists (/was disconnected)
-    else if (lobby.players.find((player) => player.user?.id === user?.id)) {
+    if (lobby.players?.find((player) => player.user?.id === user?.id)) {
       updatedLobby = {
         ...lobby,
         players: lobby.players.map((player) =>
@@ -78,10 +72,25 @@ class LobbyHandler {
         duration: 3000,
         icon: <ArrowPathRoundedSquareIcon />,
       });
+    } //join as spector if already running
+    else if (
+      lobby.gameStatus == GameStatus.Running ||
+      lobby.gameStatus == GameStatus.Finished
+    ) {
+      if (!lobby.spectators?.find((spectator) => spectator?.id === user?.id)) {
+        updatedLobby = {
+          ...lobby,
+          spectators: [...lobby.spectators, user],
+        };
+        toast.info("Game is already running. You are now spectating.");
+      }
     } else {
       updatedLobby = {
         ...lobby,
-        players: [...lobby.players, { user, score: 0, throws: [], connected: true}],
+        players: [
+          ...lobby.players,
+          { user, score: 0, throws: [], connected: true },
+        ],
       };
     }
     //sync and return updated lobby if something changed (updatedLobby is undefined otherwise )
