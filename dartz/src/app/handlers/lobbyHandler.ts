@@ -1,5 +1,10 @@
 "use client";
-import { syncLobby, loadLobby, listenToLobby } from "../services/lobbyService";
+import {
+  syncLobby,
+  loadLobby,
+  listenToLobby,
+  getLobbySnapshot,
+} from "../services/lobbyService";
 import { LobbyNotFoundError, MissingLobbyDataError } from "../utils/errors";
 import { GameMode, Lobby, GameStatus, User, Player, Throw } from "../utils/types";
 import IdGenerator from "../utils/idGenerator";
@@ -18,6 +23,12 @@ class LobbyHandler {
 
     syncLobby(newLobby.id, newLobby);
     return newLobby;
+  }
+
+  static async getLobbyExists(id: string): Promise<boolean> {
+    const lobby = await getLobbySnapshot(id);
+    if (!lobby) return false;
+    return true;
   }
 
   static async loadLobby(id: string): Promise<Lobby> {

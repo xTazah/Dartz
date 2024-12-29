@@ -11,6 +11,13 @@ import { GAME_MODES } from "@/app/utils/constants";
 import { Lobby, Player, GameMode } from "@/app/utils/types";
 import { UserContext } from "../userProvider/userProvider";
 import { Button } from "@nextui-org/button";
+import {
+  ClipboardDocumentIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/solid";
+import { Tooltip } from "@nextui-org/react";
+import LobbyHandler from "@/app/handlers/lobbyHandler";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -26,10 +33,26 @@ export default function Dashboard() {
     router.push(`/lobby?mode=${gameMode.key}`);
   };
 
-  const handleLobbyJoin =  () => {
+  const handleLobbyJoin = async () => {
     setIsLobbyLoading(true);
-    if(lobbyKey!="")
-    router.push(`/lobby?id=${lobbyKey}`);
+    if (lobbyKey != "") {
+      const lobby = await LobbyHandler.getLobbyExists(lobbyKey);
+      if (!lobby) {
+        toast(
+          <>
+            <ExclamationTriangleIcon className="size-6" />
+            <div>
+              Lobby with code <span className="font-bold"> {lobbyKey} </span>{" "}
+              does not exist.
+            </div>
+          </>,
+          {
+            duration: 5000,
+          }
+        );
+        setIsLobbyLoading(false);
+      } else router.push(`/lobby?id=${lobbyKey}`);
+    }
   };
 
   return (
@@ -49,29 +72,46 @@ export default function Dashboard() {
           alt="Logo"
         />
         <div>
-          {/* <h1 className={styles.joinTitle}>Join via code</h1> */}
-          <p className="text-[var(--secondary)] text-center mb-2">Enter a custom lobby code to join a lobby</p>
-          <div>
+          <p className="text-[var(--secondary)] text-center mb-2">
+            Enter or paste a
+            <span className="font-bold"> custom lobby code </span>to join a
+            lobby
+          </p>
+          <div className="relative">
             <input
-                  type="text"
-                  value={lobbyKey}
-                  onChange={(e) => {
-                    setLobbyKey(e.target.value);
-                  }}
-                  placeholder="Code"
-                  className="focus:outline outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-                />
-              <Button
-                className="mt-4 w-full bg-[var(--primary)]"
-                onClick={handleLobbyJoin}
-                disabled={(lobbyKey=="")}
-                isLoading={isLobbyLoading}
-                color="primary"
-              >Join Lobby</Button>
+              type="text"
+              value={lobbyKey}
+              onChange={(e) => {
+                setLobbyKey(e.target.value);
+              }}
+              placeholder="Code"
+              className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] pr-10"
+            />
+            <Tooltip
+              closeDelay={0}
+              showArrow
+              className="text-black"
+              content="Paste"
+            >
+              <ClipboardDocumentIcon
+                className="absolute top-1/2 right-3 -translate-y-1/2 h-5 w-5 cursor-pointer text-[var(--secondary)] hover:text-[var(--primary)]"
+                onClick={async () => {
+                  const clipboardText = await navigator.clipboard.readText();
+                  setLobbyKey(clipboardText);
+                }}
+              />
+            </Tooltip>
           </div>
-
+          <Button
+            className="mt-4 w-full bg-[var(--primary)]"
+            onClick={handleLobbyJoin}
+            disabled={lobbyKey === ""}
+            isLoading={isLobbyLoading}
+            color="primary"
+          >
+            Join Lobby
+          </Button>
         </div>
-
       </div>
       <div className={"row-span-2 col-span-1 flex flex-col gap-5"}>
         <div className={styles.tile + " flex justify-around " + styles.score}>
