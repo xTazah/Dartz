@@ -19,7 +19,7 @@ export default function MultiplierTabs(props: any) {
         key={Multiplier.Single}
         title={
           <div className="flex items-center space-x-2">
-            <span>Single</span>
+            <span>1x</span>
           </div>
         }
     />
@@ -27,7 +27,7 @@ export default function MultiplierTabs(props: any) {
         key={Multiplier.Double}
         title={
           <div className="flex items-center space-x-2">
-            <span>Double</span>
+            <span>2x</span>
           </div>
         }
     />
@@ -35,7 +35,7 @@ export default function MultiplierTabs(props: any) {
         key={Multiplier.Tripple}
         title={
           <div className="flex items-center space-x-2">
-            <span>Tripple</span>
+            <span>3x</span>
           </div>
         }
     />

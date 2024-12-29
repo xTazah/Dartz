@@ -7,6 +7,8 @@ import { Button } from "@nextui-org/react";
 import getCheckoutPath from "@/app/handlers/checkoutHandler";
 import { UserContext } from "../userProvider/userProvider";
 import MultiplierTabs from "../multiplierTabs/multiplierTabs";
+import styles from "@/app/styles/game.module.scss"
+import {calculateAverage, calculate100Plus, calculateHighestScore} from "@/app/handlers/statisticsHandler";
 
 interface GameProps {
   lobby: Lobby;
@@ -25,6 +27,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
   const [multiplier3, setMultiplier3] = useState<Multiplier>(Multiplier.Single);
 
   const currentPlayer = lobby.players[lobby.currentPlayerIndex];
+  
 
   const handleSubmitScore = () => {
     if (playerScore1 === "" ||playerScore2 === ""|| playerScore3 === "") return;
@@ -56,25 +59,26 @@ const Game = ({ lobby, setLobby }: GameProps) => {
   };
 
   return (
-    <div className="p-4 bg-[(var(--background))] text-white rounded-lg shadow-md">
+    <div className="p-4 bg-[(var(--background))] text-white rounded-lg">
       <h1 className="text-2xl font-bold mb-4">Game in Progress</h1>
       <div className="mb-4">
-        <h2 className="text-xl">
-          Current Player: {currentPlayer.user?.username}
-        </h2>
-        <p>Remaining Score: {lobby.players[lobby.currentPlayerIndex]?.score}</p>
-        <p>Checkout: {getCheckoutPath(lobby.players[lobby.currentPlayerIndex]?.score)}</p>
-      </div>
+       </div>
 
-      <div>
-        {user?.id === currentPlayer.user?.id ? (
+      <div className="grid grid-cols-3 gap-5">
+      {lobby.players?.map((player) => (
           <div>
-            <h3 className="mb-2">Enter your score:</h3>
+          <div className={styles.score}>{player?.score}</div>
+          <div className={styles.player + ""}>
+            <h2 className="text-xl text-center mb-3">
+            {player.user?.username}
+            </h2>
+          {user?.id === currentPlayer.user?.id && currentPlayer.user?.id === player.user?.id ? (       
             <div className="flex flex-col gap-2 items-center">
+              <h3 className="mb-2">Enter your score:</h3>
               <div className="flex gap-2 items-center">
                 <input
                   type="number"
-                  className="p-2 rounded-md text-black"
+                  className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] pr-10"
                   value={playerScore1}
                   onChange={(e) => {
                     setPlayerScore1(Number(e.target.value));
@@ -85,7 +89,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
               <div className="flex gap-2 items-center">
                 <input
                     type="number"
-                    className="p-2 rounded-md text-black"
+                    className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] pr-10"        
                     value={playerScore2}
                     onChange={(e) => {
                       setPlayerScore2(Number(e.target.value));
@@ -96,7 +100,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
               <div className="flex gap-2 items-center">
                 <input
                   type="number"
-                  className="p-2 rounded-md text-black"
+                  className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] pr-10"    
                   value={playerScore3}
                   onChange={(e) => {
                     setPlayerScore3(Number(e.target.value));
@@ -112,10 +116,31 @@ const Game = ({ lobby, setLobby }: GameProps) => {
                 Submit Score
               </Button>
             </div>
+          ) : (
+            <div>
+              {(player.throws!= undefined)?
+                <div>
+                  <p className="mb-2">Average: {calculateAverage(player?.throws)}</p>
+                  <p className="mb-2">100+: {calculate100Plus(player?.throws)}</p>
+                  <p className="mb-2">Highest Score: {calculateHighestScore(player?.throws)}</p>
+                </div>
+              :
+                <></>
+              }
+            </div>
+          )}
           </div>
-        ) : (
-          <p>Waiting for {currentPlayer.user?.username} to play...</p>
-        )}
+          {(() => {
+          var checkout = getCheckoutPath(player?.score);
+           if (checkout) {
+              return <div className={styles.checkout}>{getCheckoutPath(player?.score)}</div>         
+           }
+            return <></>;
+        })()}   
+        </div>
+        ))}
+        
+ 
       </div>
     </div>
   );

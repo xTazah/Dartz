@@ -13,26 +13,26 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 
-export default function Navigation() {
+export default function Navigation(props:any) {
   const router = useRouter();
 
   const [selected, setSelected] = useState(1);
-  const [collapsed, setCollapsed] = useState(false);
+  
 
   const handleNavigation = (page: number, path: string) => {
     setSelected(page);
     router.push(path);
   };
 
-  const toggleCollapse = () => setCollapsed(!collapsed);
+  const toggleCollapse = () => props.setCollapsed(!props.collapsed);
 
   return (
     <div
-      className={`${styles.navigation} ${collapsed ? styles.collapsed : ""}`}
+      className={`${styles.navigation} ${props.collapsed ? styles.collapsed : ""}`}
     >
       <div className={styles.toggleButton}>
         <button onClick={toggleCollapse}>
-          {collapsed ? (
+          {props.collapsed ? (
             <ChevronRightIcon className="size-5" />
           ) : (
             <ChevronLeftIcon className="size-5" />
@@ -48,7 +48,7 @@ export default function Navigation() {
         alt="Logo"
         onClick={() => handleNavigation(1, "/")}
         style={{
-          display: collapsed ? "none" : "block",
+          display: props.collapsed ? "none" : "block",
         }} /*ToDo: Add small logo that has only the feather of the dart to be collapsible too*/
       />
 
@@ -59,7 +59,7 @@ export default function Navigation() {
         onClick={() => handleNavigation(1, "/")}
       >
         <HomeIcon className="size-5" color="#6F7172" />
-        {!collapsed && " Home"}
+        {!props.collapsed && " Home"}
       </button>
 
       <button
@@ -69,7 +69,7 @@ export default function Navigation() {
         onClick={() => handleNavigation(2, "/statistics")}
       >
         <ChartPieIcon className="size-5" color="#6F7172" />
-        {!collapsed && " Statistics"}
+        {!props.collapsed && " Statistics"}
       </button>
 
       <button
@@ -79,7 +79,7 @@ export default function Navigation() {
         onClick={() => handleNavigation(3, "/friend-list")}
       >
         <UsersIcon className="size-5" color="#6F7172" />
-        {!collapsed && " Friend List"}
+        {!props.collapsed && " Friend List"}
       </button>
 
       <button
@@ -89,7 +89,7 @@ export default function Navigation() {
         onClick={() => handleNavigation(4, "/quickplay")}
       >
         <PlayIcon className="size-5" color="#6F7172" />
-        {!collapsed && " Quickplay"}
+        {!props.collapsed && " Quickplay"}
       </button>
     </div>
   );

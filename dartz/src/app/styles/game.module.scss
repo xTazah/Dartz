@@ -1,0 +1,31 @@
+.player
+{
+    width: 100%;
+    background-color: var(--component-background);
+    border-radius: 15px;
+    padding: 20px;
+}
+
+.score{
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    width: auto;
+    background-color: var(--component-background);
+    border-radius: 15px;
+    padding: 10px;
+    font-size: 25px;
+    font-weight: bold;
+    margin:10px;
+}
+
+.checkout{
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    width: auto;
+    background-color: var(--component-background);
+    border-radius: 15px;
+    padding: 15px;
+    margin:10px;
+}
