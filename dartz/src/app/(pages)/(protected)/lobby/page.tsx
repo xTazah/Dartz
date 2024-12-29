@@ -7,6 +7,10 @@ import { UserContext } from "@/app/components/userProvider/userProvider";
 import { GameMode, GameStatus, Lobby } from "@/app/utils/types";
 import { GAME_MODES } from "@/app/utils/constants";
 import Game from "@/app/components/lobby/game";
+import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
+
+import { Tooltip } from "@nextui-org/react";
+import { toast } from "sonner";
 
 export default function LobbyPage() {
   const searchParams = useSearchParams();
@@ -35,14 +39,42 @@ export default function LobbyPage() {
     }
   }, [id, paramMode]);
 
-  switch (lobby?.gameStatus) {
-    case GameStatus.Waiting:
-      return <WaitingLobby lobby={lobby} setLobby={setLobby} />;
-    case GameStatus.Running:
-      return <Game lobby={lobby} setLobby={setLobby} />;
-    case GameStatus.Finished:
-      return <div>Winnder Screen Not implemented yet</div>;
-    default:
-      return <div>Unknown game state??</div>;
-  }
+  return (
+    <>
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl text-center flex-grow text-center">Lobby</h1>
+        {lobby && (
+          <div className="flex items-center space-x-2 text-sm">
+            <span>
+              Code: <span className="font-bold">{lobby.id}</span>
+            </span>
+            <Tooltip className="text-black" content="Copy to Clipboard">
+              <DocumentDuplicateIcon
+                className="size-5 cursor-pointer transition-colors hover:[color:var(--primary)]"
+                onClick={() => {
+                  navigator.clipboard.writeText(lobby.id);
+                  toast.info("Copied to Clipboard", {
+                    duration: 2000,
+                  });
+                }}
+              />
+            </Tooltip>
+          </div>
+        )}
+      </div>
+
+      {(() => {
+        switch (lobby?.gameStatus) {
+          case GameStatus.Waiting:
+            return <WaitingLobby lobby={lobby} setLobby={setLobby} />;
+          case GameStatus.Running:
+            return <Game lobby={lobby} setLobby={setLobby} />;
+          case GameStatus.Finished:
+            return <div>Winner Screen Not implemented yet</div>;
+          default:
+            return <div>Unknown game state??</div>;
+        }
+      })()}
+    </>
+  );
 }

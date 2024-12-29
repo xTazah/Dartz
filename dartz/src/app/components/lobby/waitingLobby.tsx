@@ -34,7 +34,6 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
 
   return (
     <div>
-      <h1 className="text-xl mb-3 text-center">Lobby</h1>
       {lobby && (
         <GameModeSwitch
           selectedGameMode={lobby.gameMode}
