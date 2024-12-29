@@ -76,12 +76,21 @@ function listenToLobby(
 function setUserConnected(
   lobbyId: string,
   index: number,
+  isSpectator: boolean,
   connected: boolean = true
 ) {
-  const userRef = ref(database, `Lobby_${lobbyId}/players/${index}/connected`);
-  set(userRef, connected);
-  if (connected) {
-    onDisconnect(userRef).set(false); //mark user as disconnected when firebase detects a disconnect
+  if (!isSpectator) {
+    const userRef = ref(
+      database,
+      `Lobby_${lobbyId}/players/${index}/connected`
+    );
+    set(userRef, connected);
+    if (connected) {
+      onDisconnect(userRef).set(false); //mark user as disconnected when firebase detects a disconnect
+    }
+  } else {
+    const specRef = ref(database, `Lobby_${lobbyId}/spectators/${index}`);
+    onDisconnect(specRef).set(null); //remove spectator
   }
 }
 

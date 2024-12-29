@@ -57,7 +57,7 @@ class LobbyHandler {
 
   static addPlayer(lobby: Lobby, user: User): Lobby {
     let updatedLobby;
-
+    var isSpectator = false;
     // check if player already exists (/was disconnected)
     if (lobby.players?.find((player) => player.user?.id === user?.id)) {
       updatedLobby = {
@@ -83,6 +83,7 @@ class LobbyHandler {
           spectators: [...lobby.spectators, user],
         };
         toast.info("Game is already running. You are now spectating.");
+        isSpectator = true;
       }
     } else {
       updatedLobby = {
@@ -95,7 +96,11 @@ class LobbyHandler {
     }
     //sync and return updated lobby if something changed (updatedLobby is undefined otherwise )
     if (updatedLobby) {
-      setUserConnected(updatedLobby.id, updatedLobby.players.length - 1);
+      let index;
+      if (isSpectator) index = updatedLobby.spectators.length - 1;
+      else index = updatedLobby.players.length - 1;
+
+      setUserConnected(updatedLobby.id, index, isSpectator);
       syncLobby(updatedLobby.id, updatedLobby);
       return updatedLobby;
     }
