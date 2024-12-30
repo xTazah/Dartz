@@ -22,12 +22,13 @@ function ProtectedLayout({
   return (
     <>
       <div className="grid grid-cols-12 gap-7 relative">
-
-        <div className={collapsed? "col-span-1": "col-span-2"}>
-          <Navigation collapsed={collapsed} setCollapsed={setCollapsed}/>
+        <div className={collapsed ? "col-span-1" : "col-span-2"}>
+          <Navigation collapsed={collapsed} setCollapsed={setCollapsed} />
         </div>
 
-        <div className={collapsed? "col-span-9 relative": "col-span-8 relative"}>
+        <div
+          className={collapsed ? "col-span-9 relative" : "col-span-8 relative"}
+        >
           <div className="top-0 z-10">
             <BackNavigation />
           </div>

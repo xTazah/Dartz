@@ -12,12 +12,12 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
+import { UnderConstruction } from "../underConstruction";
 
-export default function Navigation(props:any) {
+export default function Navigation(props: any) {
   const router = useRouter();
 
   const [selected, setSelected] = useState(1);
-  
 
   const handleNavigation = (page: number, path: string) => {
     setSelected(page);
@@ -28,7 +28,9 @@ export default function Navigation(props:any) {
 
   return (
     <div
-      className={`${styles.navigation} ${props.collapsed ? styles.collapsed : ""}`}
+      className={`${styles.navigation} ${
+        props.collapsed ? styles.collapsed : ""
+      }`}
     >
       <div className={styles.toggleButton}>
         <button onClick={toggleCollapse}>
@@ -62,35 +64,41 @@ export default function Navigation(props:any) {
         {!props.collapsed && " Home"}
       </button>
 
-      <button
-        className={`${styles.navigationButton} ${
-          selected === 2 ? styles.selected : ""
-        }`}
-        onClick={() => handleNavigation(2, "/statistics")}
-      >
-        <ChartPieIcon className="size-5" color="#6F7172" />
-        {!props.collapsed && " Statistics"}
-      </button>
+      <UnderConstruction>
+        <button
+          className={`${styles.navigationButton} ${
+            selected === 2 ? styles.selected : ""
+          }`}
+          onClick={() => handleNavigation(2, "/statistics")}
+        >
+          <ChartPieIcon className="size-5" color="#6F7172" />
+          {!props.collapsed && " Statistics"}
+        </button>
+      </UnderConstruction>
 
-      <button
-        className={`${styles.navigationButton} ${
-          selected === 3 ? styles.selected : ""
-        }`}
-        onClick={() => handleNavigation(3, "/friend-list")}
-      >
-        <UsersIcon className="size-5" color="#6F7172" />
-        {!props.collapsed && " Friend List"}
-      </button>
+      <UnderConstruction>
+        <button
+          className={`${styles.navigationButton} ${
+            selected === 3 ? styles.selected : ""
+          }`}
+          onClick={() => handleNavigation(3, "/friend-list")}
+        >
+          <UsersIcon className="size-5" color="#6F7172" />
+          {!props.collapsed && " Friend List"}
+        </button>
+      </UnderConstruction>
 
-      <button
-        className={`${styles.navigationButton} ${
-          selected === 4 ? styles.selected : ""
-        }`}
-        onClick={() => handleNavigation(4, "/quickplay")}
-      >
-        <PlayIcon className="size-5" color="#6F7172" />
-        {!props.collapsed && " Quickplay"}
-      </button>
+      <UnderConstruction>
+        <button
+          className={`${styles.navigationButton} ${
+            selected === 4 ? styles.selected : ""
+          }`}
+          onClick={() => handleNavigation(4, "/quickplay")}
+        >
+          <PlayIcon className="size-5" color="#6F7172" />
+          {!props.collapsed && " Quickplay"}
+        </button>
+      </UnderConstruction>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import PlayerService from "@/app/services/playerService";
 import { UserContext } from "../userProvider/userProvider";
 import { Button } from "@nextui-org/react";
 import { SettingsDropdown } from "../settingsDropdown/settingsDropdown";
+import { UnderConstruction } from "../underConstruction";
 
 export default function FriendList() {
   const [selected, setSelected] = useState(1);
@@ -32,13 +33,15 @@ export default function FriendList() {
           </div>
           <div>{user?.username}</div>
         </div>
-          <SettingsDropdown/>
+        <SettingsDropdown />
       </div>
       <div className={` ${styles.list} `}>
         <p className="title">Friend List</p>
-        {names.map((name) => (
-          <Friend key={name} name={name} />
-        ))}
+        <UnderConstruction>
+          {names.map((name) => (
+            <Friend key={name} name={name} />
+          ))}
+        </UnderConstruction>
       </div>
     </div>
   );
