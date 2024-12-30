@@ -10,7 +10,6 @@ export const fiveHundredOneLogic: GameLogic = {
   },
 
   processTurn(lobby: Lobby, player: Player, throws: Throw) {
-    //toDo: score is not a number but DartThrowObject
     const updatedLobby = { ...lobby };
 
     if (
@@ -20,23 +19,41 @@ export const fiveHundredOneLogic: GameLogic = {
       throw new Error("Invalid turn");
     }
 
-    let score = throws.score1*throws.multiplier1+throws.score2*throws.multiplier2+throws.score3*throws.multiplier3;
+    let score =
+      throws.score1 * throws.multiplier1 +
+      throws.score2 * throws.multiplier2 +
+      throws.score3 * throws.multiplier3;
 
     // calc new score
     const newScore =
       updatedLobby.players[updatedLobby.currentPlayerIndex].score - score;
 
-    if (newScore === 0 && scoreIsDouble(score)) {
+    if (newScore === 0) {
+      updatedLobby.players[updatedLobby.currentPlayerIndex].score = newScore;
+      updatedLobby.players[updatedLobby.currentPlayerIndex].throws.push(throws);
+      updatedLobby.players[updatedLobby.currentPlayerIndex].legs += 1;
+      if (
+        updatedLobby.legs != 0 &&
+        updatedLobby.sets != 0 &&
+        updatedLobby.players[updatedLobby.currentPlayerIndex].legs ===
+          updatedLobby.legs
+      ) {
+        updatedLobby.players[updatedLobby.currentPlayerIndex].sets++;
+        updatedLobby.players[updatedLobby.currentPlayerIndex].legs = 0;
+      }
       updatedLobby.gameStatus = GameStatus.Finished;
     } else if (newScore < 0) {
-      // Bust: do nothing
+      if (!updatedLobby.players[updatedLobby.currentPlayerIndex].throws)
+        updatedLobby.players[updatedLobby.currentPlayerIndex].throws = [];
+      updatedLobby.players[updatedLobby.currentPlayerIndex].throws.push(
+        createEmptyThrows()
+      );
     } else {
       updatedLobby.players[updatedLobby.currentPlayerIndex].score = newScore;
-      if(!updatedLobby.players[updatedLobby.currentPlayerIndex].throws)
-        updatedLobby.players[updatedLobby.currentPlayerIndex].throws = []
+      if (!updatedLobby.players[updatedLobby.currentPlayerIndex].throws)
+        updatedLobby.players[updatedLobby.currentPlayerIndex].throws = [];
       updatedLobby.players[updatedLobby.currentPlayerIndex].throws.push(throws);
     }
-
     // next player
     updatedLobby.currentPlayerIndex =
       (updatedLobby.currentPlayerIndex + 1) % updatedLobby.players.length;
@@ -46,6 +63,14 @@ export const fiveHundredOneLogic: GameLogic = {
 };
 
 // helper function
-function scoreIsDouble(score: number): boolean {
-  return score % 2 === 0; //todo
+function createEmptyThrows() {
+  let emptyThrows: Throw = {
+    score1: 0,
+    multiplier1: 1,
+    score2: 0,
+    multiplier2: 1,
+    score3: 0,
+    multiplier3: 1,
+  };
+  return emptyThrows;
 }

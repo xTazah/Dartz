@@ -2,7 +2,7 @@
 
 import { ConnectedPlayer, Lobby, Multiplier, Throw } from "@/app/utils/types";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Button } from "@nextui-org/react";
 import getCheckoutPath from "@/app/handlers/checkoutHandler";
 import { UserContext } from "../userProvider/userProvider";
@@ -25,6 +25,8 @@ interface GameProps {
 const Game = ({ lobby, setLobby }: GameProps) => {
   const context = useContext(UserContext);
   const user = context?.user;
+
+  const [previewScore, setPreviewScore] = useState(501);
   const [playerScore1, setPlayerScore1] = useState<number | "">("");
   const [playerScore2, setPlayerScore2] = useState<number | "">("");
   const [playerScore3, setPlayerScore3] = useState<number | "">("");
@@ -56,6 +58,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
       currentPlayer,
       score
     );
+    console.log(updatedLobby);
     setLobby(updatedLobby);
     //reset States
     setPlayerScore1("");
@@ -66,9 +69,28 @@ const Game = ({ lobby, setLobby }: GameProps) => {
     setMultiplier3(Multiplier.Single);
   };
 
+  useEffect(() => {
+    let s1 = playerScore1 == "" ? 0 : playerScore1;
+    let s2 = playerScore2 == "" ? 0 : playerScore2;
+    let s3 = playerScore3 == "" ? 0 : playerScore3;
+    setPreviewScore(
+      currentPlayer.score -
+        s1 * multiplier1 -
+        s2 * multiplier2 -
+        s3 * multiplier3
+    );
+  }, [
+    playerScore1,
+    playerScore2,
+    playerScore3,
+    multiplier1,
+    multiplier2,
+    multiplier3,
+  ]);
+
   return (
     <div className="p-4 bg-[(var(--background))] text-white rounded-lg">
-      <h1 className="text-2xl font-bold mb-4">Game in Progress</h1>
+      <h1 className="text-2xl font-bold mb-4"></h1>
       <div className="mb-4"></div>
 
       <div className="grid grid-cols-3 gap-5">
@@ -84,7 +106,15 @@ const Game = ({ lobby, setLobby }: GameProps) => {
               </div>
             )}
 
-            <div className={styles.score}>{player?.score}</div>
+            <div className={styles.wins}>{player?.legs} </div>
+            <div className={styles.score}>
+              {user?.id === currentPlayer.user?.id &&
+              currentPlayer.user?.id === player.user?.id
+                ? (previewScore < 2 || previewScore > 501) && previewScore != 0 
+                  ? "BUST"
+                  : previewScore
+                : player?.score}
+            </div>
             <div className={styles.player + ""}>
               <h2 className="text-xl text-center mb-3">
                 {player.user?.username}
@@ -167,13 +197,15 @@ const Game = ({ lobby, setLobby }: GameProps) => {
               )}
             </div>
             {(() => {
-              var checkout = getCheckoutPath(player?.score);
+              var checkout = "";
+              if (
+                user?.id === currentPlayer.user?.id &&
+                currentPlayer.user?.id === player.user?.id
+              )
+                checkout = getCheckoutPath(previewScore);
+              else checkout = getCheckoutPath(player?.score);
               if (checkout) {
-                return (
-                  <div className={styles.checkout}>
-                    {getCheckoutPath(player?.score)}
-                  </div>
-                );
+                return <div className={styles.checkout}>{checkout}</div>;
               }
               return <></>;
             })()}

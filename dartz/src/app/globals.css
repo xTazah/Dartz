@@ -13,13 +13,14 @@
   --component-outline: #4b4b4b;
   --background: #17181a;
 
-  --font-color: #78797b;
+  --font-color: #797a7c;
 
   --primary: rgb(3, 176, 118);
   --secondary: #6f7172;
 
   --nextui-primary: 160 97% 35%;
   --nextui-default-100: 220 4% 14%;
+  --nextui-foreground:220 1% 48%;
 }
 
 body {
