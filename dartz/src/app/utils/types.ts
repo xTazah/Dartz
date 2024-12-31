@@ -64,3 +64,20 @@ export interface GameLogic {
    */
   processTurn(lobby: Lobby, player: Player, score: Throw): Lobby;
 }
+
+export interface LobbyInvite {
+  lobbyId: string;
+  username: string;
+}
+
+export interface FriendRequest {
+  userId: string;
+  username: string;
+}
+
+export interface FirebaseUser {
+  user: User;
+  online: boolean;
+  openLobbyInvites?: LobbyInvite[];
+  openFriendRequests?: FriendRequest[];
+}

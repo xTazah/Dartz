@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { User } from "@/app/utils/types";
 import PlayerService from "@/app/services/playerService";
 import { LoadingSpinner } from "../loadingSpinner/loadingSpinner";
+import { handleUserLogin } from "@/app/services/userService";
 
 export const UserContext = React.createContext<{
   user: User | null;
@@ -24,7 +25,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
         .getUserBySession()
         .then((response) => {
           if (response.status === 200) {
-            setUser(response.data);
+            const user = response.data as User;
+
+            setUser(user);
           }
         })
         .catch(() => setUser(null))
@@ -34,6 +37,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (user) handleUserLogin(user);
+  }, [user]);
 
   if (loading) {
     return (
