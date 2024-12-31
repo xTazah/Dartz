@@ -20,7 +20,7 @@
 
   --nextui-primary: 160 97% 35%;
   --nextui-default-100: 220 4% 14%;
-  --nextui-foreground:220 1% 48%;
+  --nextui-foreground: 220 1% 48%;
 }
 
 body {
@@ -67,4 +67,15 @@ body {
 *::-webkit-scrollbar-thumb {
   background-color: var(--component-background-hover);
   border-radius: 10px;
+}
+
+.dropzone {
+  border: 2px dashed #ccc;
+  padding: 20px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.dropzone.highlight {
+  background-color: #63bcf787;
 }

@@ -85,3 +85,13 @@ export interface FirebaseUser {
   openLobbyInvites?: LobbyInvite[];
   openFriendRequests?: FriendRequest[];
 }
+
+export enum DragDataType {
+  FRIEND = "FRIEND",
+  OTHER = "OTHER",
+}
+
+export interface DragDropProps {
+  dropzoneId: string;
+  dragDataTypes: DragDataType[];
+}

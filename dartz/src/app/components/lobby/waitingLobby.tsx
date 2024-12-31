@@ -1,17 +1,29 @@
 "use client";
 
-import { GameMode, GameStatus, Lobby, User } from "@/app/utils/types";
+import {
+  DragDataType,
+  DragDropProps,
+  GameMode,
+  GameStatus,
+  Lobby,
+  User,
+} from "@/app/utils/types";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
 import GameModeSwitch from "./gameModeSwitch";
 import { UserContext } from "../userProvider/userProvider";
 import React, { useEffect, useState } from "react";
 import { Button, Checkbox } from "@nextui-org/react";
 import Friend from "../friendList/friend";
+import DropZone from "../DragDrop/dropzone";
 
 interface WaitingLobbyProps {
   lobby: Lobby;
   setLobby: (updatedLobby: Lobby) => void;
 }
+export const WaitingLobbyDragDropProps: DragDropProps = {
+  dropzoneId: "lobby-dropzone",
+  dragDataTypes: [DragDataType.FRIEND],
+};
 
 const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
   const [isSetsSelected, setIsSetsSelected] = useState(false);
@@ -44,7 +56,6 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
   const { user } = React.useContext(UserContext)!;
 
   let isOwner = user?.id === lobby.owner?.id;
-  console.log("Is owner: ", isOwner);
   useEffect(() => {
     isOwner = user?.id === lobby.owner?.id;
   }, [lobby.owner]);
@@ -59,7 +70,10 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
         />
       )}
       <div className="grid grid-cols-2 gap-6">
-      <div>
+        <DropZone
+          dropzoneId={WaitingLobbyDragDropProps.dropzoneId}
+          dragDataTypes={WaitingLobbyDragDropProps.dragDataTypes}
+        >
           <h2 className="text-lg mb-3 mt-4">Player</h2>
           {lobby.players?.map((player) => (
             <Friend
@@ -72,7 +86,7 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
               }
             />
           ))}
-        </div>
+        </DropZone>
         <div>
           {isOwner && (
             <div>
@@ -137,7 +151,7 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
         </div>
       </div>
       <div className="flex flex-end gap-10">
-      <Button
+        <Button
           className="mt-4 w-full bg-[var(--secondary)]"
           onClick={startGame}
           color="secondary"

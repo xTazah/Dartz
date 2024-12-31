@@ -142,11 +142,9 @@ export default function FriendList() {
       </div>
       <div className={` ${styles.list} `}>
         <p className="title">Friend List</p>
-        <UnderConstruction>
-          {names.map((name) => (
-            <Friend key={name} name={name} />
-          ))}
-        </UnderConstruction>
+        {names.map((name) => (
+          <Friend key={name} name={name} />
+        ))}
       </div>
     </div>
   );
