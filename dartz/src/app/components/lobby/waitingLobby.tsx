@@ -58,11 +58,25 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
           isOwner={isOwner}
         />
       )}
+      <div className="grid grid-cols-2 gap-6">
       <div>
+          <h2 className="text-lg mb-3 mt-4">Player</h2>
+          {lobby.players?.map((player) => (
+            <Friend
+              key={player.user?.id}
+              name={
+                (player.user?.username == undefined
+                  ? ""
+                  : player.user?.username) +
+                (player.user?.id == lobby.owner?.id ? " (Owner)" : "")
+              }
+            />
+          ))}
+        </div>
         <div>
           {isOwner && (
             <div>
-              <h2 className="text-lg mb-3">Settings</h2>
+              <h2 className="text-lg mb-3 mt-4">Settings</h2>
               <Checkbox
                 className="mr-4"
                 isSelected={isSetsSelected}
@@ -121,22 +135,23 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
             </div>
           )}
         </div>
-        <h2 className="text-lg mb-3 mt-4">Player</h2>
-        {lobby.players?.map((player) => (
-          <Friend
-            key={player.user?.id}
-            name={
-              (player.user?.username == undefined
-                ? ""
-                : player.user?.username) +
-              (player.user?.id == lobby.owner?.id ? " (Owner)" : "")
-            }
-          />
-        ))}
       </div>
-      <Button className="text-black" onClick={startGame}>
-        Start Game
-      </Button>
+      <div className="flex flex-end gap-10">
+      <Button
+          className="mt-4 w-full bg-[var(--secondary)]"
+          onClick={startGame}
+          color="secondary"
+        >
+          Leave Lobby
+        </Button>
+        <Button
+          className="mt-4 w-full bg-[var(--primary)]"
+          onClick={startGame}
+          color="primary"
+        >
+          Start Game
+        </Button>
+      </div>
     </div>
   );
 };
