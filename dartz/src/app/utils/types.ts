@@ -21,6 +21,8 @@ export type Throw = {
 export type Player = ConnectedPlayer & {
   score: number;
   throws: Throw[];
+  legs: number;
+  sets: number;
 };
 
 export type ConnectedPlayer = {
@@ -48,6 +50,8 @@ export type Lobby = {
   gameStatus: GameStatus;
   currentPlayerIndex: number;
   gameMode: GameMode;
+  legs: number;
+  sets: number;
   customData?: Record<string, any>; // game-specific data
 };
 

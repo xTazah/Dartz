@@ -11,6 +11,7 @@ import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
 
 import { Tooltip } from "@nextui-org/react";
 import { toast } from "sonner";
+import WinnerScreen from "@/app/components/lobby/winnerScreen";
 
 export default function LobbyPage() {
   const searchParams = useSearchParams();
@@ -75,7 +76,7 @@ export default function LobbyPage() {
           case GameStatus.Running:
             return <Game lobby={lobby} setLobby={setLobby} />;
           case GameStatus.Finished:
-            return <div>Winner Screen Not implemented yet</div>;
+            return <WinnerScreen lobby={lobby} setLobby={setLobby} />;
           default:
             return <div>Unknown game state??</div>;
         }

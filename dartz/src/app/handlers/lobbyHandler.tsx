@@ -31,6 +31,8 @@ class LobbyHandler {
       players: [],
       spectators: [],
       owner: user,
+      legs: 0,
+      sets: 0,
     };
 
     syncLobby(newLobby.id, newLobby);
@@ -121,7 +123,7 @@ class LobbyHandler {
         ...lobby,
         players: [
           ...lobby.players,
-          { user, score: 0, throws: [], connected: true },
+          { user, score: 0, throws: [], legs: 0, sets: 0, connected: true },
         ],
       };
     }
@@ -167,6 +169,12 @@ class LobbyHandler {
 
   static changeGameMode(lobby: Lobby, gameMode: GameMode): Lobby {
     const updatedLobby = { ...lobby, gameMode };
+    syncLobby(updatedLobby.id, updatedLobby);
+    return updatedLobby;
+  }
+
+  static changeSetsAndLegs(lobby: Lobby, sets: number, legs: number): Lobby {
+    const updatedLobby = { ...lobby, sets, legs };
     syncLobby(updatedLobby.id, updatedLobby);
     return updatedLobby;
   }

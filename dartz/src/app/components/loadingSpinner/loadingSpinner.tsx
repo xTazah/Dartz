@@ -9,7 +9,6 @@ export const LoadingSpinner = ({
   return (
     <>
       <Spinner color="success" label={label} />
-      <h4>{label}</h4>
     </>
   );
 };
