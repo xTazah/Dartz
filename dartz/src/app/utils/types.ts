@@ -1,3 +1,4 @@
+import { DragEndEvent } from "@dnd-kit/core";
 import { GAME_MODES } from "./constants";
 
 //user that is received by an api call
@@ -79,7 +80,7 @@ export interface FriendRequest {
   username: string;
 }
 
-export interface FirebaseUser {
+export interface FriendlistUser {
   user: User;
   online: boolean;
   openLobbyInvites?: LobbyInvite[];
@@ -93,5 +94,6 @@ export enum DragDataType {
 
 export interface DragDropProps {
   dropzoneId: string;
-  dragDataTypes: DragDataType[];
+  allowedDataTypes: DragDataType[];
+  onDrop: (event: DragEndEvent) => void;
 }

@@ -15,14 +15,19 @@ import React, { useEffect, useState } from "react";
 import { Button, Checkbox } from "@nextui-org/react";
 import Friend from "../friendList/friend";
 import DropZone from "../DragDrop/dropzone";
+import UserComponent from "../friendList/User";
 
 interface WaitingLobbyProps {
   lobby: Lobby;
   setLobby: (updatedLobby: Lobby) => void;
 }
-export const WaitingLobbyDragDropProps: DragDropProps = {
+
+const DragDropProperties: DragDropProps = {
   dropzoneId: "lobby-dropzone",
-  dragDataTypes: [DragDataType.FRIEND],
+  allowedDataTypes: [DragDataType.FRIEND],
+  onDrop: (event: any): void => {
+    console.log("Valid drop with event:", event);
+  },
 };
 
 const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
@@ -71,14 +76,15 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
       )}
       <div className="grid grid-cols-2 gap-6">
         <DropZone
-          dropzoneId={WaitingLobbyDragDropProps.dropzoneId}
-          dragDataTypes={WaitingLobbyDragDropProps.dragDataTypes}
+          dropzoneId={DragDropProperties.dropzoneId}
+          allowedDataTypes={DragDropProperties.allowedDataTypes}
+          onDrop={DragDropProperties.onDrop}
         >
           <h2 className="text-lg mb-3 mt-4">Player</h2>
           {lobby.players?.map((player) => (
-            <Friend
+            <UserComponent
               key={player.user?.id}
-              name={
+              username={
                 (player.user?.username == undefined
                   ? ""
                   : player.user?.username) +

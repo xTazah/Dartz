@@ -68,14 +68,3 @@ body {
   background-color: var(--component-background-hover);
   border-radius: 10px;
 }
-
-.dropzone {
-  border: 2px dashed #ccc;
-  padding: 20px;
-  border-radius: 8px;
-  transition: background-color 0.2s ease;
-}
-
-.dropzone.highlight {
-  background-color: #63bcf787;
-}

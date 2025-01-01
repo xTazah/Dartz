@@ -8,7 +8,12 @@ import {
   off,
 } from "firebase/database";
 import { database } from "./firebaseConfig";
-import { FirebaseUser, FriendRequest, LobbyInvite, User } from "../utils/types";
+import {
+  FriendlistUser,
+  FriendRequest,
+  LobbyInvite,
+  User,
+} from "../utils/types";
 
 export function handleUserLogin(user: User): void {
   try {
@@ -18,7 +23,7 @@ export function handleUserLogin(user: User): void {
         if (!snapshot.exists()) {
           console.log("User doesnt exist in firebase");
           // create entry if it doesnt exist
-          const newUser: FirebaseUser = {
+          const newUser: FriendlistUser = {
             user: user,
             online: true,
             openLobbyInvites: [],

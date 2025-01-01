@@ -1,0 +1,16 @@
+.dropzone {
+  transition: background-color 0.2s ease;
+
+  &.dragging {
+    outline: 2px dashed #ccc;
+    border-radius: 8px;
+
+    &.valid {
+      background-color: #63bcf787;
+    }
+
+    &.invalid {
+      background-color: #f7636387;
+    }
+  }
+}

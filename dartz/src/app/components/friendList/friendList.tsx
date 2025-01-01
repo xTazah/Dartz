@@ -19,7 +19,12 @@ import { Badge } from "@/components/ui/badge";
 import { SettingsDropdown } from "../settingsDropdown/settingsDropdown";
 import { UnderConstruction } from "../underConstruction";
 import { off } from "process";
-import { FriendRequest, LobbyInvite } from "@/app/utils/types";
+import {
+  DragDataType,
+  FriendlistUser,
+  FriendRequest,
+  LobbyInvite,
+} from "@/app/utils/types";
 import { setupUserCallbacks } from "@/app/services/userService";
 import {
   DropdownMenu,
@@ -31,9 +36,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { BellIcon, UserPlusIcon, PlayIcon } from "@heroicons/react/24/solid";
+import Draggable from "../DragDrop/draggable";
 
 export default function FriendList() {
-  const names = ["Timinz", "Tazah", "Bunkert", "Jonas", "Felix"];
+  const friends: FriendlistUser[] = [
+    { online: true, user: { id: 69, initial: "X", username: "xTazah" } },
+  ];
 
   const context = useContext(UserContext);
   const { user } = context!;
@@ -142,8 +150,13 @@ export default function FriendList() {
       </div>
       <div className={` ${styles.list} `}>
         <p className="title">Friend List</p>
-        {names.map((name) => (
-          <Friend key={name} name={name} />
+        {friends.map((friend) => (
+          <Draggable
+            id={friend.user!.id}
+            data={{ type: DragDataType.FRIEND, ["test"]: "123" }}
+          >
+            <Friend key={friend.user?.id} user={friend} />
+          </Draggable>
         ))}
       </div>
     </div>

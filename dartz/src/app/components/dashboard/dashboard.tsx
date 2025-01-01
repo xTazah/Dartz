@@ -8,7 +8,7 @@ import Image from "next/image";
 import Statistics from "../statistics/statistics";
 import ThemeSwitcher from "../themeSwitcher/themeSwitcher";
 import { GAME_MODES } from "@/app/utils/constants";
-import { Lobby, Player, GameMode } from "@/app/utils/types";
+import { Lobby, Player, GameMode, DragDataType } from "@/app/utils/types";
 import { UserContext } from "../userProvider/userProvider";
 import { Button } from "@nextui-org/button";
 import {
@@ -18,6 +18,7 @@ import {
 import { Tooltip } from "@nextui-org/react";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
 import { toast } from "sonner";
+import DropZone from "../DragDrop/dropzone";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -145,7 +146,7 @@ export default function Dashboard() {
         <Statistics />
       </div>
       <div className={"col-span-2 " + styles.title}>Match History</div>
-      <div className={styles.tile + " row-span-2 col-span-2 "}>
+      <div className={styles.tile + " row-span-2 col-span-2"}>
         <HistoryList />
       </div>
     </div>
