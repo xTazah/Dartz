@@ -154,8 +154,9 @@ export default function FriendList() {
           <Draggable
             id={friend.user!.id}
             data={{ type: DragDataType.FRIEND, ["test"]: "123" }}
+            key={friend.user?.id}
           >
-            <Friend key={friend.user?.id} user={friend} />
+            <Friend user={friend} />
           </Draggable>
         ))}
       </div>
