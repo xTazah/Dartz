@@ -19,6 +19,7 @@ import iconStyles from "../../styles/icon.module.scss";
 import PlayerService from "@/app/services/backend/playerService";
 import { useContext } from "react";
 import { UserContext } from "../userProvider/userProvider";
+import { setOnlineStatus } from "@/app/services/firebase/userService";
 
 export function SettingsDropdown() {
   const playerService = new PlayerService();
@@ -53,6 +54,7 @@ export function SettingsDropdown() {
           className={`${styles.dropdownItem}`}
           onClick={() =>
             playerService.logout().then(() => {
+              setOnlineStatus(context!.user!.id, false);
               context?.setUser(null);
             })
           }

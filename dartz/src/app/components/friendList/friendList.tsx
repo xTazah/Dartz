@@ -31,6 +31,7 @@ import {
 } from "@/app/utils/types";
 import {
   clearOpen,
+  getOnlineStatus,
   sendFriendRequest,
   setupOnlineStatusListener,
   setupUserCallbacks,
@@ -71,32 +72,39 @@ export default function FriendList() {
         let friendlistUsers: FriendlistUser[] = [];
         const unsubscribeCallbacks: (() => void)[] = [];
 
-        users.forEach((user) => {
+        const promises = users.map((user) => {
           const friend: FriendlistUser = {
             user: user,
             online: false,
           };
 
-          const unsubscribe = setupOnlineStatusListener(
-            user!.id,
-            (onlineStatus) => {
-              friend.online = onlineStatus;
-              setFriends((prevFriends) => {
-                return prevFriends
-                  ? [
-                      ...prevFriends.filter((f) => f.user?.id !== user?.id),
-                      friend,
-                    ]
-                  : [friend];
-              });
-            }
-          );
+          return getOnlineStatus(user!.id).then((onlineStatus) => {
+            console.log(onlineStatus);
+            friend.online = onlineStatus;
 
-          unsubscribeCallbacks.push(unsubscribe);
-          friendlistUsers.push(friend);
+            const unsubscribe = setupOnlineStatusListener(
+              user!.id,
+              (updatedOnlineStatus) => {
+                friend.online = updatedOnlineStatus;
+                setFriends((prevFriends) => {
+                  return prevFriends
+                    ? [
+                        ...prevFriends.filter((f) => f.user?.id !== user?.id),
+                        friend,
+                      ]
+                    : [friend];
+                });
+              }
+            );
+
+            unsubscribeCallbacks.push(unsubscribe);
+            friendlistUsers.push(friend);
+          });
         });
 
-        setFriends(friendlistUsers);
+        Promise.all(promises).then(() => {
+          setFriends(friendlistUsers);
+        });
 
         return () => {
           unsubscribeCallbacks.forEach((unsubscribe) => unsubscribe());

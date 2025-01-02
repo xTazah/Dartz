@@ -35,9 +35,21 @@ export function handleUserLogin(user: User): void {
           // set online status
           update(userRef, { online: true });
         }
-        onDisconnect(userRef).update({ online: false }); //mark user as offline //ToDo: call this on Logout manually
+        onDisconnect(userRef).update({ online: false }); //mark user as offline
       })
-      .catch(() => console.log("cannot fetch user profile"));
+      .catch((error) => {
+        const newUser: FriendlistUser = {
+          user: user,
+          online: true,
+        };
+        update(userRef, newUser)
+          .then(() => {
+            onDisconnect(userRef).update({ online: false });
+          })
+          .catch((updateError) => {
+            console.log("Failed to create a new user entry:", updateError);
+          });
+      });
   } catch (error) {
     console.error("error in firebase login", error);
   }
@@ -61,6 +73,21 @@ export function setupOnlineStatusListener(
   return () => {
     unsub;
   };
+}
+
+export function getOnlineStatus(userId: number): Promise<boolean> {
+  const userRef = ref(database, `Users/${userId}/online`);
+  return get(userRef).then((snapshot) => {
+    if (snapshot.exists()) {
+      return snapshot.val();
+    }
+    return false;
+  });
+}
+
+export function setOnlineStatus(userId: number, online: boolean): void {
+  const userRef = ref(database, `Users/${userId}`);
+  update(userRef, { online: false });
 }
 
 export function setupUserCallbacks(
