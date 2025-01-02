@@ -14,6 +14,7 @@ namespace Dartz.Model
         public string Username { get; set; }
         public string PasswordHash { get; set; }
         public virtual ICollection<GameSession> GameSessions { get; set; }
+        public virtual ICollection<Player> Friends {get; set;}
 
         [NotMapped]
         public string Initial { get =>

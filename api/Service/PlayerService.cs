@@ -36,6 +36,11 @@ namespace Dartz.Service
             return _playerRepository.GetPlayerById(id);
         }
 
+        public Player GetPlayerWithFriends(int id)
+        {
+            return _playerRepository.GetPlayerWithFriends(id);
+        }
+
         public IEnumerable<Player> GetAllPlayers()
         {
             return _playerRepository.GetAllPlayers();
