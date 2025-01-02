@@ -15,7 +15,8 @@ import {
 } from "@heroicons/react/24/solid";
 
 import styles from "../../styles/dropdown.module.scss";
-import PlayerService from "@/app/services/playerService";
+import iconStyles from "../../styles/icon.module.scss";
+import PlayerService from "@/app/services/backend/playerService";
 import { useContext } from "react";
 import { UserContext } from "../userProvider/userProvider";
 
@@ -26,19 +27,22 @@ export function SettingsDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Cog6ToothIcon className={`size-5 ${styles.icon}`} color="#6F7172" />
+        <Cog6ToothIcon
+          className={`size-5 ${iconStyles.icon}`}
+          color="#6F7172"
+        />
       </DropdownMenuTrigger>
       <DropdownMenuContent className={`w-56 ${styles.dropdownBackground}`}>
         <DropdownMenuLabel>Account Settings</DropdownMenuLabel>
         <DropdownMenuSeparator className={`${styles.dropdownSeperator}`} />
         <DropdownMenuGroup>
           <DropdownMenuItem className={`${styles.dropdownItem}`}>
-            <UserIcon className={`size-5 ${styles.icon}`} color="#6F7172" />
+            <UserIcon className={`size-5 ${iconStyles.icon}`} color="#6F7172" />
             Profile
           </DropdownMenuItem>
           <DropdownMenuItem className={`${styles.dropdownItem}`}>
             <Cog6ToothIcon
-              className={`size-5 ${styles.icon}`}
+              className={`size-5 ${iconStyles.icon}`}
               color="#6F7172"
             />
             Settings
@@ -54,7 +58,7 @@ export function SettingsDropdown() {
           }
         >
           <ArrowLeftEndOnRectangleIcon
-            className={`size-5 ${styles.icon}`}
+            className={`size-5 ${iconStyles.icon}`}
             color="#6F7172"
           />
           Log out

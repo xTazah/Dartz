@@ -1,5 +1,5 @@
 import ApiService from "./apiService";
-import { ApiResponse } from "../utils/types";
+import { ApiResponse } from "../../utils/types";
 
 class PlayerService extends ApiService {
   constructor() {
@@ -10,20 +10,24 @@ class PlayerService extends ApiService {
     return this.get<T>(`${id}`);
   }
 
+  async getByUsername<T>(username: string): Promise<ApiResponse<T>> {
+    return this.get<T>(`username/${username}`);
+  }
+
   async login<T>(payload: T): Promise<ApiResponse<T>> {
-    return this.post<T>("login", payload, true);
+    return this.post("login", payload, true);
   }
 
   async logout<T>(): Promise<ApiResponse<T>> {
-    return this.post<T>("logout", undefined, false);
+    return this.post("logout", undefined, false);
   }
 
   async signup<T>(payload: T): Promise<ApiResponse<T>> {
-    return this.post<T>("signup", payload, false);
+    return this.post("signup", payload, false);
   }
 
   async getUserBySession<T>(): Promise<ApiResponse<T>> {
-    return this.post<T>("login/sessionId", undefined, true);
+    return this.post("login/sessionId", undefined, true);
   }
 }
 

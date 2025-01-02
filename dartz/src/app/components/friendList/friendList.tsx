@@ -2,6 +2,7 @@
 
 import React, { useContext, useEffect, useState } from "react";
 import styles from "../../styles/friendList.module.scss";
+import iconStyles from "../../styles/icon.module.scss";
 import dropdownStyles from "../../styles/dropdown.module.scss";
 import Image from "next/image";
 import {
@@ -11,17 +12,16 @@ import {
   BellSlashIcon,
   XMarkIcon,
   CheckIcon,
+  PlusIcon,
 } from "@heroicons/react/24/solid";
 import Friend from "./friend";
 import ThemeSwitcher from "../themeSwitcher/themeSwitcher";
-import PlayerService from "@/app/services/playerService";
+import PlayerService from "@/app/services/backend/playerService";
 import { UserContext } from "../userProvider/userProvider";
 import { Button } from "@/components/ui/button";
-import { Button as NextUiButton } from "@nextui-org/react";
+import { Input, Button as NextUiButton } from "@nextui-org/react";
 import { Badge } from "@/components/ui/badge";
 import { SettingsDropdown } from "../settingsDropdown/settingsDropdown";
-import { UnderConstruction } from "../underConstruction";
-import { off } from "process";
 import {
   DragDataType,
   FriendlistUser,
@@ -30,14 +30,15 @@ import {
   User,
 } from "@/app/utils/types";
 import {
-  clearLobbyInvite,
+  clearOpen,
+  sendFriendRequest,
+  setupOnlineStatusListener,
   setupUserCallbacks,
-} from "@/app/services/userService";
+} from "@/app/services/firebase/userService";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -46,16 +47,73 @@ import { BellIcon, UserPlusIcon, PlayIcon } from "@heroicons/react/24/solid";
 import Draggable from "../DragDrop/draggable";
 import { Tooltip } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
+import FriendsService from "@/app/services/backend/friendsService";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Label } from "@radix-ui/react-dropdown-menu";
+import { toast } from "sonner";
 
 export default function FriendList() {
-  const friends: FriendlistUser[] = [
-    {
-      online: true,
-      user: { id: 69, initial: "X", username: "xTazah" } as User,
-    },
-  ];
-
   const { user, inLobby } = useContext(UserContext)!;
+
+  const [friends, setFriends] = useState<FriendlistUser[] | null>(null);
+  const friendService = new FriendsService();
+  useEffect(() => {
+    friendService
+      .getFriends(user!.id)
+      .then((response) => {
+        const users: User[] = response.data;
+
+        let friendlistUsers: FriendlistUser[] = [];
+
+        // cleanup
+        const unsubscribeCallbacks: (() => void)[] = [];
+
+        // get online status
+        users.forEach((user) => {
+          const friend: FriendlistUser = {
+            user: user,
+            online: false,
+          };
+
+          // listener for this users online status
+          const unsubscribe = setupOnlineStatusListener(
+            user!.id,
+            (onlineStatus) => {
+              friend.online = onlineStatus;
+              setFriends((prevFriends) => {
+                return prevFriends
+                  ? [
+                      ...prevFriends.filter((f) => f.user?.id !== user?.id),
+                      friend,
+                    ]
+                  : [friend];
+              });
+            }
+          );
+
+          unsubscribeCallbacks.push(unsubscribe);
+
+          friendlistUsers.push(friend);
+        });
+
+        // set friends once at start
+        setFriends(friendlistUsers);
+
+        // cleanup on dismount
+        return () => {
+          unsubscribeCallbacks.forEach((unsubscribe) => unsubscribe());
+        };
+      })
+      .catch((error) => {
+        console.error("Error fetching friends:", error);
+      });
+  }, []);
+
+  const [friendUsername, setFriendUsername] = useState("");
 
   const router = useRouter();
 
@@ -78,13 +136,23 @@ export default function FriendList() {
     return () => unsubscribe();
   }, [user]);
 
+  const handleAcceptFriend = (key: string, userId2: number) => {
+    clearOpen("FriendRequests", key, user);
+    const friendService = new FriendsService();
+    friendService.addFriend(user!.id, userId2);
+  };
+
+  const handleDeclineFriend = (key: string) => {
+    clearOpen("FriendRequests", key, user);
+  };
+
   const handleAcceptInvite = (key: string, lobbyId: string) => {
-    clearLobbyInvite(key, user);
+    clearOpen("LobbyInvites", key, user);
     router.push(`/lobby?id=${lobbyId}`);
   };
 
   const handleDeclineInvite = (key: string) => {
-    clearLobbyInvite(key, user);
+    clearOpen("LobbyInvites", key, user);
   };
 
   const numNotifications =
@@ -111,7 +179,7 @@ export default function FriendList() {
             <DropdownMenuContent
               align="end"
               sideOffset={8}
-              className="w-auto p-4 bg-[var(--component-background)] rounded-md shadow-lg"
+              className="w-auto p-4 bg-[var(--component-background)] rounded-md shadow-lg outline outline-[var(--component-background-hover)]"
             >
               <DropdownMenuLabel className="mb-2 text-lg font-medium">
                 Notifications
@@ -131,9 +199,28 @@ export default function FriendList() {
                           <UserPlusIcon className="h-5 w-5" />
                         </div>
                         <div className="flex-1 space-y-1">
-                          <span className="text-sm font-medium">
+                          <p className="text-sm font-medium">
                             Friend Request from {friendRequest.username}
-                          </span>
+                          </p>
+                          <div className="flex gap-2">
+                            <NextUiButton
+                              onClick={() =>
+                                handleAcceptFriend(key, friendRequest.userId)
+                              }
+                              isIconOnly
+                              isDisabled={inLobby}
+                              className={`flex items-center gap-1 text-sm text-white rounded-full bg-[var(--primary)]`}
+                            >
+                              <CheckIcon className="h-5 w-5" />
+                            </NextUiButton>
+                            <NextUiButton
+                              isIconOnly
+                              onClick={() => handleDeclineFriend(key)}
+                              className="flex items-center gap-1 text-sm text-white rounded-full bg-red-500"
+                            >
+                              <XMarkIcon className="size-5" />
+                            </NextUiButton>
+                          </div>
                         </div>
                       </div>
                     )
@@ -204,16 +291,71 @@ export default function FriendList() {
         <SettingsDropdown />
       </div>
       <div className={` ${styles.list} `}>
-        <p className="title">Friend List</p>
-        {friends.map((friend) => (
-          <Draggable
-            id={friend.user!.id}
-            data={{ type: DragDataType.FRIEND, customData: friend.user }}
-            key={friend.user?.id}
-          >
-            <Friend user={friend} />
-          </Draggable>
-        ))}
+        <div className="flex justify-between items-center">
+          <p className="title">Friend List</p>
+          <Popover>
+            <PopoverTrigger asChild>
+              <PlusIcon
+                className={`size-5 ${iconStyles.icon}`}
+                color="#6F7172"
+              />
+            </PopoverTrigger>
+            <PopoverContent
+              sideOffset={5}
+              side="left"
+              align="start"
+              className="w-72 p-4 bg-[var(--component-background)] rounded-md shadow-lg outline outline-[var(--component-background-hover)]"
+            >
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Add Friend</h4>
+                  <p className="text-sm">
+                    Send a friend request to another player
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <div className="items-center">
+                    <input
+                      type="text"
+                      value={friendUsername}
+                      onChange={(e) => {
+                        setFriendUsername(e.target.value);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          sendFriendRequest(user, friendUsername)
+                            .then((success) => {
+                              if (success) setFriendUsername("");
+                            })
+                            .catch((error) => {
+                              if (error.status)
+                                toast(
+                                  "You are already friends with " +
+                                    friendUsername
+                                );
+                            });
+                        }
+                      }}
+                      placeholder="Username"
+                      className="focus:outline outline-[var(--component-outline)] w-full col-span-2 h-8 text-white p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                    />
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {friends &&
+          friends.map((friend) => (
+            <Draggable
+              id={friend.user!.id}
+              data={{ type: DragDataType.FRIEND, customData: friend.user }}
+              key={friend.user?.id}
+            >
+              <Friend user={friend} />
+            </Draggable>
+          ))}
       </div>
     </div>
   );

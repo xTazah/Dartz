@@ -28,10 +28,10 @@ function ProtectedLayout({
         <div
           className={collapsed ? "col-span-9 relative" : "col-span-8 relative"}
         >
-          <div className="top-0 z-10">
+          {/* <div className="top-0 z-10">
             <BackNavigation />
-          </div>
-          <main className={inter.className}>{children}</main>
+          </div> */}
+          <main className={`${inter.className} mt-4`}>{children}</main>
         </div>
 
         <div className="col-span-2">

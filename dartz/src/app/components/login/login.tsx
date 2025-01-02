@@ -2,7 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../tabs/tabs";
 import { User } from "@/app/utils/types";
-import PlayerService from "@/app/services/playerService";
+import PlayerService from "@/app/services/backend/playerService";
 import { toast } from "sonner";
 import { useContext, useState } from "react";
 import { UserContext } from "@/app/components/userProvider/userProvider";
@@ -90,7 +90,7 @@ export const LoginPage = () => {
               Sign-Up
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="login" >
+          <TabsContent value="login">
             <div className="mt-4">
               <input
                 type="text"

@@ -1,8 +1,8 @@
 import { ref, set, get, onValue, off, onDisconnect } from "firebase/database";
 import { database } from "./firebaseConfig";
-import { Lobby, GameMode } from "../utils/types";
-import { IconsMap } from "../utils/constants";
-import { LobbyNotFoundError } from "../utils/errors";
+import { Lobby, GameMode } from "../../utils/types";
+import { IconsMap } from "../../utils/constants";
+import { LobbyNotFoundError } from "../../utils/errors";
 import { reject } from "lodash";
 
 //persistence and syncing logic

@@ -14,8 +14,10 @@ import {
   FriendRequest,
   LobbyInvite,
   User,
-} from "../utils/types";
+} from "../../utils/types";
 import { toast } from "sonner";
+import PlayerService from "../backend/playerService";
+import FriendsService from "../backend/friendsService";
 
 export function handleUserLogin(user: User): void {
   try {
@@ -39,6 +41,26 @@ export function handleUserLogin(user: User): void {
   } catch (error) {
     console.error("error in firebase login", error);
   }
+}
+
+export function setupOnlineStatusListener(
+  userId: number,
+  onOnlineStatusChange: (online: boolean) => void
+): () => void {
+  const userRef = ref(database, `Users/${userId}/online`);
+
+  const onlineStatusCallback = (snapshot: any) => {
+    if (snapshot.exists()) {
+      const onlineStatus = snapshot.val();
+      onOnlineStatusChange(onlineStatus);
+    }
+  };
+
+  const unsub = onValue(userRef, onlineStatusCallback);
+
+  return () => {
+    unsub;
+  };
 }
 
 export function setupUserCallbacks(
@@ -125,10 +147,86 @@ export function inviteUserToLobby(
     });
 }
 
-export function clearLobbyInvite(lobbyKey: string, user: User): void {
-  const lobbyInviteRef = ref(
-    database,
-    `Users/${user!.id}/openLobbyInvites/${lobbyKey}`
-  );
-  set(lobbyInviteRef, null);
+export function sendFriendRequest(
+  sender: User,
+  recieverUsername: string
+): Promise<boolean> {
+  const playerService = new PlayerService();
+  const friendsService = new FriendsService();
+
+  return new Promise((resolve, reject) => {
+    playerService
+      .getByUsername(recieverUsername)
+      .then((response) => {
+        const reciever: User = response.data;
+
+        friendsService
+          .getIsFriend(sender!.id, reciever!.id)
+          .then(() => {
+            const friendRequestsRef = ref(
+              database,
+              `Users/${reciever?.id}/openFriendRequests`
+            );
+
+            const friendRequest: FriendRequest = {
+              userId: sender!.id,
+              username: sender!.username,
+            };
+
+            // Check for existing friendRequest
+            get(friendRequestsRef)
+              .then((snapshot) => {
+                if (snapshot.exists()) {
+                  const requests = snapshot.val();
+                  const requestExists = Object.values(
+                    requests as Record<string, FriendRequest>
+                  ).some((request) => request.userId === sender?.id);
+
+                  if (requestExists) {
+                    toast(
+                      `${reciever?.username} already has an open friend request from you`
+                    );
+                    resolve(false); // Request already exists
+                    return;
+                  }
+                }
+                // Add friend request
+                push(friendRequestsRef, friendRequest)
+                  .then(() => {
+                    toast(
+                      "Successfully sent friend request to " +
+                        reciever?.username
+                    );
+                    resolve(true); // Successfully sent
+                  })
+                  .catch((error) => {
+                    console.error("Error adding friend:", error);
+                    resolve(false); // Error sending request
+                  });
+              })
+              .catch((error) => {
+                console.error("Error checking friend requests:", error);
+                resolve(false); // Error checking friend requests
+              });
+          })
+          .catch((error) => {
+            toast.error("You are already friends with " + recieverUsername);
+            resolve(false);
+          });
+      })
+      .catch((error) => {
+        console.log(error);
+        toast.error("No player found with username " + recieverUsername);
+        resolve(false); // reciever not found
+      });
+  });
+}
+
+export function clearOpen(
+  type: "FriendRequests" | "LobbyInvites",
+  key: string,
+  user: User
+): void {
+  const reference = ref(database, `Users/${user!.id}/open${type}/${key}`);
+  set(reference, null);
 }

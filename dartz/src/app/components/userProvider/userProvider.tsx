@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { User } from "@/app/utils/types";
-import PlayerService from "@/app/services/playerService";
+import PlayerService from "@/app/services/backend/playerService";
 import { LoadingSpinner } from "../loadingSpinner/loadingSpinner";
-import { handleUserLogin } from "@/app/services/userService";
+import { handleUserLogin } from "@/app/services/firebase/userService";
 
 export const UserContext = React.createContext<{
   user: User | null;

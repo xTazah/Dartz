@@ -14,7 +14,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { Button, Checkbox } from "@nextui-org/react";
 import DropZone from "../DragDrop/dropzone";
 import UserComponent from "../friendList/User";
-import { inviteUserToLobby } from "@/app/services/userService";
+import { inviteUserToLobby } from "@/app/services/firebase/userService";
 import { toast } from "sonner";
 
 interface WaitingLobbyProps {

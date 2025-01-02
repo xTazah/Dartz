@@ -5,7 +5,7 @@ import {
   listenToLobby,
   setUserConnected,
   getLobbySnapshot,
-} from "../services/lobbyService";
+} from "../services/firebase/lobbyService";
 import { LobbyNotFoundError, MissingLobbyDataError } from "../utils/errors";
 import {
   GameMode,

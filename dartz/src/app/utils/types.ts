@@ -77,8 +77,8 @@ export interface LobbyInvite {
 }
 
 export interface FriendRequest {
-  userId: string;
-  username: string;
+  userId: number; //sender
+  username: string; //sender
 }
 
 export interface FriendlistUser {
