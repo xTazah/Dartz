@@ -18,6 +18,33 @@ namespace Dartz.Business
         public DbSet<PlayerThrow> PlayerThrows { get; set; }
         public DbSet<DBThrow> Throws { get; set; }
 
-        public DataContext(DbContextOptions<DataContext> options) : base(options) { }
+        public DataContext(DbContextOptions<DataContext> options) : base(options) {
+
+            
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Player>()
+                .HasMany(p => p.Friends)
+                .WithMany()
+                .UsingEntity<Dictionary<string, object>>(
+                    "PlayerFriendship",
+                    j => j
+                        .HasOne<Player>()
+                        .WithMany()
+                        .HasForeignKey("FriendId")
+                        .OnDelete(DeleteBehavior.Cascade),
+                    j => j
+                        .HasOne<Player>()
+                        .WithMany()
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.Cascade),
+                    j =>
+                    {
+                        j.HasKey("PlayerId", "FriendId");
+                        j.ToTable("PlayerFriendships");
+                    });
+        }
     }
 }

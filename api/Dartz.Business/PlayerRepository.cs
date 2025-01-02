@@ -44,6 +44,11 @@ namespace Dartz.Business
             return dataContext.Players.FirstOrDefault(x => x.ID == id);
         }
 
+        public Player GetPlayerWithFriends(int id)
+        {
+            return dataContext.Players.Include(x=>x.Friends).FirstOrDefault(x => x.ID == id);
+        }
+
         public IEnumerable<Player> GetAllPlayers()
         {
             return dataContext.Players.ToList();
