@@ -67,10 +67,10 @@ function listenToLobby(
     }
   };
 
-  onValue(lobbyRef, callback);
+  const unsubCallback = onValue(lobbyRef, callback);
 
   // return an unsubscribe function
-  return () => off(lobbyRef, "value", callback);
+  return () => unsubCallback;
 }
 
 function setUserConnected(

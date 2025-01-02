@@ -9,12 +9,16 @@ import { handleUserLogin } from "@/app/services/userService";
 export const UserContext = React.createContext<{
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  inLobby: boolean;
+  setInLobby: React.Dispatch<React.SetStateAction<boolean>>;
 } | null>(null);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [inLobby, setInLobby] = useState<boolean>(false);
+
   const [loading, setLoading] = useState(true);
 
   const service = new PlayerService();
@@ -51,7 +55,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   }
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, inLobby, setInLobby }}>
       {children}
     </UserContext.Provider>
   );

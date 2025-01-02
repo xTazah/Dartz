@@ -10,7 +10,7 @@ import {
 import LobbyHandler from "@/app/handlers/lobbyHandler";
 import GameModeSwitch from "./gameModeSwitch";
 import { UserContext } from "../userProvider/userProvider";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Button, Checkbox } from "@nextui-org/react";
 import DropZone from "../DragDrop/dropzone";
 import UserComponent from "../friendList/User";
@@ -50,7 +50,7 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
     setLobby(updatedLobby);
   };
 
-  const { user } = React.useContext(UserContext)!;
+  const { user } = useContext(UserContext)!;
 
   const DragDropProperties: DropZoneProps = {
     dropzoneId: "lobby-dropzone",

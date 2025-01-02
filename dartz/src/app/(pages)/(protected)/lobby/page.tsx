@@ -21,10 +21,11 @@ export default function LobbyPage() {
     (mode: GameMode) => mode.key === String(paramMode ? paramMode : "")
   );
 
-  const { user } = React.useContext(UserContext)!;
+  const { user, setInLobby } = React.useContext(UserContext)!;
 
   const [lobby, setLobby] = useState<Lobby | null>(null);
 
+  let unsubscribe: any;
   useEffect(() => {
     if (!id && gameMode) {
       const newLobby = LobbyHandler.createLobby(user, gameMode);
@@ -34,11 +35,19 @@ export default function LobbyPage() {
       LobbyHandler.loadLobby(id).then((fetchedLobby) => {
         fetchedLobby = LobbyHandler.addPlayer(fetchedLobby, user);
         setLobby(fetchedLobby);
-        const unsubscribe = LobbyHandler.listenToLobby(id, setLobby);
-        return () => unsubscribe();
+        setInLobby(true);
+        unsubscribe = LobbyHandler.listenToLobby(id, setLobby);
       });
     }
   }, [id, paramMode]);
+
+  useEffect(() => {
+    //on unmount of component
+    return () => {
+      setInLobby(false);
+      unsubscribe && unsubscribe();
+    };
+  }, []);
 
   return (
     <>

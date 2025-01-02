@@ -22,16 +22,13 @@ export function handleUserLogin(user: User): void {
     const userRef = ref(database, `Users/${user?.id}`);
     get(userRef)
       .then((snapshot) => {
-        if (!snapshot.exists()) {
-          console.log("User doesnt exist in firebase");
+        if (!snapshot.val().user) {
           // create entry if it doesnt exist
           const newUser: FriendlistUser = {
             user: user,
             online: true,
-            openLobbyInvites: [],
-            openFriendRequests: [],
           };
-          set(userRef, newUser);
+          update(userRef, newUser);
         } else {
           // set online status
           update(userRef, { online: true });
@@ -46,15 +43,20 @@ export function handleUserLogin(user: User): void {
 
 export function setupUserCallbacks(
   userId: number,
-  onLobbyInvite: (lobbyInvites: LobbyInvite[]) => void,
-  onFriendRequest: (friendRequests: FriendRequest[]) => void
+  onLobbyInvite: (lobbyInvites: Record<string, LobbyInvite>) => void,
+  onFriendRequest: (friendRequests: Record<string, FriendRequest>) => void
 ): () => void {
   const lobbyInvitesRef = ref(database, `Users/${userId}/openLobbyInvites`);
   const friendRequestsRef = ref(database, `Users/${userId}/openFriendRequests`);
 
   const lobbyInviteCallback = (snapshot: any) => {
     if (snapshot.exists()) {
-      const invites: LobbyInvite[] = snapshot.val();
+      const invites = Object.fromEntries(
+        Object.entries(snapshot.val()).map(([key, value]) => [
+          key,
+          value as LobbyInvite,
+        ])
+      );
       onLobbyInvite(invites);
     }
   };
@@ -62,7 +64,12 @@ export function setupUserCallbacks(
 
   const friendRequestsCallback = (snapshot: any) => {
     if (snapshot.exists()) {
-      const requests: FriendRequest[] = snapshot.val();
+      const requests = Object.fromEntries(
+        Object.entries(snapshot.val()).map(([key, value]) => [
+          key,
+          value as FriendRequest,
+        ])
+      );
       onFriendRequest(requests);
     }
   };
@@ -116,4 +123,12 @@ export function inviteUserToLobby(
     .catch((error) => {
       console.error("Error checking invites:", error);
     });
+}
+
+export function clearLobbyInvite(lobbyKey: string, user: User): void {
+  const lobbyInviteRef = ref(
+    database,
+    `Users/${user!.id}/openLobbyInvites/${lobbyKey}`
+  );
+  set(lobbyInviteRef, null);
 }
