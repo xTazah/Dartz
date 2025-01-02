@@ -16,6 +16,8 @@ import DropZone from "../DragDrop/dropzone";
 import UserComponent from "../friendList/User";
 import { inviteUserToLobby } from "@/app/services/firebase/userService";
 import { toast } from "sonner";
+import { leaveLobby } from "@/app/services/firebase/lobbyService";
+import { useRouter } from "next/navigation";
 
 interface WaitingLobbyProps {
   lobby: Lobby;
@@ -29,6 +31,7 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
   const [sets, setSets] = useState(1);
   const [legs, setLegs] = useState(3);
 
+  const router = useRouter();
   const changeGameMode = (gameMode: GameMode) => {
     const updatedLobby = LobbyHandler.changeGameMode(lobby, gameMode);
     setLobby(updatedLobby);
@@ -48,6 +51,21 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
       updatedLobby = changeSetsAndLegs(updatedLobby)!;
 
     setLobby(updatedLobby);
+  };
+
+  const leave = () => {
+    let isSpectator = false;
+    let index = lobby.players.findIndex(
+      (player) => player.user?.id === user?.id
+    );
+    if (index === -1) {
+      index = lobby.spectators.findIndex(
+        (spectator) => spectator.user?.id === user?.id
+      );
+      isSpectator = true;
+    }
+    leaveLobby(lobby.id, index, isSpectator);
+    router.push("/");
   };
 
   const { user } = useContext(UserContext)!;
@@ -87,17 +105,19 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
           onDrop={DragDropProperties.onDrop}
         >
           <h2 className="text-lg mb-3 mt-4">Player</h2>
-          {lobby.players?.map((player) => (
-            <UserComponent
-              key={player.user?.id}
-              username={
-                (player.user?.username == undefined
-                  ? ""
-                  : player.user?.username) +
-                (player.user?.id == lobby.owner?.id ? " (Owner)" : "")
-              }
-            />
-          ))}
+          <div className="flex flex-col gap-4">
+            {lobby.players?.map((player) => (
+              <UserComponent
+                key={player.user?.id}
+                username={
+                  (player.user?.username == undefined
+                    ? ""
+                    : player.user?.username) +
+                  (player.user?.id == lobby.owner?.id ? " (Owner)" : "")
+                }
+              />
+            ))}
+          </div>
         </DropZone>
         <div>
           {isOwner && (
@@ -164,18 +184,18 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
       </div>
       <div className="flex flex-end gap-10">
         <Button
-          className="mt-4 w-full bg-[var(--secondary)]"
-          onClick={startGame}
-          color="secondary"
-        >
-          Leave Lobby
-        </Button>
-        <Button
           className="mt-4 w-full bg-[var(--primary)]"
           onClick={startGame}
           color="primary"
         >
           Start Game
+        </Button>
+        <Button
+          className="mt-4 w-full bg-[var(--secondary)]"
+          onClick={leave}
+          color="secondary"
+        >
+          Leave Lobby
         </Button>
       </div>
     </div>

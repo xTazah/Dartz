@@ -12,6 +12,7 @@ import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
 import { Tooltip } from "@nextui-org/react";
 import { toast } from "sonner";
 import WinnerScreen from "@/app/components/lobby/winnerScreen";
+import { setUserConnected } from "@/app/services/firebase/lobbyService";
 
 export default function LobbyPage() {
   const searchParams = useSearchParams();
@@ -45,6 +46,19 @@ export default function LobbyPage() {
     //on unmount of component
     return () => {
       setInLobby(false);
+      if (lobby) {
+        let isSpectator = false;
+        let index = lobby.players.findIndex(
+          (player) => player.user?.id === user?.id
+        );
+        if (index === -1) {
+          index = lobby.spectators.findIndex(
+            (spectator) => spectator.user?.id === user?.id
+          );
+          isSpectator = true;
+        }
+        setUserConnected(lobby!.id, index, isSpectator, false);
+      }
       unsubscribe && unsubscribe();
     };
   }, []);

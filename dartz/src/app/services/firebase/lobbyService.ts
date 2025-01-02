@@ -91,6 +91,16 @@ function setUserConnected(
   }
 }
 
+function leaveLobby(lobbyId: string, index: number, isSpectator: boolean) {
+  let playerRef;
+  if (!isSpectator) {
+    playerRef = ref(database, `Lobby_${lobbyId}/players/${index}`);
+  } else {
+    playerRef = ref(database, `Lobby_${lobbyId}/spectators/${index}`);
+  }
+  set(playerRef, null);
+}
+
 async function getLobbySnapshot(lobbyId: string): Promise<Lobby | null> {
   try {
     const lobbyRef = ref(database, `Lobby_${lobbyId}`);
@@ -142,4 +152,5 @@ export {
   setUserConnected,
   loadLobby,
   getLobbySnapshot,
+  leaveLobby,
 };

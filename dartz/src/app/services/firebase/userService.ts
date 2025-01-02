@@ -80,6 +80,8 @@ export function setupUserCallbacks(
         ])
       );
       onLobbyInvite(invites);
+    } else {
+      onLobbyInvite({});
     }
   };
   onValue(lobbyInvitesRef, lobbyInviteCallback);
@@ -93,6 +95,8 @@ export function setupUserCallbacks(
         ])
       );
       onFriendRequest(requests);
+    } else {
+      onFriendRequest({});
     }
   };
   onValue(friendRequestsRef, friendRequestsCallback);
@@ -159,7 +163,6 @@ export function sendFriendRequest(
       .getByUsername(recieverUsername)
       .then((response) => {
         const reciever: User = response.data;
-
         friendsService
           .getIsFriend(sender!.id, reciever!.id)
           .then(() => {
@@ -227,6 +230,7 @@ export function clearOpen(
   key: string,
   user: User
 ): void {
+  console.log(`Trying to clear: Users/${user!.id}/open${type}/${key}`);
   const reference = ref(database, `Users/${user!.id}/open${type}/${key}`);
   set(reference, null);
 }

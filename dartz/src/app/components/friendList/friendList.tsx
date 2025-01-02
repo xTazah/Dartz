@@ -61,25 +61,22 @@ export default function FriendList() {
 
   const [friends, setFriends] = useState<FriendlistUser[] | null>(null);
   const friendService = new FriendsService();
-  useEffect(() => {
+
+  const fetchFriends = () => {
     friendService
       .getFriends(user!.id)
       .then((response) => {
         const users: User[] = response.data;
 
         let friendlistUsers: FriendlistUser[] = [];
-
-        // cleanup
         const unsubscribeCallbacks: (() => void)[] = [];
 
-        // get online status
         users.forEach((user) => {
           const friend: FriendlistUser = {
             user: user,
             online: false,
           };
 
-          // listener for this users online status
           const unsubscribe = setupOnlineStatusListener(
             user!.id,
             (onlineStatus) => {
@@ -96,14 +93,11 @@ export default function FriendList() {
           );
 
           unsubscribeCallbacks.push(unsubscribe);
-
           friendlistUsers.push(friend);
         });
 
-        // set friends once at start
         setFriends(friendlistUsers);
 
-        // cleanup on dismount
         return () => {
           unsubscribeCallbacks.forEach((unsubscribe) => unsubscribe());
         };
@@ -111,6 +105,11 @@ export default function FriendList() {
       .catch((error) => {
         console.error("Error fetching friends:", error);
       });
+  };
+
+  useEffect(() => {
+    const cleanup = fetchFriends();
+    return cleanup;
   }, []);
 
   const [friendUsername, setFriendUsername] = useState("");
@@ -139,7 +138,10 @@ export default function FriendList() {
   const handleAcceptFriend = (key: string, userId2: number) => {
     clearOpen("FriendRequests", key, user);
     const friendService = new FriendsService();
-    friendService.addFriend(user!.id, userId2);
+    friendService
+      .addFriend(user!.id, userId2)
+      .then(() => fetchFriends())
+      .catch(() => toast("You are already friends with this user"));
   };
 
   const handleDeclineFriend = (key: string) => {
@@ -179,7 +181,7 @@ export default function FriendList() {
             <DropdownMenuContent
               align="end"
               sideOffset={8}
-              className="w-auto p-4 bg-[var(--component-background)] rounded-md shadow-lg outline outline-[var(--component-background-hover)]"
+              className="w-auto min-w-52 p-4 bg-[var(--component-background)] rounded-md shadow-lg outline outline-[var(--component-background-hover)]"
             >
               <DropdownMenuLabel className="mb-2 text-lg font-medium">
                 Notifications
@@ -278,9 +280,9 @@ export default function FriendList() {
               )}
 
               {numNotifications <= 0 && (
-                <div>
+                <div className="flex items-center">
                   <BellSlashIcon className="h-5 w-5" />
-                  <p className="text-sm">No new Notifications</p>
+                  <p className="ml-4 text-sm">No new Notifications</p>
                 </div>
               )}
             </DropdownMenuContent>
@@ -347,15 +349,22 @@ export default function FriendList() {
         </div>
 
         {friends &&
-          friends.map((friend) => (
-            <Draggable
-              id={friend.user!.id}
-              data={{ type: DragDataType.FRIEND, customData: friend.user }}
-              key={friend.user?.id}
-            >
-              <Friend user={friend} />
-            </Draggable>
-          ))}
+          friends
+            .sort((a: FriendlistUser, b: FriendlistUser) => {
+              if (a.online && !b.online) return -1;
+              if (!a.online && b.online) return 1;
+
+              return a.user!.username.localeCompare(b.user!.username);
+            })
+            .map((friend) => (
+              <Draggable
+                id={friend.user!.id}
+                data={{ type: DragDataType.FRIEND, customData: friend.user }}
+                key={friend.user?.id}
+              >
+                <Friend user={friend} />
+              </Draggable>
+            ))}
       </div>
     </div>
   );

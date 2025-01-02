@@ -1,8 +1,14 @@
 import React from "react";
 import styles from "../../styles/friendList.module.scss";
-import { UserIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
+import {
+  UserIcon,
+  EllipsisHorizontalIcon,
+  PowerIcon,
+} from "@heroicons/react/24/solid";
 import { FriendlistUser } from "@/app/utils/types";
 import UserComponent from "./User";
+import { DotIcon } from "lucide-react";
+import { Tooltip } from "@nextui-org/react";
 
 interface FriendProps {
   user: FriendlistUser;
@@ -10,13 +16,22 @@ interface FriendProps {
 
 export default function Friend({ user }: FriendProps) {
   return (
-    <div className={`${styles.friendProfile}`}>
-      <UserComponent username={user.user!.username} />
+    <div className="flex items-center justify-between mb-5 text-sm">
+      <div className="flex items-center gap-1">
+        <UserComponent username={user.user!.username} />
+        <Tooltip
+          className="text-black"
+          showArrow
+          content={user.online ? "online" : "offline"}
+        >
+          <DotIcon
+            viewBox="6 6 12 12"
+            color={user.online ? "green" : "red"}
+          ></DotIcon>
+        </Tooltip>
+      </div>
 
-      <EllipsisHorizontalIcon
-        className={`size-5 ${styles.icon}`}
-        color="#6F7172"
-      />
+      <EllipsisHorizontalIcon className="w-5 h-5 text-gray-500" />
     </div>
   );
 }
