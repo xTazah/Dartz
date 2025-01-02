@@ -105,3 +105,9 @@ export interface DraggableProps {
   children: ReactNode;
   className?: string; // allow styling
 }
+
+export interface ApiResponse<T> {
+  data: any;
+  status: number;
+  error?: string;
+}
