@@ -24,8 +24,8 @@ namespace Dartz_API.Controllers
             return Ok(_friendsService.GetFriends(id));
         }
 
-        [HttpPost("")]
-        public ActionResult AddFriend([FromForm] Relationship rs)
+        [HttpPost("add")]
+        public ActionResult AddFriend([FromBody] Relationship rs)
         {
             var isFriend = _friendsService.CheckFriendship(rs.userId1, rs.userId2);
             if (!isFriend)
@@ -39,7 +39,7 @@ namespace Dartz_API.Controllers
         }
 
         [HttpPost("isFriend")]
-        public ActionResult IsFriend([FromForm] Relationship rs)
+        public ActionResult IsFriend([FromBody] Relationship rs)
         {    
             var isFriend = _friendsService.CheckFriendship(rs.userId1, rs.userId2);
             if (!isFriend)
@@ -48,8 +48,8 @@ namespace Dartz_API.Controllers
             return StatusCode(StatusCodes.Status406NotAcceptable, isFriend);
         }
 
-        [HttpDelete("")]
-        public ActionResult DeleteFriend([FromForm] Relationship rs)
+        [HttpDelete("remove")]
+        public ActionResult DeleteFriend([FromBody] Relationship rs)
         {
 
             var isFriend = _friendsService.CheckFriendship(rs.userId1, rs.userId2);

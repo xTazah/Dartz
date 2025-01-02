@@ -29,13 +29,23 @@ namespace Dartz_API.Controllers
         [HttpGet("username/{username}")]
         public ActionResult<Player> GetByUsername(string username)
         {
-            return Ok(_playerService.GetPlayerByUsername(username));
+            var result = _playerService.GetPlayerByUsername(username);
+            if(result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
         public ActionResult<Player> GetById(int id)
         {
-            return Ok(_playerService.GetPlayerById(id));
+            var result = _playerService.GetPlayerById(id);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
         }
 
         [HttpPost("signup")]
