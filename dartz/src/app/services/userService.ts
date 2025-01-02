@@ -6,6 +6,7 @@ import {
   get,
   onDisconnect,
   off,
+  push,
 } from "firebase/database";
 import { database } from "./firebaseConfig";
 import {
@@ -14,6 +15,7 @@ import {
   LobbyInvite,
   User,
 } from "../utils/types";
+import { toast } from "sonner";
 
 export function handleUserLogin(user: User): void {
   try {
@@ -71,4 +73,47 @@ export function setupUserCallbacks(
     off(lobbyInvitesRef, "value", lobbyInviteCallback);
     off(friendRequestsRef, "value", friendRequestsCallback);
   };
+}
+
+export function inviteUserToLobby(
+  lobbyId: string,
+  sender: User,
+  invited: User
+): void {
+  const lobbyInvitesRef = ref(
+    database,
+    `Users/${invited?.id}/openLobbyInvites`
+  );
+
+  const lobbyInvite: LobbyInvite = {
+    lobbyId: lobbyId,
+    sender: sender,
+  };
+
+  // check for existing invites to this lobby
+  get(lobbyInvitesRef)
+    .then((snapshot) => {
+      if (snapshot.exists()) {
+        const invites = snapshot.val();
+        const inviteExists = Object.values(
+          invites as Record<string, LobbyInvite>
+        ).some((invite) => invite.lobbyId === lobbyId);
+
+        if (inviteExists) {
+          toast(`${invited?.username} has already been invited to this lobby.`);
+          return;
+        }
+      }
+      // No existing invites, add the new invite
+      push(lobbyInvitesRef, lobbyInvite)
+        .then(() => {
+          toast("Successfully invited " + invited?.username + " to the lobby.");
+        })
+        .catch((error) => {
+          console.error("Error adding invite:", error);
+        });
+    })
+    .catch((error) => {
+      console.error("Error checking invites:", error);
+    });
 }

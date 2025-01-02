@@ -1,13 +1,6 @@
-import React, { ReactNode } from "react";
+import React from "react";
 import { useDraggable } from "@dnd-kit/core";
-import { DragDataType } from "@/app/utils/types";
-
-interface DraggableProps {
-  id: number;
-  data: { type: DragDataType; [key: string]: any };
-  children: ReactNode;
-  className?: string; // allow styling
-}
+import { DraggableProps } from "@/app/utils/types";
 
 const Draggable: React.FC<DraggableProps> = ({
   id,

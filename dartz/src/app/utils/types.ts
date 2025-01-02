@@ -1,5 +1,6 @@
 import { DragEndEvent } from "@dnd-kit/core";
 import { GAME_MODES } from "./constants";
+import { ReactNode } from "react";
 
 //user that is received by an api call
 export type User = {
@@ -72,7 +73,7 @@ export interface GameLogic {
 
 export interface LobbyInvite {
   lobbyId: string;
-  username: string;
+  sender: User;
 }
 
 export interface FriendRequest {
@@ -92,8 +93,15 @@ export enum DragDataType {
   OTHER = "OTHER",
 }
 
-export interface DragDropProps {
+export interface DropZoneProps {
   dropzoneId: string;
   allowedDataTypes: DragDataType[];
   onDrop: (event: DragEndEvent) => void;
+}
+
+export interface DraggableProps {
+  id: number;
+  data: { type: DragDataType; customData?: any };
+  children: ReactNode;
+  className?: string; // allow styling
 }

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useDndMonitor, useDroppable } from "@dnd-kit/core";
-import { DragDataType, DragDropProps } from "@/app/utils/types";
+import { DragDataType, DropZoneProps } from "@/app/utils/types";
 import styles from "@/app/styles/dropzone.module.scss";
 
-interface DropZoneProps extends DragDropProps {
+interface DropZoneComponentProps extends DropZoneProps {
   children: React.ReactNode;
 }
 
@@ -12,7 +12,7 @@ const DropZone = ({
   allowedDataTypes: dragDataTypes,
   onDrop,
   children,
-}: DropZoneProps) => {
+}: DropZoneComponentProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: dropzoneId,
   });

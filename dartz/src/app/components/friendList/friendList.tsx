@@ -24,6 +24,7 @@ import {
   FriendlistUser,
   FriendRequest,
   LobbyInvite,
+  User,
 } from "@/app/utils/types";
 import { setupUserCallbacks } from "@/app/services/userService";
 import {
@@ -40,7 +41,10 @@ import Draggable from "../DragDrop/draggable";
 
 export default function FriendList() {
   const friends: FriendlistUser[] = [
-    { online: true, user: { id: 69, initial: "X", username: "xTazah" } },
+    {
+      online: true,
+      user: { id: 69, initial: "X", username: "xTazah" } as User,
+    },
   ];
 
   const context = useContext(UserContext);
@@ -127,7 +131,7 @@ export default function FriendList() {
                       </div>
                       <div className="flex-1 space-y-1">
                         <p className="text-sm font-medium">
-                          Lobby Invite from: {invite.username}
+                          Lobby Invite from: {invite.sender?.username}
                         </p>
                       </div>
                     </DropdownMenuItem>
@@ -153,7 +157,7 @@ export default function FriendList() {
         {friends.map((friend) => (
           <Draggable
             id={friend.user!.id}
-            data={{ type: DragDataType.FRIEND, ["test"]: "123" }}
+            data={{ type: DragDataType.FRIEND, customData: friend.user }}
             key={friend.user?.id}
           >
             <Friend user={friend} />

@@ -2,9 +2,8 @@
 
 import {
   DragDataType,
-  DragDropProps,
+  DropZoneProps,
   GameMode,
-  GameStatus,
   Lobby,
   User,
 } from "@/app/utils/types";
@@ -13,22 +12,15 @@ import GameModeSwitch from "./gameModeSwitch";
 import { UserContext } from "../userProvider/userProvider";
 import React, { useEffect, useState } from "react";
 import { Button, Checkbox } from "@nextui-org/react";
-import Friend from "../friendList/friend";
 import DropZone from "../DragDrop/dropzone";
 import UserComponent from "../friendList/User";
+import { inviteUserToLobby } from "@/app/services/userService";
+import { toast } from "sonner";
 
 interface WaitingLobbyProps {
   lobby: Lobby;
   setLobby: (updatedLobby: Lobby) => void;
 }
-
-const DragDropProperties: DragDropProps = {
-  dropzoneId: "lobby-dropzone",
-  allowedDataTypes: [DragDataType.FRIEND],
-  onDrop: (event: any): void => {
-    console.log("Valid drop with event:", event);
-  },
-};
 
 const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
   const [isSetsSelected, setIsSetsSelected] = useState(false);
@@ -59,6 +51,20 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
   };
 
   const { user } = React.useContext(UserContext)!;
+
+  const DragDropProperties: DropZoneProps = {
+    dropzoneId: "lobby-dropzone",
+    allowedDataTypes: [DragDataType.FRIEND],
+    onDrop: (event: any): void => {
+      const invited = event.active.data.current.customData as User;
+
+      if (!invited) {
+        toast.error("Invalid drop data. Please invite player manually!");
+        return;
+      }
+      inviteUserToLobby(lobby.id, user, invited);
+    },
+  };
 
   let isOwner = user?.id === lobby.owner?.id;
   useEffect(() => {
