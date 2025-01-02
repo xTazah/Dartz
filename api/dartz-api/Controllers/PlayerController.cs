@@ -97,7 +97,8 @@ namespace Dartz_API.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.MaxValue
+                Expires = DateTimeOffset.MaxValue,
+                Path = "/"
             });
 
             return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username});
@@ -136,7 +137,13 @@ namespace Dartz_API.Controllers
             if (!string.IsNullOrEmpty(sessionId))
             {
                 SessionMiddleware.RemoveSession(sessionId); 
-                Response.Cookies.Delete("SessionId");
+                Response.Cookies.Delete("SessionId", new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Path = "/",
+                });
             }
             return Ok();
         }

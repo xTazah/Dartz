@@ -19,7 +19,7 @@ class PlayerService extends ApiService {
   }
 
   async logout<T>(): Promise<ApiResponse<T>> {
-    return this.post("logout", undefined, false);
+    return this.post("logout", undefined, true);
   }
 
   async signup<T>(payload: T): Promise<ApiResponse<T>> {
