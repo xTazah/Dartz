@@ -177,7 +177,11 @@ export default function FriendList() {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative focus-visible:ring-inset ring-transparent focus-visible:ring-offset-0"
+              >
                 <BellIcon className="h-5 w-5" />
                 {numNotifications > 0 && (
                   <Badge className="absolute -top-2 -right-2 rounded-full bg-red-500 text-white px-2 py-0.5 text-xs font-medium">
@@ -189,7 +193,7 @@ export default function FriendList() {
             <DropdownMenuContent
               align="end"
               sideOffset={8}
-              className="w-auto min-w-52 p-4 bg-[var(--component-background)] rounded-md shadow-lg outline outline-[var(--component-background-hover)]"
+              className={` w-auto min-w-52 p-4 rounded-md shadow-lg ${dropdownStyles.dropdownBackground}`}
             >
               <DropdownMenuLabel className="mb-2 text-lg font-medium">
                 Notifications
@@ -212,23 +216,22 @@ export default function FriendList() {
                           <p className="text-sm font-medium">
                             Friend Request from {friendRequest.username}
                           </p>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 justify-end">
+                            <NextUiButton
+                              isIconOnly
+                              onClick={() => handleDeclineFriend(key)}
+                              className=" min-w-6 h-6 w-6 flex items-center gap-1 text-sm text-white rounded-full bg-red-500"
+                            >
+                              <XMarkIcon className="size-4" />
+                            </NextUiButton>
                             <NextUiButton
                               onClick={() =>
                                 handleAcceptFriend(key, friendRequest.userId)
                               }
                               isIconOnly
-                              isDisabled={inLobby}
-                              className={`flex items-center gap-1 text-sm text-white rounded-full bg-[var(--primary)]`}
+                              className={`min-w-6 h-6 w-6 flex items-center gap-1 text-sm text-white rounded-full bg-[var(--primary)]`}
                             >
-                              <CheckIcon className="h-5 w-5" />
-                            </NextUiButton>
-                            <NextUiButton
-                              isIconOnly
-                              onClick={() => handleDeclineFriend(key)}
-                              className="flex items-center gap-1 text-sm text-white rounded-full bg-red-500"
-                            >
-                              <XMarkIcon className="size-5" />
+                              <CheckIcon className="size-4" />
                             </NextUiButton>
                           </div>
                         </div>
@@ -236,7 +239,7 @@ export default function FriendList() {
                     )
                   )}
                   <DropdownMenuSeparator
-                    className={`${dropdownStyles.dropdownSeperator} my-2`}
+                    className={`${dropdownStyles.dropdownSeperator} !my-2`}
                   />
                 </DropdownMenuGroup>
               )}
@@ -252,7 +255,14 @@ export default function FriendList() {
                         <p className="text-sm font-medium">
                           Lobby Invite from: {invite.sender?.username}
                         </p>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 justify-end">
+                          <NextUiButton
+                            isIconOnly
+                            onClick={() => handleDeclineInvite(key)}
+                            className="min-w-6 h-6 w-6 flex items-center gap-1 text-sm text-white rounded-full bg-red-500"
+                          >
+                            <XMarkIcon className="size-4" />
+                          </NextUiButton>
                           <Tooltip
                             content={"You are already in a lobby"}
                             className="text-black"
@@ -267,19 +277,12 @@ export default function FriendList() {
                                 }
                                 isIconOnly
                                 isDisabled={inLobby}
-                                className={`flex items-center gap-1 text-sm text-white rounded-full bg-[var(--primary)]`}
+                                className={`min-w-6 h-6 w-6 flex items-center gap-1 text-sm text-white rounded-full bg-[var(--primary)]`}
                               >
-                                <CheckIcon className="h-5 w-5" />
+                                <CheckIcon className="size-4" />
                               </NextUiButton>
                             </span>
                           </Tooltip>
-                          <NextUiButton
-                            isIconOnly
-                            onClick={() => handleDeclineInvite(key)}
-                            className="flex items-center gap-1 text-sm text-white rounded-full bg-red-500"
-                          >
-                            <XMarkIcon className="size-5" />
-                          </NextUiButton>
                         </div>
                       </div>
                     </div>

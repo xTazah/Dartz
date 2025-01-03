@@ -23,6 +23,7 @@ export default function Friend({ user }: FriendProps) {
           className="text-black"
           showArrow
           content={user.online ? "online" : "offline"}
+          closeDelay={0}
         >
           <DotIcon
             viewBox="6 6 12 12"
