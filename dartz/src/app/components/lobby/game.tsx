@@ -35,12 +35,18 @@ const Game = ({ lobby, setLobby }: GameProps) => {
   const [multiplier2, setMultiplier2] = useState<Multiplier>(Multiplier.Single);
   const [multiplier3, setMultiplier3] = useState<Multiplier>(Multiplier.Single);
 
+  const [isSubmitDisabled, setIsSubmitDisabled] = useState<boolean>(true);
+
   const currentPlayer = lobby.players[lobby.currentPlayerIndex];
 
   const handleSubmitScore = () => {
     if (playerScore1 === "" || playerScore2 === "" || playerScore3 === "")
       return;
-    else if (playerScore1 > 20 || playerScore2 > 20 || playerScore3 > 20)
+    else if (
+      (playerScore1 > 20 && playerScore1 != 25) ||
+      (playerScore2 > 20 && playerScore2 != 25) ||
+      (playerScore3 > 20 && playerScore3 != 25)
+    )
       return;
     else if (playerScore1 < 0 || playerScore2 < 0 || playerScore3 < 0) return;
 
@@ -79,6 +85,26 @@ const Game = ({ lobby, setLobby }: GameProps) => {
         s2 * multiplier2 -
         s3 * multiplier3
     );
+    if (playerScore1 == 25 && multiplier1 == Multiplier.Tripple) {
+      setMultiplier1(Multiplier.Single);
+    }
+    if (playerScore2 == 25 && multiplier2 == Multiplier.Tripple) {
+      setMultiplier2(Multiplier.Single);
+    }
+    if (playerScore3 == 25 && multiplier3 == Multiplier.Tripple) {
+      setMultiplier3(Multiplier.Single);
+    }
+    setIsSubmitDisabled(false);
+    if (playerScore1 === "" || playerScore2 === "" || playerScore3 === "")
+      setIsSubmitDisabled(true);
+    else if (
+      (playerScore1 > 20 && playerScore1 != 25) ||
+      (playerScore2 > 20 && playerScore2 != 25) ||
+      (playerScore3 > 20 && playerScore3 != 25)
+    )
+      setIsSubmitDisabled(true);
+    else if (playerScore1 < 0 || playerScore2 < 0 || playerScore3 < 0)
+      setIsSubmitDisabled(true);
   }, [
     playerScore1,
     playerScore2,
@@ -110,7 +136,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
             <div className={styles.score}>
               {user?.id === currentPlayer.user?.id &&
               currentPlayer.user?.id === player.user?.id
-                ? (previewScore < 2 || previewScore > 501) && previewScore != 0 
+                ? (previewScore < 2 || previewScore > 501) && previewScore != 0
                   ? "BUST"
                   : previewScore
                 : player?.score}
@@ -135,6 +161,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
                     <MultiplierTabs
                       selectedMultiplier={multiplier1}
                       setSelectedMultiplier={setMultiplier1}
+                      isDisabled={playerScore1 == 25}
                     />
                   </div>
                   <div className="flex gap-2 items-center">
@@ -149,6 +176,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
                     <MultiplierTabs
                       selectedMultiplier={multiplier2}
                       setSelectedMultiplier={setMultiplier2}
+                      isDisabled={playerScore2 == 25}
                     />
                   </div>
                   <div className="flex gap-2 items-center">
@@ -163,11 +191,13 @@ const Game = ({ lobby, setLobby }: GameProps) => {
                     <MultiplierTabs
                       selectedMultiplier={multiplier3}
                       setSelectedMultiplier={setMultiplier3}
+                      isDisabled={playerScore3 == 25}
                     />
                   </div>
                   <Button
                     className="mt-4 w-full bg-[var(--primary)]"
                     onClick={handleSubmitScore}
+                    isDisabled={isSubmitDisabled}
                     color="primary"
                   >
                     Submit Score
