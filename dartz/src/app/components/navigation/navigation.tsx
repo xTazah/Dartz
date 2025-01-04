@@ -51,7 +51,19 @@ export default function Navigation(props: any) {
         onClick={() => handleNavigation(1, "/")}
         style={{
           display: props.collapsed ? "none" : "block",
-        }} /*ToDo: Add small logo that has only the feather of the dart to be collapsible too*/
+        }}
+      />
+
+      <Image
+        className="cursor-pointer mt-3 mb-8"
+        src="/images/DartzIconTransparent.png"
+        width={40}
+        height={100}
+        alt="Logo"
+        onClick={() => handleNavigation(1, "/")}
+        style={{
+          display: props.collapsed ? "block" : "none",
+        }}
       />
 
       <button
