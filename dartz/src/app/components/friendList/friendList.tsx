@@ -370,7 +370,7 @@ export default function FriendList() {
                 data={{ type: DragDataType.FRIEND, customData: friend.user }}
                 key={friend.user?.id}
               >
-                <Friend user={friend} />
+                <Friend friendlistUser={friend} />
               </Draggable>
             ))}
       </div>
