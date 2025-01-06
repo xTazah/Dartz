@@ -184,18 +184,18 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
       </div>
       <div className="flex flex-end gap-10">
         <Button
-          className="mt-4 w-full bg-[var(--primary)]"
-          onClick={startGame}
-          color="primary"
-        >
-          Start Game
-        </Button>
-        <Button
           className="mt-4 w-full bg-[var(--secondary)]"
           onClick={leave}
           color="secondary"
         >
           Leave Lobby
+        </Button>
+        <Button
+          className="mt-4 w-full bg-[var(--primary)]"
+          onClick={startGame}
+          color="primary"
+        >
+          Start Game
         </Button>
       </div>
     </div>

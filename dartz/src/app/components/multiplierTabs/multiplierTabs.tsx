@@ -33,6 +33,7 @@ export default function MultiplierTabs(props: any) {
     />
     <Tab
         key={Multiplier.Tripple}
+        isDisabled={props.isDisabled}
         title={
           <div className="flex items-center space-x-2">
             <span>3x</span>
