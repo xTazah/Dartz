@@ -15,7 +15,7 @@ import {
   calculateLastScore,
 } from "@/app/handlers/statisticsHandler";
 
-import { SignalSlashIcon } from "@heroicons/react/24/solid";
+import { SignalSlashIcon, ArrowUturnLeftIcon } from "@heroicons/react/24/solid";
 
 interface GameProps {
   lobby: Lobby;
@@ -114,6 +114,72 @@ const Game = ({ lobby, setLobby }: GameProps) => {
     multiplier3,
   ]);
 
+  const handleUndo = () => {
+    let updatedLobby = LobbyHandler.handleUndo(lobby);
+    let length =
+      updatedLobby.players[updatedLobby.currentPlayerIndex].throws.length - 1;
+    setPlayerScore1(
+      updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
+        .score1
+    );
+    setPlayerScore2(
+      updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
+        .score2
+    );
+    setPlayerScore3(
+      updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
+        .score3
+    );
+    setMultiplier1(
+      updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
+        .multiplier1
+    );
+    setMultiplier2(
+      updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
+        .multiplier2
+    );
+    setMultiplier3(
+      updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
+        .multiplier3
+    );
+    updatedLobby = LobbyHandler.hanldeRemoveLastThrows(lobby);
+    setLobby(updatedLobby);
+  };
+
+  const handleMultChange1 = (mult: Multiplier) => {
+    console.log("Mult1 Change");
+    setMultiplier1(mult);
+  };
+
+  const handleMultChange2 = (mult: Multiplier) => {
+    console.log("Mult2 Change");
+    console.log(mult);
+    setMultiplier2(mult);
+  };
+
+  const handleMultChange3 = (mult: Multiplier) => {
+    console.log("Mult3 Change");
+    setMultiplier3(mult);
+  };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    action: (mult: Multiplier) => void
+  ) => {
+    //e.preventDefault();
+    if (e.key === "/") {
+      console.log("Key" + e.key);
+      action(Multiplier.Single);
+    } else if (e.key === "*") {
+      console.log("Key" + e.key);
+      action(Multiplier.Double);
+    } else if (e.key === "-") {
+      console.log("Key" + e.key);
+      action(Multiplier.Tripple);
+    } else if (e.key === "Enter") {
+    }
+  };
+
   return (
     <div className="p-4 bg-[(var(--background))] text-white rounded-lg">
       <h1 className="text-2xl font-bold mb-4"></h1>
@@ -145,15 +211,21 @@ const Game = ({ lobby, setLobby }: GameProps) => {
               <h2 className="text-xl text-center mb-3">
                 {player.user?.username}
               </h2>
+              <ArrowUturnLeftIcon
+                    onClick={handleUndo}
+                    className="size-5 cursor-pointer"
+                  ></ArrowUturnLeftIcon>
               {user?.id === currentPlayer.user?.id &&
               currentPlayer.user?.id === player.user?.id ? (
                 <div className="flex flex-col gap-2 items-center">
+
                   <h3 className="mb-2">Enter your score:</h3>
                   <div className="flex gap-2 items-center">
                     <input
                       type="number"
                       className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
                       value={playerScore1}
+                      onKeyDown={(e) => handleKeyDown(e, handleMultChange1)}
                       onChange={(e) => {
                         setPlayerScore1(Number(e.target.value));
                       }}
@@ -172,6 +244,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
                       onChange={(e) => {
                         setPlayerScore2(Number(e.target.value));
                       }}
+                      onKeyDown={(e) => handleKeyDown(e, handleMultChange2)}
                     />
                     <MultiplierTabs
                       selectedMultiplier={multiplier2}
@@ -187,6 +260,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
                       onChange={(e) => {
                         setPlayerScore3(Number(e.target.value));
                       }}
+                      onKeyDown={(e) => handleKeyDown(e, handleMultChange3)}
                     />
                     <MultiplierTabs
                       selectedMultiplier={multiplier3}

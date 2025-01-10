@@ -69,6 +69,10 @@ export interface GameLogic {
    * Process a player's turn and update the lobby state.
    */
   processTurn(lobby: Lobby, player: Player, score: Throw): Lobby;
+
+  undoTurn(lobby: Lobby): Lobby;
+
+  removeLastThrows(lobby: Lobby): Lobby;
 }
 
 export interface LobbyInvite {

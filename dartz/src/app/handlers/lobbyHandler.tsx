@@ -167,6 +167,30 @@ class LobbyHandler {
     return updatedLobby;
   }
 
+  static handleUndo(lobby: Lobby): Lobby {
+    const gameModeLogic = GAME_MODES.find(
+      (gm) => gm.key === lobby.gameMode.key
+    )?.logic;
+    if (!gameModeLogic) throw new Error("Game mode logic not found!");
+
+    const updatedLobby = gameModeLogic.undoTurn(lobby);
+
+    return updatedLobby;
+  }
+
+  static hanldeRemoveLastThrows(lobby: Lobby): Lobby {
+    const gameModeLogic = GAME_MODES.find(
+      (gm) => gm.key === lobby.gameMode.key
+    )?.logic;
+    if (!gameModeLogic) throw new Error("Game mode logic not found!");
+
+    const updatedLobby = gameModeLogic.removeLastThrows(lobby);
+
+    syncLobby(updatedLobby.id, updatedLobby);
+
+    return updatedLobby;
+  }
+
   static changeGameMode(lobby: Lobby, gameMode: GameMode): Lobby {
     const updatedLobby = { ...lobby, gameMode };
     syncLobby(updatedLobby.id, updatedLobby);

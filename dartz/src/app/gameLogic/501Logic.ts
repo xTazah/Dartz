@@ -60,6 +60,33 @@ export const fiveHundredOneLogic: GameLogic = {
 
     return updatedLobby;
   },
+
+  undoTurn(lobby: Lobby) {
+    const updatedLobby = { ...lobby };
+    updatedLobby.currentPlayerIndex =
+      (updatedLobby.currentPlayerIndex - 1) % updatedLobby.players.length;
+    return updatedLobby;
+  },
+
+  removeLastThrows(lobby: Lobby) {
+    const updatedLobby = { ...lobby };
+    if (
+      updatedLobby.players[updatedLobby.currentPlayerIndex].throws.length >= 1
+    ) {
+      let throws= updatedLobby.players[updatedLobby.currentPlayerIndex].throws[updatedLobby.players[updatedLobby.currentPlayerIndex].throws.length-1];
+      let score =
+        throws.score1 * throws.multiplier1 +
+        throws.score2 * throws.multiplier2 +
+        throws.score3 * throws.multiplier3;
+
+      updatedLobby.players[updatedLobby.currentPlayerIndex].throws.pop();
+    
+      updatedLobby.players[updatedLobby.currentPlayerIndex].score =
+        updatedLobby.players[updatedLobby.currentPlayerIndex].score + score;
+    }
+
+    return updatedLobby;
+  },
 };
 
 // helper function
