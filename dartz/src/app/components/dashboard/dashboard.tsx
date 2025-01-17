@@ -54,6 +54,7 @@ export default function Dashboard() {
         setIsLobbyLoading(false);
       } else router.push(`/lobby?id=${lobbyKey}`);
     }
+    setIsLobbyLoading(false);
   };
 
   return (
@@ -107,7 +108,7 @@ export default function Dashboard() {
           </div>
           <Button
             className="mt-4 w-full bg-[var(--primary)]"
-            onClick={handleLobbyJoin}
+            onPress={handleLobbyJoin}
             disabled={lobbyKey === ""}
             isLoading={isLobbyLoading}
             color="primary"

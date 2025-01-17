@@ -88,7 +88,7 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
       <div className="flex gap-4">
         <Button
           className="mt-4 w-full bg-[var(--secondary)]"
-          onClick={() => {
+          onPress={() => {
             router.push("/");
           }}
           color="secondary"
@@ -98,7 +98,7 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
         {!isFinished && (
           <Button
             className="mt-4 w-full bg-[var(--primary)]"
-            onClick={handlePlayAgain}
+            onPress={handlePlayAgain}
             color="primary"
           >
             Play Again

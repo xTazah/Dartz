@@ -118,7 +118,7 @@ export const LoginPage = () => {
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
             <Button
               className="mt-4 w-full bg-[var(--primary)]"
-              onClick={handleLogin}
+              onPress={handleLogin}
               isLoading={isLoginLoading}
               color="primary"
             >
@@ -155,7 +155,7 @@ export const LoginPage = () => {
             )}
             <Button
               className="mt-4 w-full bg-[var(--primary)]"
-              onClick={handleSignup}
+              onPress={handleSignup}
               isLoading={isSignupLoading}
               color="primary"
             >

@@ -11,9 +11,10 @@ import {
   PlayIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  Bars3Icon
+  Bars3Icon,
 } from "@heroicons/react/24/solid";
 import { UnderConstruction } from "../underConstruction";
+import { GAME_MODES } from "@/app/utils/constants";
 
 export default function PhoneNavigation(props: any) {
   const router = useRouter();
@@ -27,21 +28,27 @@ export default function PhoneNavigation(props: any) {
 
   return (
     <>
-    <div className="shadow-lg lg:hidden fixed w-full p-3 h-15 rounded-b-xl bg-[var(--component-background)] top-0">
-      <div className="flex justify-between items-center">
-      <Image
-        className="cursor-pointer"
-        src="/images/DartsLogo.png"
-        width={80}
-        height={100}
-        alt="Logo"
-        onClick={() => handleNavigation(1, "/")}
-        style={{
-          display: props.collapsed ? "none" : "block",
-        }}
-      />
-    <Bars3Icon onClick={()=>{props.setFriendListCollapsed(!props.friendListCollapsed)}} className="size-6" color="#6F7172" />
-    </div>
+      <div className="shadow-lg lg:hidden fixed w-full p-3 h-15 rounded-b-xl bg-[var(--component-background)] top-0">
+        <div className="flex justify-between items-center">
+          <Image
+            className="cursor-pointer"
+            src="/images/DartsLogo.png"
+            width={80}
+            height={100}
+            alt="Logo"
+            onClick={() => handleNavigation(1, "/")}
+            style={{
+              display: props.collapsed ? "none" : "block",
+            }}
+          />
+          <Bars3Icon
+            onClick={() => {
+              props.setFriendListCollapsed(!props.friendListCollapsed);
+            }}
+            className="size-6"
+            color="#6F7172"
+          />
+        </div>
       </div>
       <div className="shadow-lg lg:hidden fixed w-full p-3 h-15 rounded-t-xl bg-[var(--component-background)] bottom-0">
         <div className="grid grid-cols-4 gap-8 ">
@@ -74,7 +81,7 @@ export default function PhoneNavigation(props: any) {
               className={`${styles.phoneNavigationButton} ${
                 selected === 3 ? styles.selected : ""
               }`}
-              onClick={() => handleNavigation(3, "/friend-list")}
+              onClick={() => handleNavigation(3, "/profile")}
             >
               <UsersIcon className="size-5" color="#6F7172" />
             </button>
@@ -84,7 +91,7 @@ export default function PhoneNavigation(props: any) {
               className={`${styles.phoneNavigationButton} ${
                 selected === 4 ? styles.selected : ""
               }`}
-              onClick={() => handleNavigation(4, "/quickplay")}
+              onClick={() => handleNavigation(4, `/lobby?mode=${GAME_MODES[1].key}`)}
             >
               <PlayIcon className="size-5" color="#6F7172" />
             </button>
