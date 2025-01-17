@@ -53,7 +53,7 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
       )}
       <p>Sets in Total: {lobby.sets}</p>
       <p>Legs in Total: {lobby.legs}</p>
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
         {lobby.players?.map((player) => (
           <div className="relative" key={player.user?.id}>
             <div className={styles.player + ""}>
