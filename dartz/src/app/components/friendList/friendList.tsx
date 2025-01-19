@@ -169,7 +169,9 @@ export default function FriendList() {
     Object.values(lobbyInvites).length + Object.values(friendRequests).length;
 
   return (
-    <div className={styles.friendList}>
+    <div
+      className={` w-fill h-fill min-h-screen p-5 pt-20 lg:pt-5 bg-[var(--component-background)]`}
+    >
       <div className={styles.userProfile}>
         <div className="flex flex-row items-center gap-3">
           <div className={`${styles.circle}`}>

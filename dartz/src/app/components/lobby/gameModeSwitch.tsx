@@ -28,11 +28,28 @@ export const SvgIcon: React.FC<IconProps> = ({ Icon }) => {
   );
 };
 
+
+
 export default function GameModeSwitch({
   selectedGameMode,
   setSelectedGameMode,
   isOwner,
 }: ModeSwapProps) {
+
+  function createAbbreviation(input: string): string {
+    const trimmedInput = input.trim();
+    
+    if (!trimmedInput.includes(' ')) {
+      return trimmedInput;
+    }
+  
+    const words = trimmedInput.split(' ').filter(word => word.length > 0);
+
+    const abbreviation = words.map(word => word.charAt(0).toUpperCase()).join('');
+  
+    return abbreviation;
+  }
+
   return (
     <div className="flex w-full flex-col ">
       <Tabs
@@ -57,7 +74,8 @@ export default function GameModeSwitch({
             title={
               <div className="flex items-center space-x-2">
                 <SvgIcon Icon={mode.Icon} />
-                <span>{mode.name}</span>
+                <span className="block lg:hidden" >{createAbbreviation(mode.name)}</span>
+                <span className="hidden lg:block">{mode.name}</span>
               </div>
             }
           />

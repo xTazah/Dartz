@@ -13,6 +13,7 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 import { UnderConstruction } from "../underConstruction";
+import { GAME_MODES } from "@/app/utils/constants";
 
 export default function Navigation(props: any) {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function Navigation(props: any) {
         props.collapsed ? styles.collapsed : ""
       }`}
     >
-      <div className={styles.toggleButton}>
+      <div className={styles.toggleButton} >
         <button onClick={toggleCollapse}>
           {props.collapsed ? (
             <ChevronRightIcon className="size-5" />
@@ -76,41 +77,35 @@ export default function Navigation(props: any) {
         {!props.collapsed && " Home"}
       </button>
 
-      <UnderConstruction>
-        <button
-          className={`${styles.navigationButton} ${
-            selected === 2 ? styles.selected : ""
-          }`}
-          onClick={() => handleNavigation(2, "/statistics")}
-        >
-          <ChartPieIcon className="size-5" color="#6F7172" />
-          {!props.collapsed && " Statistics"}
-        </button>
-      </UnderConstruction>
+      <button
+        className={`${styles.navigationButton} ${
+          selected === 2 ? styles.selected : ""
+        }`}
+        onClick={() => handleNavigation(2, "/statistics")}
+      >
+        <ChartPieIcon className="size-5" color="#6F7172" />
+        {!props.collapsed && " Statistics"}
+      </button>
 
-      <UnderConstruction>
-        <button
-          className={`${styles.navigationButton} ${
-            selected === 3 ? styles.selected : ""
-          }`}
-          onClick={() => handleNavigation(3, "/friend-list")}
-        >
-          <UsersIcon className="size-5" color="#6F7172" />
-          {!props.collapsed && " Friend List"}
-        </button>
-      </UnderConstruction>
+      <button
+        className={`${styles.navigationButton} ${
+          selected === 3 ? styles.selected : ""
+        }`}
+        onClick={() => handleNavigation(3, "/profile")}
+      >
+        <UsersIcon className="size-5" color="#6F7172" />
+        {!props.collapsed && " Profile"}
+      </button>
 
-      <UnderConstruction>
-        <button
-          className={`${styles.navigationButton} ${
-            selected === 4 ? styles.selected : ""
-          }`}
-          onClick={() => handleNavigation(4, "/quickplay")}
-        >
-          <PlayIcon className="size-5" color="#6F7172" />
-          {!props.collapsed && " Quickplay"}
-        </button>
-      </UnderConstruction>
+      <button
+        className={`${styles.navigationButton} ${
+          selected === 4 ? styles.selected : ""
+        }`}
+        onClick={() => handleNavigation(4, `/lobby?mode=${GAME_MODES[1].key}`)}
+      >
+        <PlayIcon className="size-5" color="#6F7172" />
+        {!props.collapsed && " Quickplay"}
+      </button>
     </div>
   );
 }

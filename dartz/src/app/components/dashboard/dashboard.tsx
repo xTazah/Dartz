@@ -54,10 +54,13 @@ export default function Dashboard() {
         setIsLobbyLoading(false);
       } else router.push(`/lobby?id=${lobbyKey}`);
     }
+    setIsLobbyLoading(false);
   };
 
   return (
-    <div className={styles.dashboard + " grid grid-cols-3 gap-8"}>
+    <div
+      className={styles.dashboard + " grid grid-cols-1 lg:grid-cols-3 gap-8"}
+    >
       <div
         className={
           styles.tile +
@@ -105,7 +108,7 @@ export default function Dashboard() {
           </div>
           <Button
             className="mt-4 w-full bg-[var(--primary)]"
-            onClick={handleLobbyJoin}
+            onPress={handleLobbyJoin}
             disabled={lobbyKey === ""}
             isLoading={isLobbyLoading}
             color="primary"
@@ -114,7 +117,9 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
-      <div className={"row-span-2 col-span-1 flex flex-col gap-5"}>
+      <div
+        className={"row-span-2 col-span-2 lg:col-span-1 flex flex-col gap-5"}
+      >
         <div className={styles.tile + " flex justify-around " + styles.score}>
           <div>140 +</div>
           <div className={styles.scoreAmount}>47 Times</div>
@@ -129,8 +134,10 @@ export default function Dashboard() {
         </div>
       </div>
       <div className={"col-span-2 " + styles.title}>Create Lobby</div>
-      <div className={"col-span-1 " + styles.title}>Your Statistics</div>
-      <div className={"col-span-2 grid grid-cols-3 gap-8"}>
+      <div className={"hidden lg:block col-span-1 " + styles.title}>
+        Your Statistics
+      </div>
+      <div className={"col-span-2 grid grid-cols-3 gap-3 md:gap-4 lg:gap-8"}>
         {GAME_MODES.map((gameMode) => (
           <div
             key={gameMode.key}
@@ -138,11 +145,14 @@ export default function Dashboard() {
             onClick={() => navigateToLobby(gameMode)}
           >
             <gameMode.Icon className="modeIcons" color="#6F7172" />
-            {gameMode.name}
+            <span className="text-center text-sm lg:text-md">{gameMode.name}</span>
           </div>
         ))}
       </div>
-      <div className={styles.tile + " row-span-4 "}>
+      <div className={"block lg:hidden col-span-1 " + styles.title}>
+        Your Statistics
+      </div>
+      <div className={styles.tile + " row-span-4 col-span-2 lg:col-span-1 "}>
         <Statistics />
       </div>
       <div className={"col-span-2 " + styles.title}>Match History</div>

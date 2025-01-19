@@ -119,7 +119,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
       <h1 className="text-2xl font-bold mb-4"></h1>
       <div className="mb-4"></div>
 
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
         {lobby.players?.map((player) => (
           <div className="relative" key={player.user?.id}>
             {!player.connected && (
@@ -196,7 +196,7 @@ const Game = ({ lobby, setLobby }: GameProps) => {
                   </div>
                   <Button
                     className="mt-4 w-full bg-[var(--primary)]"
-                    onClick={handleSubmitScore}
+                    onPress={handleSubmitScore}
                     isDisabled={isSubmitDisabled}
                     color="primary"
                   >
