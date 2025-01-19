@@ -1,6 +1,12 @@
 "use client";
 
-import { ConnectedPlayer, Lobby, Multiplier, Throw } from "@/app/utils/types";
+import {
+  ConnectedPlayer,
+  Lobby,
+  Multiplier,
+  Throw,
+  User,
+} from "@/app/utils/types";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
 import React, { useContext, useEffect, useState } from "react";
 import { Button } from "@nextui-org/react";
@@ -20,9 +26,10 @@ import { SignalSlashIcon } from "@heroicons/react/24/solid";
 interface GameProps {
   lobby: Lobby;
   setLobby: (updatedLobby: Lobby) => void;
+  localUsers: User[] | null;
 }
 
-const Game = ({ lobby, setLobby }: GameProps) => {
+const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
   const context = useContext(UserContext);
   const user = context?.user;
 
@@ -114,133 +121,157 @@ const Game = ({ lobby, setLobby }: GameProps) => {
     multiplier3,
   ]);
 
+  const isCurrentOrLocalUser = (
+    playerUserId: number | undefined,
+    localUsers: User[] | null,
+    user: User | undefined
+  ) => {
+    if (!playerUserId) return false;
+    return (
+      user?.id === playerUserId ||
+      localUsers?.some((localUser) => localUser?.id === playerUserId)
+    );
+  };
+
   return (
     <div className="p-4 bg-[(var(--background))] text-white rounded-lg">
       <h1 className="text-2xl font-bold mb-4"></h1>
       <div className="mb-4"></div>
 
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {lobby.players?.map((player) => (
-          <div className="relative" key={player.user?.id}>
-            {!player.connected && (
-              <div className="z-10 rounded-md cursor-not-allowed absolute w-full h-full bg-[var(--component-background-low-opacity)] flex flex-col justify-center items-center">
-                <SignalSlashIcon className="w-1/3 h-1/3 opacity-100 mb-4" />
-                <div className="text-l">
-                  <span className="font-bold">{player.user?.username}</span> is
-                  disconnected
-                </div>
-              </div>
-            )}
+        {lobby.players?.map((player) => {
+          const isPlayersTurn =
+            lobby.players[lobby.currentPlayerIndex].user!.id == player.user?.id;
 
-            <div className={styles.wins}>{player?.legs} </div>
-            <div className={styles.score}>
-              {user?.id === currentPlayer.user?.id &&
-              currentPlayer.user?.id === player.user?.id
-                ? (previewScore < 2 || previewScore > 501) && previewScore != 0
-                  ? "BUST"
-                  : previewScore
-                : player?.score}
-            </div>
-            <div className={styles.player + ""}>
-              <h2 className="text-xl text-center mb-3">
-                {player.user?.username}
-              </h2>
-              {user?.id === currentPlayer.user?.id &&
-              currentPlayer.user?.id === player.user?.id ? (
-                <div className="flex flex-col gap-2 items-center">
-                  <h3 className="mb-2">Enter your score:</h3>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="number"
-                      className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-                      value={playerScore1}
-                      onChange={(e) => {
-                        setPlayerScore1(Number(e.target.value));
-                      }}
-                    />
-                    <MultiplierTabs
-                      selectedMultiplier={multiplier1}
-                      setSelectedMultiplier={setMultiplier1}
-                      isDisabled={playerScore1 == 25}
-                    />
+          const currentOrLocalUser = isCurrentOrLocalUser(
+            player.user?.id,
+            localUsers,
+            user
+          );
+
+          return (
+            <div className="relative" key={player.user?.id}>
+              {!player.connected && (
+                <div className="z-10 rounded-md cursor-not-allowed absolute w-full h-full bg-[var(--component-background-low-opacity)] flex flex-col justify-center items-center">
+                  <SignalSlashIcon className="w-1/3 h-1/3 opacity-100 mb-4" />
+                  <div className="text-l">
+                    <span className="font-bold">{player.user?.username}</span>{" "}
+                    is disconnected
                   </div>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="number"
-                      className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] "
-                      value={playerScore2}
-                      onChange={(e) => {
-                        setPlayerScore2(Number(e.target.value));
-                      }}
-                    />
-                    <MultiplierTabs
-                      selectedMultiplier={multiplier2}
-                      setSelectedMultiplier={setMultiplier2}
-                      isDisabled={playerScore2 == 25}
-                    />
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="number"
-                      className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-                      value={playerScore3}
-                      onChange={(e) => {
-                        setPlayerScore3(Number(e.target.value));
-                      }}
-                    />
-                    <MultiplierTabs
-                      selectedMultiplier={multiplier3}
-                      setSelectedMultiplier={setMultiplier3}
-                      isDisabled={playerScore3 == 25}
-                    />
-                  </div>
-                  <Button
-                    className="mt-4 w-full bg-[var(--primary)]"
-                    onPress={handleSubmitScore}
-                    isDisabled={isSubmitDisabled}
-                    color="primary"
-                  >
-                    Submit Score
-                  </Button>
-                </div>
-              ) : (
-                <div>
-                  {player.throws != undefined ? (
-                    <div>
-                      <p className="mb-2">
-                        Average: {calculateAverage(player?.throws)}
-                      </p>
-                      <p className="mb-2">
-                        100+: {calculate100Plus(player?.throws)}
-                      </p>
-                      <p className="mb-2">
-                        Highest Score: {calculateHighestScore(player?.throws)}
-                      </p>
-                      <p className="mb-2 text-2xl text-center mt-6">
-                        {calculateLastScore(player?.throws)}
-                      </p>
-                    </div>
-                  ) : (
-                    <></>
-                  )}
                 </div>
               )}
-            </div>
-            {(() => {
-              var checkout = "";
-              if (
-                user?.id === currentPlayer.user?.id &&
+
+              <div className={styles.wins}>{player?.legs} </div>
+              <div className={styles.score}>
+                {user?.id === currentPlayer.user?.id &&
                 currentPlayer.user?.id === player.user?.id
-              )
-                checkout = getCheckoutPath(previewScore);
-              else checkout = getCheckoutPath(player?.score);
-              if (checkout) {
-                return <div className={styles.checkout}>{checkout}</div>;
-              }
-              return <></>;
-            })()}
-          </div>
-        ))}
+                  ? (previewScore < 2 || previewScore > 501) &&
+                    previewScore != 0
+                    ? "BUST"
+                    : previewScore
+                  : player?.score}
+              </div>
+              <div className={styles.player + ""}>
+                <h2 className="text-xl text-center mb-3">
+                  {player.user?.username}
+                </h2>
+                {isPlayersTurn && currentOrLocalUser ? (
+                  <div className="flex flex-col gap-2 items-center">
+                    <h3 className="mb-2">Enter your score:</h3>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                        value={playerScore1}
+                        onChange={(e) => {
+                          setPlayerScore1(Number(e.target.value));
+                        }}
+                      />
+                      <MultiplierTabs
+                        selectedMultiplier={multiplier1}
+                        setSelectedMultiplier={setMultiplier1}
+                        isDisabled={playerScore1 == 25}
+                      />
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] "
+                        value={playerScore2}
+                        onChange={(e) => {
+                          setPlayerScore2(Number(e.target.value));
+                        }}
+                      />
+                      <MultiplierTabs
+                        selectedMultiplier={multiplier2}
+                        setSelectedMultiplier={setMultiplier2}
+                        isDisabled={playerScore2 == 25}
+                      />
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                        value={playerScore3}
+                        onChange={(e) => {
+                          setPlayerScore3(Number(e.target.value));
+                        }}
+                      />
+                      <MultiplierTabs
+                        selectedMultiplier={multiplier3}
+                        setSelectedMultiplier={setMultiplier3}
+                        isDisabled={playerScore3 == 25}
+                      />
+                    </div>
+                    <Button
+                      className="mt-4 w-full bg-[var(--primary)]"
+                      onClick={handleSubmitScore}
+                      isDisabled={isSubmitDisabled}
+                      color="primary"
+                    >
+                      Submit Score
+                    </Button>
+                  </div>
+                ) : (
+                  <div>
+                    {player.throws != undefined ? (
+                      <div>
+                        <p className="mb-2">
+                          Average: {calculateAverage(player?.throws)}
+                        </p>
+                        <p className="mb-2">
+                          100+: {calculate100Plus(player?.throws)}
+                        </p>
+                        <p className="mb-2">
+                          Highest Score: {calculateHighestScore(player?.throws)}
+                        </p>
+                        <p className="mb-2 text-2xl text-center mt-6">
+                          {calculateLastScore(player?.throws)}
+                        </p>
+                      </div>
+                    ) : (
+                      <></>
+                    )}
+                  </div>
+                )}
+              </div>
+              {(() => {
+                var checkout = "";
+                if (
+                  user?.id === currentPlayer.user?.id &&
+                  currentPlayer.user?.id === player.user?.id
+                )
+                  checkout = getCheckoutPath(previewScore);
+                else checkout = getCheckoutPath(player?.score);
+                if (checkout) {
+                  return <div className={styles.checkout}>{checkout}</div>;
+                }
+                return <></>;
+              })()}
+            </div>
+          );
+        })}
+        ;
       </div>
 
       <div className="absolute bottom-0 left-0 w-full bg-opacity-50 bg-[(var(--background))] p-4">

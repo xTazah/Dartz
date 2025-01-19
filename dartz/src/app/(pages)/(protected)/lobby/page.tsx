@@ -4,7 +4,7 @@ import LobbyHandler from "@/app/handlers/lobbyHandler";
 import WaitingLobby from "@/app/components/lobby/waitingLobby";
 import { useSearchParams, useRouter } from "next/navigation";
 import { UserContext } from "@/app/components/userProvider/userProvider";
-import { GameMode, GameStatus, Lobby } from "@/app/utils/types";
+import { GameMode, GameStatus, Lobby, User } from "@/app/utils/types";
 import { GAME_MODES } from "@/app/utils/constants";
 import Game from "@/app/components/lobby/game";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
@@ -25,6 +25,23 @@ export default function LobbyPage() {
   const { user, setInLobby } = React.useContext(UserContext)!;
 
   const [lobby, setLobby] = useState<Lobby | null>(null);
+
+  //local users are bound to the player that adds them to the lobby (--> everybody can add unlimited amounts of local players)
+  const [localUsers, setLocalUsers] = useState<User[] | null>(() => {
+    // retrieve the initial value from localStorage (in case of page reload)
+    const storedUsers = localStorage.getItem(`Lobby_${id}/localUsers`);
+    return storedUsers ? JSON.parse(storedUsers) : null;
+  });
+
+  // sync state with localStorage
+  useEffect(() => {
+    if (localUsers !== null) {
+      localStorage.setItem(
+        `Lobby_${id}/localUsers`,
+        JSON.stringify(localUsers)
+      );
+    }
+  }, [localUsers]);
 
   let unsubscribe: any;
   useEffect(() => {
@@ -95,9 +112,18 @@ export default function LobbyPage() {
       {(() => {
         switch (lobby?.gameStatus) {
           case GameStatus.Waiting:
-            return <WaitingLobby lobby={lobby} setLobby={setLobby} />;
+            return (
+              <WaitingLobby
+                lobby={lobby}
+                setLobby={setLobby}
+                localUsers={localUsers}
+                setLocalUsers={setLocalUsers}
+              />
+            );
           case GameStatus.Running:
-            return <Game lobby={lobby} setLobby={setLobby} />;
+            return (
+              <Game lobby={lobby} setLobby={setLobby} localUsers={localUsers} />
+            );
           case GameStatus.Finished:
             return <WinnerScreen lobby={lobby} setLobby={setLobby} />;
           default:

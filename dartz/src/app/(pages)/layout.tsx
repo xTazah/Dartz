@@ -20,7 +20,12 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
       <body>
-        <Toaster closeButton />
+        <Toaster
+          toastOptions={{
+            className: "text-white bg-[var(--component-background)]",
+          }}
+          closeButton
+        />
         <UserProvider>{children}</UserProvider>
       </body>
     </html>
