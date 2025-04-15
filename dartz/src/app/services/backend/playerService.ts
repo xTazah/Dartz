@@ -14,8 +14,11 @@ class PlayerService extends ApiService {
     return this.get<T>(`username/${username}`);
   }
 
-  async login<T>(payload: T): Promise<ApiResponse<T>> {
-    return this.post("login", payload, true);
+  async login<T>(
+    payload: T,
+    setCookies: boolean = true
+  ): Promise<ApiResponse<T>> {
+    return this.post("login", payload, setCookies);
   }
 
   async logout<T>(): Promise<ApiResponse<T>> {

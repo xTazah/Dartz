@@ -56,69 +56,19 @@ import {
 } from "@/components/ui/popover";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { toast } from "sonner";
+import { useFriendsStore } from "@/app/utils/globalStore";
 
 export default function FriendList() {
   const { user, inLobby } = useContext(UserContext)!;
 
-  const [friends, setFriends] = useState<FriendlistUser[] | null>(null);
   const friendService = new FriendsService();
-
-  const fetchFriends = () => {
-    friendService
-      .getFriends(user!.id)
-      .then((response) => {
-        const users: User[] = response.data;
-
-        let friendlistUsers: FriendlistUser[] = [];
-        const unsubscribeCallbacks: (() => void)[] = [];
-
-        const promises = users.map((user) => {
-          const friend: FriendlistUser = {
-            user: user,
-            online: false,
-          };
-
-          return getOnlineStatus(user!.id).then((onlineStatus) => {
-            console.log(onlineStatus);
-            friend.online = onlineStatus;
-
-            const unsubscribe = setupOnlineStatusListener(
-              user!.id,
-              (updatedOnlineStatus) => {
-                friend.online = updatedOnlineStatus;
-                setFriends((prevFriends) => {
-                  return prevFriends
-                    ? [
-                        ...prevFriends.filter((f) => f.user?.id !== user?.id),
-                        friend,
-                      ]
-                    : [friend];
-                });
-              }
-            );
-
-            unsubscribeCallbacks.push(unsubscribe);
-            friendlistUsers.push(friend);
-          });
-        });
-
-        Promise.all(promises).then(() => {
-          setFriends(friendlistUsers);
-        });
-
-        return () => {
-          unsubscribeCallbacks.forEach((unsubscribe) => unsubscribe());
-        };
-      })
-      .catch((error) => {
-        console.error("Error fetching friends:", error);
-      });
-  };
+  const { friends, fetchFriends } = useFriendsStore();
 
   useEffect(() => {
-    const cleanup = fetchFriends();
-    return cleanup;
-  }, []);
+    if (user) {
+      fetchFriends(user.id);
+    }
+  }, [user, fetchFriends]);
 
   const [friendUsername, setFriendUsername] = useState("");
 
@@ -148,7 +98,7 @@ export default function FriendList() {
     const friendService = new FriendsService();
     friendService
       .addFriend(user!.id, userId2)
-      .then(() => fetchFriends())
+      .then(() => fetchFriends(user!.id))
       .catch(() => toast("You are already friends with this user"));
   };
 
@@ -169,7 +119,9 @@ export default function FriendList() {
     Object.values(lobbyInvites).length + Object.values(friendRequests).length;
 
   return (
-    <div className={styles.friendList}>
+    <div
+      className={` w-fill h-fill min-h-screen p-5 pt-20 lg:pt-5 bg-[var(--component-background)]`}
+    >
       <div className={styles.userProfile}>
         <div className="flex flex-row items-center gap-3">
           <div className={`${styles.circle}`}>
@@ -373,7 +325,7 @@ export default function FriendList() {
                 data={{ type: DragDataType.FRIEND, customData: friend.user }}
                 key={friend.user?.id}
               >
-                <Friend user={friend} />
+                <Friend friendlistUser={friend} />
               </Draggable>
             ))}
       </div>

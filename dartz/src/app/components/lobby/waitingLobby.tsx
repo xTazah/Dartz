@@ -11,20 +11,46 @@ import LobbyHandler from "@/app/handlers/lobbyHandler";
 import GameModeSwitch from "./gameModeSwitch";
 import { UserContext } from "../userProvider/userProvider";
 import React, { useContext, useEffect, useState } from "react";
-import { Button, Checkbox } from "@nextui-org/react";
+import { Button, Checkbox, Tooltip } from "@nextui-org/react";
 import DropZone from "../DragDrop/dropzone";
 import UserComponent from "../friendList/User";
 import { inviteUserToLobby } from "@/app/services/firebase/userService";
 import { toast } from "sonner";
 import { leaveLobby } from "@/app/services/firebase/lobbyService";
 import { useRouter } from "next/navigation";
+import { PlusCircleIcon, PlusIcon } from "@heroicons/react/24/solid";
+import iconStyles from "../../styles/icon.module.scss";
+import { cn } from "@/lib/utils";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { useFriendsStore } from "@/app/utils/globalStore";
+import PlayerService from "@/app/services/backend/playerService";
 
 interface WaitingLobbyProps {
   lobby: Lobby;
   setLobby: (updatedLobby: Lobby) => void;
+  localUsers: User[] | null;
+  setLocalUsers: (updatedUsers: User[]) => void;
 }
 
-const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
+const WaitingLobby = ({
+  lobby,
+  setLobby,
+  localUsers,
+  setLocalUsers,
+}: WaitingLobbyProps) => {
   const [isSetsSelected, setIsSetsSelected] = useState(false);
   const [isLegsSelected, setIsLegsSelected] = useState(false);
 
@@ -89,6 +115,60 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
     isOwner = user?.id === lobby.owner?.id;
   }, [lobby.owner]);
 
+  const { friends } = useFriendsStore();
+  const [open, setOpen] = React.useState(false);
+
+  const [username, setUsername] = React.useState(""); //finn ToDo: when user from friendlist is selected focus the password input
+  const [password, setPassword] = useState("");
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
+
+  const handleLogin = async () => {
+    const service = new PlayerService();
+    setIsLoginLoading(true);
+    try {
+      const payload = { username, password };
+      const response = await service.login(payload, false);
+
+      if (response.status === 200) {
+        const userData: User = response.data;
+        let updatedLobby = LobbyHandler.addPlayer(lobby, userData);
+        setLobby(updatedLobby);
+        if (localUsers) setLocalUsers([...localUsers, userData]);
+        else setLocalUsers([userData]);
+
+        setUsername("");
+        setPassword("");
+        setOpen(false);
+      }
+    } catch (err) {
+      toast("Invalid username or password.");
+    } finally {
+      setIsLoginLoading(false);
+    }
+  };
+
+  const handleInvite = async () => {
+    setIsLoginLoading(true);
+    try {
+      const invited = friends?.find(
+        (friend) => friend.user!.username == username
+      );
+      if (!invited) {
+        toast.error("Error handling invite. Enter lobby code manually");
+        return;
+      }
+
+      inviteUserToLobby(lobby.id, user, invited.user);
+
+      setUsername("");
+      setPassword("");
+      setOpen(false);
+    } catch (err) {
+    } finally {
+      setIsLoginLoading(false);
+    }
+  };
+
   return (
     <div>
       {lobby && (
@@ -117,6 +197,128 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
                 }
               />
             ))}
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <PlusIcon
+                  className={`size-7 ${iconStyles.icon}`}
+                  color="#6F7172"
+                />
+              </PopoverTrigger>
+              <PopoverContent
+                sideOffset={10}
+                align="start"
+                className="w-90 p-4 bg-[var(--component-background)] rounded-md shadow-lg outline outline-[var(--component-background-hover)]"
+              >
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium leading-none">Add Player</h4>
+                    <p className="text-sm">
+                      Select a player from your friendlist
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <div className="items-center">
+                      <Popover
+                        open={open}
+                        onOpenChange={(isOpen) => {
+                          setOpen(isOpen);
+                          if (!isOpen) {
+                            setUsername("");
+                            setPassword("");
+                          }
+                        }}
+                      >
+                        <PopoverTrigger asChild>
+                          <Button
+                            role="combobox"
+                            aria-expanded={open}
+                            className="w-[200px] text-white justify-between bg-[var(--component-background-hover)] focus:outline outline outline-[var(--component-background)]"
+                          >
+                            {username && friends
+                              ? username
+                              : "Select friend..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          sideOffset={10}
+                          align="start"
+                          className="p-4 bg-[var(--component-background)] rounded-md shadow-lg outline outline-[var(--component-background-hover)]"
+                        >
+                          <Command>
+                            <CommandInput
+                              className="bg-[var(--component-background)]"
+                              placeholder="Search for friend..."
+                            />
+                            <CommandList>
+                              <CommandEmpty>No friend found.</CommandEmpty>
+                              <CommandGroup className="mt-4">
+                                {friends &&
+                                  friends.map((friend) => (
+                                    <CommandItem
+                                      className="select-none p-2 rounded-md hover:bg-[var(--component-background-hover)] "
+                                      key={friend.user!.id}
+                                      value={friend.user!.username}
+                                      onSelect={(currentValue) => {
+                                        setUsername(
+                                          currentValue === username
+                                            ? ""
+                                            : currentValue
+                                        );
+                                        setOpen(false);
+                                      }}
+                                    >
+                                      {friend.user!.username}
+                                    </CommandItem>
+                                  ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+
+                      {username && (
+                        <div className="items-center mt-2">
+                          <div className="space-y-2">
+                            <p className="text-sm">
+                              Enter password to add{" "}
+                              <span className="font-bold">{username}</span> as
+                              local player
+                            </p>
+                          </div>
+                          <div className="mt-2">
+                            <input
+                              type="password"
+                              value={password}
+                              onChange={(e) => {
+                                setPassword(e.target.value);
+                              }}
+                              //onKeyDown={(e) => handleKeyDown(e, handleLogin)}
+                              placeholder="Password"
+                              className="focus:outline outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                            />
+                          </div>
+
+                          <Button
+                            className="mt-4 w-auto bg-[var(--primary)]"
+                            onClick={
+                              password == "" ? handleInvite : handleLogin
+                            }
+                            isLoading={isLoginLoading}
+                            color="primary"
+                          >
+                            {password == ""
+                              ? "Invite to lobby"
+                              : "Add local player"}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </DropZone>
         <div>
@@ -185,14 +387,14 @@ const WaitingLobby = ({ lobby, setLobby }: WaitingLobbyProps) => {
       <div className="flex flex-end gap-10">
         <Button
           className="mt-4 w-full bg-[var(--secondary)]"
-          onClick={leave}
+          onPress={leave}
           color="secondary"
         >
           Leave Lobby
         </Button>
         <Button
           className="mt-4 w-full bg-[var(--primary)]"
-          onClick={startGame}
+          onPress={startGame}
           color="primary"
         >
           Start Game

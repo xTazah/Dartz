@@ -53,7 +53,7 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
       )}
       <p>Sets in Total: {lobby.sets}</p>
       <p>Legs in Total: {lobby.legs}</p>
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
         {lobby.players?.map((player) => (
           <div className="relative" key={player.user?.id}>
             <div className={styles.player + ""}>
@@ -88,7 +88,7 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
       <div className="flex gap-4">
         <Button
           className="mt-4 w-full bg-[var(--secondary)]"
-          onClick={() => {
+          onPress={() => {
             router.push("/");
           }}
           color="secondary"
@@ -98,7 +98,7 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
         {!isFinished && (
           <Button
             className="mt-4 w-full bg-[var(--primary)]"
-            onClick={handlePlayAgain}
+            onPress={handlePlayAgain}
             color="primary"
           >
             Play Again
