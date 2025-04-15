@@ -211,72 +211,76 @@ const Game = ({ lobby, setLobby }: GameProps) => {
               <h2 className="text-xl text-center mb-3">
                 {player.user?.username}
               </h2>
-              <ArrowUturnLeftIcon
+
+              {user?.id === currentPlayer.user?.id &&
+              currentPlayer.user?.id === player.user?.id ? (
+                <>
+                {(currentPlayer?.throws && currentPlayer.throws?.length!=0) &&
+                  <ArrowUturnLeftIcon
                     onClick={handleUndo}
                     className="size-5 cursor-pointer"
                   ></ArrowUturnLeftIcon>
-              {user?.id === currentPlayer.user?.id &&
-              currentPlayer.user?.id === player.user?.id ? (
-                <div className="flex flex-col gap-2 items-center">
-
-                  <h3 className="mb-2">Enter your score:</h3>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="number"
-                      className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-                      value={playerScore1}
-                      onKeyDown={(e) => handleKeyDown(e, handleMultChange1)}
-                      onChange={(e) => {
-                        setPlayerScore1(Number(e.target.value));
-                      }}
-                    />
-                    <MultiplierTabs
-                      selectedMultiplier={multiplier1}
-                      setSelectedMultiplier={setMultiplier1}
-                      isDisabled={playerScore1 == 25}
-                    />
+                }
+                  <div className="flex flex-col gap-2 items-center">
+                    <h3 className="mb-2">Enter your score:</h3>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                        value={playerScore1}
+                        onKeyDown={(e) => handleKeyDown(e, handleMultChange1)}
+                        onChange={(e) => {
+                          setPlayerScore1(Number(e.target.value));
+                        }}
+                      />
+                      <MultiplierTabs
+                        selectedMultiplier={multiplier1}
+                        setSelectedMultiplier={setMultiplier1}
+                        isDisabled={playerScore1 == 25}
+                      />
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] "
+                        value={playerScore2}
+                        onChange={(e) => {
+                          setPlayerScore2(Number(e.target.value));
+                        }}
+                        onKeyDown={(e) => handleKeyDown(e, handleMultChange2)}
+                      />
+                      <MultiplierTabs
+                        selectedMultiplier={multiplier2}
+                        setSelectedMultiplier={setMultiplier2}
+                        isDisabled={playerScore2 == 25}
+                      />
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                        value={playerScore3}
+                        onChange={(e) => {
+                          setPlayerScore3(Number(e.target.value));
+                        }}
+                        onKeyDown={(e) => handleKeyDown(e, handleMultChange3)}
+                      />
+                      <MultiplierTabs
+                        selectedMultiplier={multiplier3}
+                        setSelectedMultiplier={setMultiplier3}
+                        isDisabled={playerScore3 == 25}
+                      />
+                    </div>
+                    <Button
+                      className="mt-4 w-full bg-[var(--primary)]"
+                      onClick={handleSubmitScore}
+                      isDisabled={isSubmitDisabled}
+                      color="primary"
+                    >
+                      Submit Score
+                    </Button>
                   </div>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="number"
-                      className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] "
-                      value={playerScore2}
-                      onChange={(e) => {
-                        setPlayerScore2(Number(e.target.value));
-                      }}
-                      onKeyDown={(e) => handleKeyDown(e, handleMultChange2)}
-                    />
-                    <MultiplierTabs
-                      selectedMultiplier={multiplier2}
-                      setSelectedMultiplier={setMultiplier2}
-                      isDisabled={playerScore2 == 25}
-                    />
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="number"
-                      className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-                      value={playerScore3}
-                      onChange={(e) => {
-                        setPlayerScore3(Number(e.target.value));
-                      }}
-                      onKeyDown={(e) => handleKeyDown(e, handleMultChange3)}
-                    />
-                    <MultiplierTabs
-                      selectedMultiplier={multiplier3}
-                      setSelectedMultiplier={setMultiplier3}
-                      isDisabled={playerScore3 == 25}
-                    />
-                  </div>
-                  <Button
-                    className="mt-4 w-full bg-[var(--primary)]"
-                    onClick={handleSubmitScore}
-                    isDisabled={isSubmitDisabled}
-                    color="primary"
-                  >
-                    Submit Score
-                  </Button>
-                </div>
+                </>
               ) : (
                 <div>
                   {player.throws != undefined ? (
