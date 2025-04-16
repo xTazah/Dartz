@@ -10,7 +10,7 @@ const calculateAverage = (throws: Throw[]): number => {
   });
   let dartCount = throws.length;
 
-  return sum / dartCount;
+  return +(sum / dartCount).toFixed(2);
 };
 
 const calculate100Plus = (throws: Throw[]): number => {

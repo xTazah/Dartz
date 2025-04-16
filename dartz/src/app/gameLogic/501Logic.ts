@@ -42,7 +42,7 @@ export const fiveHundredOneLogic: GameLogic = {
         updatedLobby.players[updatedLobby.currentPlayerIndex].legs = 0;
       }
       updatedLobby.gameStatus = GameStatus.Finished;
-    } else if (newScore < 0) {
+    } else if (newScore <= 1) {
       if (!updatedLobby.players[updatedLobby.currentPlayerIndex].throws)
         updatedLobby.players[updatedLobby.currentPlayerIndex].throws = [];
       updatedLobby.players[updatedLobby.currentPlayerIndex].throws.push(
@@ -63,15 +63,16 @@ export const fiveHundredOneLogic: GameLogic = {
 
   undoTurn(lobby: Lobby) {
     const updatedLobby = { ...lobby };
+    let playercount = updatedLobby.players.length;
     updatedLobby.currentPlayerIndex =
-      (updatedLobby.currentPlayerIndex - 1) % updatedLobby.players.length;
+      (updatedLobby.currentPlayerIndex - 1 + playercount) % playercount;
     return updatedLobby;
   },
 
   removeLastThrows(lobby: Lobby) {
     const updatedLobby = { ...lobby };
     if (
-      updatedLobby.players[updatedLobby.currentPlayerIndex].throws.length >= 1
+      updatedLobby.players[updatedLobby.currentPlayerIndex].throws?.length >= 1
     ) {
       let throws= updatedLobby.players[updatedLobby.currentPlayerIndex].throws[updatedLobby.players[updatedLobby.currentPlayerIndex].throws.length-1];
       let score =

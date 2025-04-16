@@ -123,6 +123,9 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
 
   const handleUndo = () => {
     let updatedLobby = LobbyHandler.handleUndo(lobby);
+    console.log(updatedLobby.players)
+    console.log(updatedLobby.players[updatedLobby.currentPlayerIndex])
+    console.log(updatedLobby.currentPlayerIndex)
     let length =
       updatedLobby.players[updatedLobby.currentPlayerIndex].throws.length - 1;
     setPlayerScore1(
@@ -149,7 +152,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
       updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
         .multiplier3
     );
-    updatedLobby = LobbyHandler.hanldeRemoveLastThrows(lobby);
+    updatedLobby = LobbyHandler.hanldeRemoveLastThrows(updatedLobby);
     setLobby(updatedLobby);
   };
 
@@ -241,86 +244,101 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
                 <h2 className="text-xl text-center mb-3">
                   {player.user?.username}
                 </h2>
-                      {isPlayersTurn && currentOrLocalUser ? (
-                          {(currentPlayer?.throws && currentPlayer.throws?.length != 0) &&
-                          <ArrowUturnLeftIcon
-                              onClick={handleUndo}
-                              className="size-5 cursor-pointer"
-                          ></ArrowUturnLeftIcon>
-                }
-                  <div className="flex flex-col gap-2 items-center">
-                    <h3 className="mb-2">Enter your score:</h3>
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="number"
-                        className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-                        value={playerScore1}
-                        onChange={(e) => {
-                          setPlayerScore1(Number(e.target.value));
-                        }}
-                      />
-                      <MultiplierTabs
-                        selectedMultiplier={multiplier1}
-                        setSelectedMultiplier={setMultiplier1}
-                        isDisabled={playerScore1 == 25}
-                      />
+                {isPlayersTurn && currentOrLocalUser ? (
+                  <>
+                    {currentPlayer?.throws &&
+                      currentPlayer.throws?.length != 0 &&
+                      lobby.players.length === 1 && currentPlayer.score != 501 && (
+                        <ArrowUturnLeftIcon
+                          onClick={handleUndo}
+                          className="size-5 cursor-pointer"
+                        ></ArrowUturnLeftIcon>
+                      )}
+                    <div className="flex flex-col gap-2 items-center">
+                      <h3 className="mb-2">Enter your score:</h3>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="number"
+                          className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                          value={playerScore1}
+                          onChange={(e) => {
+                            setPlayerScore1(Number(e.target.value));
+                          }}
+                        />
+                        <MultiplierTabs
+                          selectedMultiplier={multiplier1}
+                          setSelectedMultiplier={setMultiplier1}
+                          isDisabled={playerScore1 == 25}
+                        />
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="number"
+                          className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] "
+                          value={playerScore2}
+                          onChange={(e) => {
+                            setPlayerScore2(Number(e.target.value));
+                          }}
+                        />
+                        <MultiplierTabs
+                          selectedMultiplier={multiplier2}
+                          setSelectedMultiplier={setMultiplier2}
+                          isDisabled={playerScore2 == 25}
+                        />
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="number"
+                          className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                          value={playerScore3}
+                          onChange={(e) => {
+                            setPlayerScore3(Number(e.target.value));
+                          }}
+                        />
+                        <MultiplierTabs
+                          selectedMultiplier={multiplier3}
+                          setSelectedMultiplier={setMultiplier3}
+                          isDisabled={playerScore3 == 25}
+                        />
+                      </div>
+                      <Button
+                        className="mt-4 w-full bg-[var(--primary)]"
+                        onPress={handleSubmitScore}
+                        isDisabled={isSubmitDisabled}
+                        color="primary"
+                      >
+                        Submit Score
+                      </Button>
                     </div>
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="number"
-                        className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] "
-                        value={playerScore2}
-                        onChange={(e) => {
-                          setPlayerScore2(Number(e.target.value));
-                        }}
-                      />
-                      <MultiplierTabs
-                        selectedMultiplier={multiplier2}
-                        setSelectedMultiplier={setMultiplier2}
-                        isDisabled={playerScore2 == 25}
-                      />
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="number"
-                        className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-                        value={playerScore3}
-                        onChange={(e) => {
-                          setPlayerScore3(Number(e.target.value));
-                        }}
-                      />
-                      <MultiplierTabs
-                        selectedMultiplier={multiplier3}
-                        setSelectedMultiplier={setMultiplier3}
-                        isDisabled={playerScore3 == 25}
-                      />
-                    </div>
-                    <Button
-                      className="mt-4 w-full bg-[var(--primary)]"
-                      onClick={handleSubmitScore}
-                      isDisabled={isSubmitDisabled}
-                      color="primary"
-                    >
-                      Submit Score
-                    </Button>
-                  </div>
+                  </>
                 ) : (
                   <div>
                     {player.throws != undefined ? (
-                      <div>
-                        <p className="mb-2">
-                          Average: {calculateAverage(player?.throws)}
-                        </p>
-                        <p className="mb-2">
-                          100+: {calculate100Plus(player?.throws)}
-                        </p>
-                        <p className="mb-2">
-                          Highest Score: {calculateHighestScore(player?.throws)}
-                        </p>
-                        <p className="mb-2 text-2xl text-center mt-6">
-                          {calculateLastScore(player?.throws)}
-                        </p>
-                      </div>
+                      <>
+                        {player.user?.id == user?.id &&
+                          player.throws?.length != 0 && player.score!= 501 && (
+                            <ArrowUturnLeftIcon
+                              onClick={handleUndo}
+                              className="size-5 cursor-pointer"
+                            ></ArrowUturnLeftIcon>
+                          )}
+
+                        <div className="mt-2">
+                          <p className="mb-2">
+                            Average: {calculateAverage(player?.throws)}
+                          </p>
+                          <p className="mb-2">
+                            100+: {calculate100Plus(player?.throws)}
+                          </p>
+                          <p className="mb-2">
+                            Highest Score:{" "}
+                            {calculateHighestScore(player?.throws)}
+                          </p>
+                          <p className="mb-2 text-2xl text-center mt-6">
+                            {calculateLastScore(player?.throws)}
+                          </p>
+                        </div>
+                      </>
                     ) : (
                       <></>
                     )}
@@ -343,7 +361,6 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
             </div>
           );
         })}
-        ;
       </div>
 
       <div className="absolute bottom-0 left-0 w-full bg-opacity-50 bg-[(var(--background))] p-4">

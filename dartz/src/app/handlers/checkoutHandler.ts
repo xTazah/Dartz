@@ -98,7 +98,7 @@ const getCheckoutPath = (score: number): string => {
     { score: 71, combo: "Triple 13, Double 16" },
     { score: 70, combo: "Triple 18, Double 8" },
     { score: 69, combo: "Triple 19, Double 6" },
-    { score: 68, combo: "Triple 20, Double 40" },
+    { score: 68, combo: "Triple 20, Double 4" },
     { score: 67, combo: "Triple 9, Double 20" },
     { score: 66, combo: "Triple 10, Double 18" },
     { score: 65, combo: "Triple 11, Double 16" },
