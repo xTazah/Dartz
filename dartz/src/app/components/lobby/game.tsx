@@ -34,9 +34,9 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
   const user = context?.user;
 
   const [previewScore, setPreviewScore] = useState(501);
-  const [playerScore1, setPlayerScore1] = useState<number | "">("");
-  const [playerScore2, setPlayerScore2] = useState<number | "">("");
-  const [playerScore3, setPlayerScore3] = useState<number | "">("");
+  const [playerScore1, setPlayerScore1] = useState<string>("");
+  const [playerScore2, setPlayerScore2] = useState<string>("");
+  const [playerScore3, setPlayerScore3] = useState<string>("");
 
   const [multiplier1, setMultiplier1] = useState<Multiplier>(Multiplier.Single);
   const [multiplier2, setMultiplier2] = useState<Multiplier>(Multiplier.Single);
@@ -50,19 +50,19 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     if (playerScore1 === "" || playerScore2 === "" || playerScore3 === "")
       return;
     else if (
-      (playerScore1 > 20 && playerScore1 != 25) ||
-      (playerScore2 > 20 && playerScore2 != 25) ||
-      (playerScore3 > 20 && playerScore3 != 25)
+      (Number(playerScore1) > 20 && Number(playerScore1) != 25) ||
+      (Number(playerScore2) > 20 && Number(playerScore2) != 25) ||
+      (Number(playerScore3) > 20 && Number(playerScore3) != 25)
     )
       return;
-    else if (playerScore1 < 0 || playerScore2 < 0 || playerScore3 < 0) return;
+    else if (Number(playerScore1) < 0 || Number(playerScore2) < 0 || Number(playerScore3) < 0) return;
 
     let score: Throw = {
-      score1: playerScore1,
+      score1: Number(playerScore1),
       multiplier1: multiplier1,
-      score2: playerScore2,
+      score2: Number(playerScore2),
       multiplier2: multiplier2,
-      score3: playerScore3,
+      score3: Number(playerScore3),
       multiplier3: multiplier3,
     };
 
@@ -88,29 +88,29 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     let s3 = playerScore3 == "" ? 0 : playerScore3;
     setPreviewScore(
       currentPlayer.score -
-        s1 * multiplier1 -
-        s2 * multiplier2 -
-        s3 * multiplier3
+      Number(s1) * multiplier1 -
+        Number(s2) * multiplier2 -
+          Number(s3) * multiplier3
     );
-    if (playerScore1 == 25 && multiplier1 == Multiplier.Tripple) {
+    if (Number(playerScore1) == 25 && multiplier1 == Multiplier.Tripple) {
       setMultiplier1(Multiplier.Single);
     }
-    if (playerScore2 == 25 && multiplier2 == Multiplier.Tripple) {
+    if (Number(playerScore2) == 25 && multiplier2 == Multiplier.Tripple) {
       setMultiplier2(Multiplier.Single);
     }
-    if (playerScore3 == 25 && multiplier3 == Multiplier.Tripple) {
+    if (Number(playerScore3) == 25 && multiplier3 == Multiplier.Tripple) {
       setMultiplier3(Multiplier.Single);
     }
     setIsSubmitDisabled(false);
     if (playerScore1 === "" || playerScore2 === "" || playerScore3 === "")
       setIsSubmitDisabled(true);
     else if (
-      (playerScore1 > 20 && playerScore1 != 25) ||
-      (playerScore2 > 20 && playerScore2 != 25) ||
-      (playerScore3 > 20 && playerScore3 != 25)
+      (Number(playerScore1) > 20 && Number(playerScore1) != 25) ||
+      (Number(playerScore2) > 20 && Number(playerScore2) != 25) ||
+      (Number(playerScore3) > 20 && Number(playerScore3) != 25)
     )
       setIsSubmitDisabled(true);
-    else if (playerScore1 < 0 || playerScore2 < 0 || playerScore3 < 0)
+    else if (Number(playerScore1) < 0 || Number(playerScore2) < 0 || Number(playerScore3) < 0)
       setIsSubmitDisabled(true);
   }, [
     playerScore1,
@@ -129,15 +129,15 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     let length =
       updatedLobby.players[updatedLobby.currentPlayerIndex].throws.length - 1;
     setPlayerScore1(
-      updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
+      ""+updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
         .score1
     );
     setPlayerScore2(
-      updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
+      ""+updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
         .score2
     );
     setPlayerScore3(
-      updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
+      ""+updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
         .score3
     );
     setMultiplier1(
@@ -262,13 +262,13 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
                           className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
                           value={playerScore1}
                           onChange={(e) => {
-                            setPlayerScore1(Number(e.target.value));
+                            setPlayerScore1(e.target.value);
                           }}
                         />
                         <MultiplierTabs
                           selectedMultiplier={multiplier1}
                           setSelectedMultiplier={setMultiplier1}
-                          isDisabled={playerScore1 == 25}
+                          isDisabled={Number(playerScore1) == 25}
                         />
                       </div>
                       <div className="flex gap-2 items-center">
@@ -277,13 +277,13 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
                           className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] "
                           value={playerScore2}
                           onChange={(e) => {
-                            setPlayerScore2(Number(e.target.value));
+                            setPlayerScore2(e.target.value);
                           }}
                         />
                         <MultiplierTabs
                           selectedMultiplier={multiplier2}
                           setSelectedMultiplier={setMultiplier2}
-                          isDisabled={playerScore2 == 25}
+                          isDisabled={Number(playerScore2) == 25}
                         />
                       </div>
                       <div className="flex gap-2 items-center">
@@ -292,13 +292,13 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
                           className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
                           value={playerScore3}
                           onChange={(e) => {
-                            setPlayerScore3(Number(e.target.value));
+                            setPlayerScore3(e.target.value);
                           }}
                         />
                         <MultiplierTabs
                           selectedMultiplier={multiplier3}
                           setSelectedMultiplier={setMultiplier3}
-                          isDisabled={playerScore3 == 25}
+                          isDisabled={Number(playerScore3) == 25}
                         />
                       </div>
                       <Button
