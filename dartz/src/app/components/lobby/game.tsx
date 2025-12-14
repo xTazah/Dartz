@@ -8,12 +8,13 @@ import {
   User,
 } from "@/app/utils/types";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, lazy, Suspense, useCallback, useMemo } from "react";
 import { Button } from "@nextui-org/react";
 import getCheckoutPath from "@/app/handlers/checkoutHandler";
 import { UserContext } from "../userProvider/userProvider";
 import MultiplierTabs from "../multiplierTabs/multiplierTabs";
 import styles from "@/app/styles/game.module.scss";
+import dartboardStyles from "@/app/styles/dartboard.module.scss";
 import {
   calculateAverage,
   calculate100Plus,
@@ -22,6 +23,17 @@ import {
 } from "@/app/handlers/statisticsHandler";
 
 import { SignalSlashIcon, ArrowUturnLeftIcon } from "@heroicons/react/24/solid";
+import { Squares2X2Icon, CursorArrowRaysIcon } from "@heroicons/react/24/outline";
+
+// Lazy load the dartboard to avoid SSR issues with Three.js
+const InteractiveDartboard = lazy(
+  () => import("../dartboard/InteractiveDartboard")
+);
+import DartboardInputPanel, {
+  DartThrow,
+} from "../dartboard/DartboardInputPanel";
+
+type InputMode = "manual" | "dartboard";
 
 interface GameProps {
   lobby: Lobby;
@@ -33,6 +45,10 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
   const context = useContext(UserContext);
   const user = context?.user;
 
+  // Input mode state
+  const [inputMode, setInputMode] = useState<InputMode>("dartboard");
+
+  // Manual input state
   const [previewScore, setPreviewScore] = useState(501);
   const [playerScore1, setPlayerScore1] = useState<string>("");
   const [playerScore2, setPlayerScore2] = useState<string>("");
@@ -44,7 +60,35 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
 
   const [isSubmitDisabled, setIsSubmitDisabled] = useState<boolean>(true);
 
+  // Dartboard input state
+  const [dartboardThrows, setDartboardThrows] = useState<DartThrow[]>([]);
+  const [dartboardPreviewScore, setDartboardPreviewScore] = useState(501);
+
   const currentPlayer = lobby.players[lobby.currentPlayerIndex];
+
+  // Check if current user is the current player or a local user
+  const isCurrentUsersTurn = useMemo(() => {
+    const playerUserId = currentPlayer.user?.id;
+    if (!playerUserId) return false;
+    return (
+      user?.id === playerUserId ||
+      localUsers?.some((localUser) => localUser?.id === playerUserId)
+    );
+  }, [currentPlayer.user?.id, user?.id, localUsers]);
+
+  // Update dartboard preview score
+  useEffect(() => {
+    const totalThrowScore = dartboardThrows.reduce(
+      (sum, t) => sum + t.score * t.multiplier,
+      0
+    );
+    setDartboardPreviewScore(currentPlayer.score - totalThrowScore);
+  }, [dartboardThrows, currentPlayer.score]);
+
+  // Reset dartboard throws when player changes
+  useEffect(() => {
+    setDartboardThrows([]);
+  }, [currentPlayer.user?.id]);
 
   const handleSubmitScore = () => {
     if (playerScore1 === "" || playerScore2 === "" || playerScore3 === "")
@@ -81,6 +125,53 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     setMultiplier2(Multiplier.Single);
     setMultiplier3(Multiplier.Single);
   };
+
+  // Handle dartboard segment click - memoized to prevent dartboard re-renders
+  const handleDartboardClick = useCallback((score: number, multiplier: Multiplier) => {
+    setDartboardThrows(prev => {
+      if (prev.length >= 3) return prev;
+      return [...prev, { score, multiplier }];
+    });
+  }, []);
+
+  // Handle undo for dartboard throw
+  const handleDartboardUndo = useCallback((index: number) => {
+    setDartboardThrows(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  // Clear all dartboard throws
+  const handleDartboardClear = useCallback(() => {
+    setDartboardThrows([]);
+  }, []);
+
+  // Confirm dartboard throws
+  const handleDartboardConfirm = useCallback(() => {
+    if (dartboardThrows.length === 0) return;
+
+    // Pad with zeros if less than 3 throws
+    const throws = [...dartboardThrows];
+    while (throws.length < 3) {
+      throws.push({ score: 0, multiplier: Multiplier.Single });
+    }
+
+    const score: Throw = {
+      score1: throws[0].score,
+      multiplier1: throws[0].multiplier,
+      score2: throws[1].score,
+      multiplier2: throws[1].multiplier,
+      score3: throws[2].score,
+      multiplier3: throws[2].multiplier,
+    };
+
+    const updatedLobby = LobbyHandler.handlePlayerScore(
+      lobby,
+      currentPlayer,
+      score
+    );
+    console.log(updatedLobby);
+    setLobby(updatedLobby);
+    setDartboardThrows([]);
+  }, [dartboardThrows, lobby, currentPlayer, setLobby]);
 
   useEffect(() => {
     let s1 = playerScore1 == "" ? 0 : playerScore1;
@@ -119,6 +210,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     multiplier1,
     multiplier2,
     multiplier3,
+    currentPlayer.score,
   ]);
 
   const handleUndo = () => {
@@ -156,40 +248,6 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     setLobby(updatedLobby);
   };
 
-  const handleMultChange1 = (mult: Multiplier) => {
-    console.log("Mult1 Change");
-    setMultiplier1(mult);
-  };
-
-  const handleMultChange2 = (mult: Multiplier) => {
-    console.log("Mult2 Change");
-    console.log(mult);
-    setMultiplier2(mult);
-  };
-
-  const handleMultChange3 = (mult: Multiplier) => {
-    console.log("Mult3 Change");
-    setMultiplier3(mult);
-  };
-
-  const handleKeyDown = (
-    e: React.KeyboardEvent,
-    action: (mult: Multiplier) => void
-  ) => {
-    //e.preventDefault();
-    if (e.key === "/") {
-      console.log("Key" + e.key);
-      action(Multiplier.Single);
-    } else if (e.key === "*") {
-      console.log("Key" + e.key);
-      action(Multiplier.Double);
-    } else if (e.key === "-") {
-      console.log("Key" + e.key);
-      action(Multiplier.Tripple);
-    } else if (e.key === "Enter") {
-    }
-  };
-
   const isCurrentOrLocalUser = (
     playerUserId: number | undefined,
     localUsers: User[] | null,
@@ -202,183 +260,275 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     );
   };
 
-  return (
-    <div className="p-4 bg-[(var(--background))] text-white rounded-lg">
-      <h1 className="text-2xl font-bold mb-4"></h1>
-      <div className="mb-4"></div>
+  // Get the preview score based on input mode
+  const getDisplayPreviewScore = () => {
+    return inputMode === "dartboard" ? dartboardPreviewScore : previewScore;
+  };
 
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {lobby.players?.map((player) => {
-          const isPlayersTurn =
-            lobby.players[lobby.currentPlayerIndex].user!.id == player.user?.id;
+  // Manual input form component - redesigned
+  const ManualInputForm = () => {
+    const totalManualScore = 
+      (playerScore1 ? Number(playerScore1) * multiplier1 : 0) +
+      (playerScore2 ? Number(playerScore2) * multiplier2 : 0) +
+      (playerScore3 ? Number(playerScore3) * multiplier3 : 0);
+    
+    return (
+      <div className={dartboardStyles.manualFormContainer}>
+        {/* Score Preview */}
+        <div className={dartboardStyles.manualScorePreview}>
+          <span className={dartboardStyles.manualScoreLabel}>Remaining</span>
+          <span className={`${dartboardStyles.manualScoreValue} ${
+            previewScore < 2 && previewScore !== 0 ? dartboardStyles.bust : ""
+          }`}>
+            {previewScore < 2 && previewScore !== 0 ? "BUST" : previewScore}
+          </span>
+          {totalManualScore > 0 && (
+            <span className={dartboardStyles.manualScoreDelta}>-{totalManualScore}</span>
+          )}
+        </div>
 
-          const currentOrLocalUser = isCurrentOrLocalUser(
-            player.user?.id,
-            localUsers,
-            user
-          );
+        {/* Throw inputs */}
+        <div className={dartboardStyles.manualThrowsGrid}>
+          {/* Dart 1 */}
+          <div className={dartboardStyles.manualThrowCard}>
+            <span className={dartboardStyles.manualDartLabel}>Dart 1</span>
+            <input
+              type="number"
+              placeholder="0-20, 25"
+              className={dartboardStyles.manualInput}
+              value={playerScore1}
+              onChange={(e) => setPlayerScore1(e.target.value)}
+            />
+            <MultiplierTabs
+              selectedMultiplier={multiplier1}
+              setSelectedMultiplier={setMultiplier1}
+              isDisabled={Number(playerScore1) == 25}
+            />
+          </div>
 
-          return (
-            <div className="relative" key={player.user?.id}>
-              {!player.connected && (
-                <div className="z-10 rounded-md cursor-not-allowed absolute w-full h-full bg-[var(--component-background-low-opacity)] flex flex-col justify-center items-center">
-                  <SignalSlashIcon className="w-1/3 h-1/3 opacity-100 mb-4" />
-                  <div className="text-l">
-                    <span className="font-bold">{player.user?.username}</span>{" "}
-                    is disconnected
-                  </div>
-                </div>
-              )}
+          {/* Dart 2 */}
+          <div className={dartboardStyles.manualThrowCard}>
+            <span className={dartboardStyles.manualDartLabel}>Dart 2</span>
+            <input
+              type="number"
+              placeholder="0-20, 25"
+              className={dartboardStyles.manualInput}
+              value={playerScore2}
+              onChange={(e) => setPlayerScore2(e.target.value)}
+            />
+            <MultiplierTabs
+              selectedMultiplier={multiplier2}
+              setSelectedMultiplier={setMultiplier2}
+              isDisabled={Number(playerScore2) == 25}
+            />
+          </div>
 
-              <div className={styles.wins}>{player?.legs} </div>
-              <div className={styles.score}>
-                {user?.id === currentPlayer.user?.id &&
-                currentPlayer.user?.id === player.user?.id
-                  ? (previewScore < 2 || previewScore > 501) &&
-                    previewScore != 0
-                    ? "BUST"
-                    : previewScore
-                  : player?.score}
-              </div>
-              <div className={styles.player + ""}>
-                <h2 className="text-xl text-center mb-3">
-                  {player.user?.username}
-                </h2>
-                {isPlayersTurn && currentOrLocalUser ? (
-                  <>
-                    {currentPlayer?.throws &&
-                      currentPlayer.throws?.length != 0 &&
-                      lobby.players.length === 1 && currentPlayer.score != 501 && (
-                        <ArrowUturnLeftIcon
-                          onClick={handleUndo}
-                          className="size-5 cursor-pointer"
-                        ></ArrowUturnLeftIcon>
-                      )}
-                    <div className="flex flex-col gap-2 items-center">
-                      <h3 className="mb-2">Enter your score:</h3>
-                      <div className="flex gap-2 items-center">
-                        <input
-                          type="number"
-                          className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-                          value={playerScore1}
-                          onChange={(e) => {
-                            setPlayerScore1(e.target.value);
-                          }}
-                        />
-                        <MultiplierTabs
-                          selectedMultiplier={multiplier1}
-                          setSelectedMultiplier={setMultiplier1}
-                          isDisabled={Number(playerScore1) == 25}
-                        />
-                      </div>
-                      <div className="flex gap-2 items-center">
-                        <input
-                          type="number"
-                          className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)] "
-                          value={playerScore2}
-                          onChange={(e) => {
-                            setPlayerScore2(e.target.value);
-                          }}
-                        />
-                        <MultiplierTabs
-                          selectedMultiplier={multiplier2}
-                          setSelectedMultiplier={setMultiplier2}
-                          isDisabled={Number(playerScore2) == 25}
-                        />
-                      </div>
-                      <div className="flex gap-2 items-center">
-                        <input
-                          type="number"
-                          className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-                          value={playerScore3}
-                          onChange={(e) => {
-                            setPlayerScore3(e.target.value);
-                          }}
-                        />
-                        <MultiplierTabs
-                          selectedMultiplier={multiplier3}
-                          setSelectedMultiplier={setMultiplier3}
-                          isDisabled={Number(playerScore3) == 25}
-                        />
-                      </div>
-                      <Button
-                        className="mt-4 w-full bg-[var(--primary)]"
-                        onPress={handleSubmitScore}
-                        isDisabled={isSubmitDisabled}
-                        color="primary"
-                      >
-                        Submit Score
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <div>
-                    {player.throws != undefined ? (
-                      <>
-                        {player.user?.id == user?.id &&
-                          player.throws?.length != 0 && player.score!= 501 && (
-                            <ArrowUturnLeftIcon
-                              onClick={handleUndo}
-                              className="size-5 cursor-pointer"
-                            ></ArrowUturnLeftIcon>
-                          )}
+          {/* Dart 3 */}
+          <div className={dartboardStyles.manualThrowCard}>
+            <span className={dartboardStyles.manualDartLabel}>Dart 3</span>
+            <input
+              type="number"
+              placeholder="0-20, 25"
+              className={dartboardStyles.manualInput}
+              value={playerScore3}
+              onChange={(e) => setPlayerScore3(e.target.value)}
+            />
+            <MultiplierTabs
+              selectedMultiplier={multiplier3}
+              setSelectedMultiplier={setMultiplier3}
+              isDisabled={Number(playerScore3) == 25}
+            />
+          </div>
+        </div>
 
-                        <div className="mt-2">
-                          <p className="mb-2">
-                            Average: {calculateAverage(player?.throws)}
-                          </p>
-                          <p className="mb-2">
-                            100+: {calculate100Plus(player?.throws)}
-                          </p>
-                          <p className="mb-2">
-                            Highest Score:{" "}
-                            {calculateHighestScore(player?.throws)}
-                          </p>
-                          <p className="mb-2 text-2xl text-center mt-6">
-                            {calculateLastScore(player?.throws)}
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <></>
-                    )}
-                  </div>
-                )}
-              </div>
-              {(() => {
-                var checkout = "";
-                if (
-                  user?.id === currentPlayer.user?.id &&
-                  currentPlayer.user?.id === player.user?.id
-                )
-                  checkout = getCheckoutPath(previewScore);
-                else checkout = getCheckoutPath(player?.score);
-                if (checkout) {
-                  return <div className={styles.checkout}>{checkout}</div>;
-                }
-                return <></>;
-              })()}
+        {/* Total */}
+        {totalManualScore > 0 && (
+          <div className={dartboardStyles.manualTotalRow}>
+            <span>Round total</span>
+            <span className={dartboardStyles.manualTotalValue}>{totalManualScore}</span>
+          </div>
+        )}
+
+        {/* Submit button */}
+        <Button
+          className={dartboardStyles.manualSubmitButton}
+          onPress={handleSubmitScore}
+          isDisabled={isSubmitDisabled}
+          color="primary"
+          size="lg"
+        >
+          Submit Score
+        </Button>
+      </div>
+    );
+  };
+
+  // Input mode toggle
+  const InputModeToggle = () => (
+    <div className={dartboardStyles.modeToggle}>
+      <button
+        className={`${dartboardStyles.modeButton} ${
+          inputMode === "dartboard" ? dartboardStyles.active : ""
+        }`}
+        onClick={() => setInputMode("dartboard")}
+      >
+        <CursorArrowRaysIcon className="w-5 h-5" />
+        Dartboard
+      </button>
+      <button
+        className={`${dartboardStyles.modeButton} ${
+          inputMode === "manual" ? dartboardStyles.active : ""
+        }`}
+        onClick={() => setInputMode("manual")}
+      >
+        <Squares2X2Icon className="w-5 h-5" />
+        Manual
+      </button>
+    </div>
+  );
+
+  // Player card component for non-active players
+  const PlayerCard = ({ player, isActive }: { player: typeof currentPlayer; isActive: boolean }) => {
+    const displayScore = isActive && user?.id === currentPlayer.user?.id
+      ? getDisplayPreviewScore()
+      : player.score;
+    
+    const isBust = isActive && user?.id === currentPlayer.user?.id && 
+      ((displayScore < 2 || displayScore > 501) && displayScore !== 0);
+
+    return (
+      <div className={`${dartboardStyles.playerCard} ${isActive ? dartboardStyles.activePlayer : ""}`}>
+        {!player.connected && (
+          <div className={dartboardStyles.disconnectedOverlay}>
+            <SignalSlashIcon className="w-8 h-8 mb-2" />
+            <span>Disconnected</span>
+          </div>
+        )}
+        
+        <div className={dartboardStyles.playerHeader}>
+          <span className={dartboardStyles.playerName}>{player.user?.username}</span>
+          <span className={dartboardStyles.playerLegs}>{player.legs} legs</span>
+        </div>
+        
+        <div className={`${dartboardStyles.playerScore} ${isBust ? dartboardStyles.bust : ""}`}>
+          {isBust ? "BUST" : displayScore}
+        </div>
+        
+        {/* Checkout suggestion */}
+        {(() => {
+          const checkout = getCheckoutPath(displayScore);
+          if (checkout) {
+            return <div className={dartboardStyles.checkoutHint}>{checkout}</div>;
+          }
+          return null;
+        })()}
+        
+        {/* Stats for non-active players */}
+        {!isActive && player.throws && player.throws.length > 0 && (
+          <div className={dartboardStyles.playerStats}>
+            <div className={dartboardStyles.statRow}>
+              <span>Avg</span>
+              <span>{calculateAverage(player.throws)}</span>
             </div>
-          );
-        })}
+            <div className={dartboardStyles.statRow}>
+              <span>Last</span>
+              <span>{calculateLastScore(player.throws)}</span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className={dartboardStyles.gameContainer}>
+      {/* Left side: Player cards */}
+      <div className={dartboardStyles.playersPanel}>
+        <h3 className={dartboardStyles.panelTitle}>Players</h3>
+        <div className={dartboardStyles.playersList}>
+          {lobby.players?.map((player) => {
+            const isActive = lobby.players[lobby.currentPlayerIndex].user?.id === player.user?.id;
+            return (
+              <PlayerCard key={player.user?.id} player={player} isActive={isActive} />
+            );
+          })}
+        </div>
+        
+        {/* Undo button */}
+        {currentPlayer?.throws && currentPlayer.throws.length > 0 && 
+         lobby.players.length === 1 && currentPlayer.score !== 501 && (
+          <button onClick={handleUndo} className={dartboardStyles.undoTurnButton}>
+            <ArrowUturnLeftIcon className="w-5 h-5" />
+            Undo Last Turn
+          </button>
+        )}
       </div>
 
-      <div className="absolute bottom-0 left-0 w-full bg-opacity-50 bg-[(var(--background))] p-4">
-        <h3 className="text-center text-white mb-3">Spectators</h3>
-        <ul className="flex justify-center gap-4">
-          {lobby.spectators?.map(
+      {/* Center: Dartboard or input area (only shown for current player) */}
+      {isCurrentUsersTurn && (
+        <div className={dartboardStyles.inputPanel}>
+          <InputModeToggle />
+          
+          {inputMode === "dartboard" ? (
+            <div className={dartboardStyles.dartboardLayout}>
+              <div className={dartboardStyles.dartboardArea}>
+                <Suspense
+                  fallback={
+                    <div className={dartboardStyles.dartboardLoading}>
+                      Loading dartboard...
+                    </div>
+                  }
+                >
+                  <InteractiveDartboard
+                    onSegmentClick={handleDartboardClick}
+                    disabled={dartboardThrows.length >= 3}
+                  />
+                </Suspense>
+              </div>
+              <div className={dartboardStyles.throwsPanel}>
+                <DartboardInputPanel
+                  throws={dartboardThrows}
+                  onUndoThrow={handleDartboardUndo}
+                  onConfirm={handleDartboardConfirm}
+                  onClear={handleDartboardClear}
+                  currentScore={currentPlayer.score}
+                  previewScore={dartboardPreviewScore}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className={dartboardStyles.manualInputArea}>
+              <ManualInputForm />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Waiting message for non-current players */}
+      {!isCurrentUsersTurn && (
+        <div className={dartboardStyles.waitingPanel}>
+          <div className={dartboardStyles.waitingContent}>
+            <div className={dartboardStyles.waitingIcon}>🎯</div>
+            <h3>Waiting for {currentPlayer.user?.username}</h3>
+            <p>They are taking their turn...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Spectators */}
+      {lobby.spectators && lobby.spectators.length > 0 && (
+        <div className={dartboardStyles.spectatorsBar}>
+          <span>Spectators:</span>
+          {lobby.spectators.map(
             (spectator: ConnectedPlayer) =>
               spectator.connected && (
-                <li
-                  key={spectator?.user?.id}
-                  className="text-white text-opacity-50 text-lg"
-                >
+                <span key={spectator?.user?.id} className={dartboardStyles.spectatorName}>
                   {spectator?.user?.username}
-                </li>
+                </span>
               )
           )}
-        </ul>
-      </div>
+        </div>
+      )}
     </div>
   );
 };
