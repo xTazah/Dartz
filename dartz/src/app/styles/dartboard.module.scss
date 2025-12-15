@@ -723,3 +723,198 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
 }
+
+// ============================================
+// WINNER SCREEN STYLES
+// ============================================
+
+.winnerContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 48px 24px;
+  min-height: calc(100vh - 200px);
+}
+
+.winnerHeader {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.trophyIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+  border-radius: 50%;
+  color: #1a1a1a;
+  animation: trophyPulse 2s ease-in-out infinite;
+}
+
+@keyframes trophyPulse {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.6);
+  }
+}
+
+.winnerTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--font-color);
+  margin: 0;
+}
+
+.winnerName {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #4ecdc4;
+  margin: 0;
+}
+
+.matchInfo {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.winnerStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 900px;
+}
+
+.winnerPlayerCard {
+  background: var(--component-background);
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+
+  &.winnerHighlight {
+    border-color: #ffd700;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+  }
+}
+
+.winnerBadge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+  border-radius: 20px;
+  color: #1a1a1a;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.winnerPlayerName {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--font-color);
+  text-align: center;
+  margin: 8px 0 20px;
+}
+
+.winnerScoreRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.winnerScoreItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.winnerScoreValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--font-color);
+}
+
+.winnerScoreLabel {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.winnerScoreDivider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.winnerStatsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.winnerStatRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.winnerStatValue {
+  font-weight: 600;
+  color: var(--font-color);
+}
+
+.winnerActions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.winnerButtonPrimary {
+  min-width: 160px;
+  font-weight: 600;
+}
+
+.winnerButtonSecondary {
+  min-width: 160px;
+  font-weight: 600;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--font-color);
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+

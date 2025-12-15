@@ -45,8 +45,21 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
   const context = useContext(UserContext);
   const user = context?.user;
 
-  // Input mode state
-  const [inputMode, setInputMode] = useState<InputMode>("dartboard");
+  // Load input mode preference from cookie, default to dartboard
+  const getInitialInputMode = (): InputMode => {
+    if (typeof document !== 'undefined') {
+      const cookies = document.cookie.split('; ');
+      const inputModeCookie = cookies.find(row => row.startsWith('inputMode='));
+      if (inputModeCookie) {
+        const mode = inputModeCookie.split('=')[1] as InputMode;
+        return mode === 'manual' || mode === 'dartboard' ? mode : 'dartboard';
+      }
+    }
+    return 'dartboard';
+  };
+
+  // Input mode state - initialize from cookie
+  const [inputMode, setInputMode] = useState<InputMode>(getInitialInputMode);
 
   // Manual input state
   const [previewScore, setPreviewScore] = useState(501);
@@ -327,10 +340,14 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     }
     setDartboardThrows(throws);
     setInputMode("dartboard");
+    // Save preference to cookie
+    document.cookie = `inputMode=dartboard; path=/; max-age=${60 * 60 * 24 * 365}`; // 1 year
   }, [playerScore1, playerScore2, playerScore3, multiplier1, multiplier2, multiplier3]);
 
   const handleSwitchToManual = useCallback(() => {
     setInputMode("manual");
+    // Save preference to cookie
+    document.cookie = `inputMode=manual; path=/; max-age=${60 * 60 * 24 * 365}`; // 1 year
   }, []);
 
   // Input mode toggle
