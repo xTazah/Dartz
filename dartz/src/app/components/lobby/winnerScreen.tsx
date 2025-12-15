@@ -1,6 +1,6 @@
 import { GameStatus, Lobby, Player } from "@/app/utils/types";
 import React, { useEffect, useState } from "react";
-import styles from "@/app/styles/game.module.scss";
+import dartboardStyles from "@/app/styles/dartboard.module.scss";
 import {
   calculate100Plus,
   calculateAverage,
@@ -10,6 +10,7 @@ import {
 import { Button } from "@nextui-org/react";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
 import { useRouter } from "next/navigation";
+import { TrophyIcon, ArrowLeftIcon, ArrowPathIcon, SignalSlashIcon } from "@heroicons/react/24/solid";
 
 interface WinnerScreenProps {
   lobby: Lobby;
@@ -20,6 +21,7 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
   const [isFinished, setisFinished] = useState(false);
   const [winner, setWinner] = useState<Player | undefined>(undefined);
   const router = useRouter();
+  
   const handlePlayAgain = () => {
     const updatedLobby = LobbyHandler.startGame(lobby);
     setLobby(updatedLobby);
@@ -40,66 +42,130 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
         setisFinished(true);
       }
     }
-  }, []);
+  }, [lobby.sets, lobby.legs, lobby.players]);
+
+  const winnerName = winner?.user?.username ?? lobby.players.find((x) => x.score == 0)?.user?.username ?? "Unknown";
 
   return (
-    <div>
-      {winner != undefined ? (
-        <p>{winner.user?.username} won the Game</p>
-      ) : (
-        <p>
-          Winner is {lobby.players.find((x) => x.score == 0)?.user?.username}
+    <div className={dartboardStyles.winnerContainer}>
+      {/* Winner announcement */}
+      <div className={dartboardStyles.winnerHeader}>
+        <div className={dartboardStyles.trophyIcon}>
+          <TrophyIcon className="w-16 h-16" />
+        </div>
+        <h1 className={dartboardStyles.winnerTitle}>
+          {isFinished ? "Game Over!" : "Leg Complete!"}
+        </h1>
+        <p className={dartboardStyles.winnerName}>
+          🎯 {winnerName} {isFinished ? "wins the match!" : "wins the leg!"}
         </p>
-      )}
-      <p>Sets in Total: {lobby.sets}</p>
-      <p>Legs in Total: {lobby.legs}</p>
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {lobby.players?.map((player) => (
-          <div className="relative" key={player.user?.id}>
-            <div className={styles.player + ""}>
-              <h2 className="text-xl text-center mb-3">
+        {lobby.sets > 0 && (
+          <p className={dartboardStyles.matchInfo}>
+            First to {lobby.sets} sets • Best of {lobby.legs} legs
+          </p>
+        )}
+        {lobby.sets === 0 && lobby.legs > 0 && (
+          <p className={dartboardStyles.matchInfo}>
+            First to {lobby.legs} legs
+          </p>
+        )}
+      </div>
+
+      {/* Player stats cards */}
+      <div className={dartboardStyles.winnerStatsGrid}>
+        {lobby.players?.map((player) => {
+          const isWinner = player.user?.username === winnerName;
+          return (
+            <div 
+              key={player.user?.id} 
+              className={`${dartboardStyles.winnerPlayerCard} ${isWinner ? dartboardStyles.winnerHighlight : ""}`}
+            >
+              {isWinner && (
+                <div className={dartboardStyles.winnerBadge}>
+                  <TrophyIcon className="w-4 h-4" />
+                  Winner
+                </div>
+              )}
+              {!player.connected && (
+                <div className={dartboardStyles.disconnectedOverlay}>
+                  <SignalSlashIcon className="w-8 h-8 mb-2" />
+                  <span>Disconnected</span>
+                </div>
+              )}
+              <h2 className={dartboardStyles.winnerPlayerName}>
                 {player.user?.username}
               </h2>
-              <div>
-                {player.throws != undefined ? (
-                  <div>
-                    <p className="mb-2">
-                      Average: {calculateAverage(player?.throws)}
-                    </p>
-                    <p className="mb-2">
-                      100+: {calculate100Plus(player?.throws)}
-                    </p>
-                    <p className="mb-2">
-                      Highest Score: {calculateHighestScore(player?.throws)}
-                    </p>
+              
+              {/* Score display */}
+              <div className={dartboardStyles.winnerScoreRow}>
+                <div className={dartboardStyles.winnerScoreItem}>
+                  <span className={dartboardStyles.winnerScoreValue}>{player.sets}</span>
+                  <span className={dartboardStyles.winnerScoreLabel}>Sets</span>
+                </div>
+                <div className={dartboardStyles.winnerScoreDivider} />
+                <div className={dartboardStyles.winnerScoreItem}>
+                  <span className={dartboardStyles.winnerScoreValue}>{player.legs}</span>
+                  <span className={dartboardStyles.winnerScoreLabel}>Legs</span>
+                </div>
+              </div>
+
+              {/* Stats */}
+              {player.throws != undefined && player.throws.length > 0 && (
+                <div className={dartboardStyles.winnerStatsSection}>
+                  <div className={dartboardStyles.winnerStatRow}>
+                    <span>Average</span>
+                    <span className={dartboardStyles.winnerStatValue}>
+                      {calculateAverage(player.throws)}
+                    </span>
                   </div>
-                ) : (
-                  <></>
-                )}
-              </div>
-              <div className="flex justify-around mt-6">
-                <h2 className="text-xl text-center ">Sets: {player.sets}</h2>
-                <h2 className="text-xl text-center ">Legs: {player.legs}</h2>
-              </div>
+                  <div className={dartboardStyles.winnerStatRow}>
+                    <span>100+ Scores</span>
+                    <span className={dartboardStyles.winnerStatValue}>
+                      {calculate100Plus(player.throws)}
+                    </span>
+                  </div>
+                  <div className={dartboardStyles.winnerStatRow}>
+                    <span>Highest Score</span>
+                    <span className={dartboardStyles.winnerStatValue}>
+                      {calculateHighestScore(player.throws)}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
-      <div className="flex gap-4">
+
+      {/* Action buttons */}
+      <div className={dartboardStyles.winnerActions}>
         <Button
-          className="mt-4 w-full bg-[var(--secondary)]"
-          onPress={() => {
-            router.push("/");
-          }}
-          color="secondary"
+          className={dartboardStyles.winnerButtonSecondary}
+          onPress={() => router.push("/")}
+          variant="bordered"
+          size="lg"
+          startContent={<ArrowLeftIcon className="w-5 h-5" />}
         >
           Leave Game
         </Button>
         {!isFinished && (
           <Button
-            className="mt-4 w-full bg-[var(--primary)]"
+            className={dartboardStyles.winnerButtonPrimary}
             onPress={handlePlayAgain}
             color="primary"
+            size="lg"
+            startContent={<ArrowPathIcon className="w-5 h-5" />}
+          >
+            Next Leg
+          </Button>
+        )}
+        {isFinished && (
+          <Button
+            className={dartboardStyles.winnerButtonPrimary}
+            onPress={handlePlayAgain}
+            color="primary"
+            size="lg"
+            startContent={<ArrowPathIcon className="w-5 h-5" />}
           >
             Play Again
           </Button>

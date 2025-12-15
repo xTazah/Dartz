@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
 import WaitingLobby from "@/app/components/lobby/waitingLobby";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -26,6 +26,20 @@ export default function LobbyPage() {
 
   const [lobby, setLobby] = useState<Lobby | null>(null);
 
+  // Use refs to track current values for cleanup
+  const lobbyRef = useRef<Lobby | null>(null);
+  const userRef = useRef<User | null>(null);
+  const unsubscribeRef = useRef<any>(null);
+
+  // Keep refs in sync with current values
+  useEffect(() => {
+    lobbyRef.current = lobby;
+  }, [lobby]);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
   //local users are bound to the player that adds them to the lobby (--> everybody can add unlimited amounts of local players)
   const [localUsers, setLocalUsers] = useState<User[] | null>(() => {
     // retrieve the initial value from localStorage (in case of page reload)
@@ -41,9 +55,8 @@ export default function LobbyPage() {
         JSON.stringify(localUsers)
       );
     }
-  }, [localUsers]);
+  }, [localUsers, id]);
 
-  let unsubscribe: any;
   useEffect(() => {
     if (!id && gameMode) {
       const newLobby = LobbyHandler.createLobby(user, gameMode);
@@ -54,31 +67,36 @@ export default function LobbyPage() {
         fetchedLobby = LobbyHandler.addPlayer(fetchedLobby, user);
         setLobby(fetchedLobby);
         setInLobby(true);
-        unsubscribe = LobbyHandler.listenToLobby(id, setLobby);
+        unsubscribeRef.current = LobbyHandler.listenToLobby(id, setLobby);
       });
     }
-  }, [id, paramMode]);
+  }, [id, paramMode, gameMode, user, setInLobby]);
 
   useEffect(() => {
-    //on unmount of component
+    //on unmount of component - use refs to get current values
     return () => {
       setInLobby(false);
-      if (lobby) {
+      const currentLobby = lobbyRef.current;
+      const currentUser = userRef.current;
+      
+      if (currentLobby && currentUser) {
         let isSpectator = false;
-        let index = lobby.players.findIndex(
-          (player) => player.user?.id === user?.id
+        let index = currentLobby.players.findIndex(
+          (player) => player.user?.id === currentUser?.id
         );
         if (index === -1) {
-          index = lobby.spectators.findIndex(
-            (spectator) => spectator.user?.id === user?.id
+          index = currentLobby.spectators.findIndex(
+            (spectator) => spectator.user?.id === currentUser?.id
           );
           isSpectator = true;
         }
-        setUserConnected(lobby!.id, index, isSpectator, false);
+        if (index !== -1) {
+          setUserConnected(currentLobby.id, index, isSpectator, false);
+        }
       }
-      unsubscribe && unsubscribe();
+      unsubscribeRef.current && unsubscribeRef.current();
     };
-  }, []);
+  }, [setInLobby]);
 
   return (
     <>

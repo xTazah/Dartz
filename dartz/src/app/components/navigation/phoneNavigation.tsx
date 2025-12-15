@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useRouter } from "next/navigation";
 import styles from "../../styles/navigation.module.scss";
 import Image from "next/image";
@@ -12,18 +12,47 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   Bars3Icon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
 import { UnderConstruction } from "../underConstruction";
 import { GAME_MODES } from "@/app/utils/constants";
+import { UserContext } from "../userProvider/userProvider";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure } from "@nextui-org/react";
+import LeaveGameModal from "../modals/LeaveGameModal";
 
 export default function PhoneNavigation(props: any) {
   const router = useRouter();
+  const { inLobby } = useContext(UserContext)!;
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [selected, setSelected] = useState(1);
+  const [pendingNavigation, setPendingNavigation] = useState<{ page: number; path: string } | null>(null);
 
   const handleNavigation = (page: number, path: string) => {
-    setSelected(page);
-    router.push(path);
+    // Check if user is in a lobby before navigating away
+    if (inLobby && !path.includes('/lobby')) {
+      // Store pending navigation and show confirmation
+      setPendingNavigation({ page, path });
+      onOpen();
+    } else {
+      // Navigate normally
+      setSelected(page);
+      router.push(path);
+    }
+  };
+
+  const confirmLeave = () => {
+    if (pendingNavigation) {
+      setSelected(pendingNavigation.page);
+      router.push(pendingNavigation.path);
+      setPendingNavigation(null);
+    }
+    onClose();
+  };
+
+  const cancelLeave = () => {
+    setPendingNavigation(null);
+    onClose();
   };
 
   return (
@@ -98,6 +127,12 @@ export default function PhoneNavigation(props: any) {
           </div>
         </div>
       </div>
+
+      <LeaveGameModal 
+        isOpen={isOpen} 
+        onClose={cancelLeave} 
+        onConfirm={confirmLeave} 
+      />
     </>
   );
 }
