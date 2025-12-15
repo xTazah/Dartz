@@ -12,9 +12,9 @@ import React, { useContext, useEffect, useState, lazy, Suspense, useCallback, us
 import { Button } from "@nextui-org/react";
 import getCheckoutPath from "@/app/handlers/checkoutHandler";
 import { UserContext } from "../userProvider/userProvider";
-import MultiplierTabs from "../multiplierTabs/multiplierTabs";
 import styles from "@/app/styles/game.module.scss";
 import dartboardStyles from "@/app/styles/dartboard.module.scss";
+import { formatScoreLabel } from "@/app/utils/dartboardSegments";
 import {
   calculateAverage,
   calculate100Plus,
@@ -85,6 +85,25 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     setDartboardPreviewScore(currentPlayer.score - totalThrowScore);
   }, [dartboardThrows, currentPlayer.score]);
 
+  // Sync dartboard throws to manual input fields ONLY when in dartboard mode
+  // This prevents focus loss when typing in manual mode
+  useEffect(() => {
+    if (inputMode !== "dartboard") return; // Don't sync when in manual mode
+    
+    const t0 = dartboardThrows[0];
+    const t1 = dartboardThrows[1];
+    const t2 = dartboardThrows[2];
+    
+    setPlayerScore1(t0 ? String(t0.score) : "");
+    setMultiplier1(t0?.multiplier ?? Multiplier.Single);
+    
+    setPlayerScore2(t1 ? String(t1.score) : "");
+    setMultiplier2(t1?.multiplier ?? Multiplier.Single);
+    
+    setPlayerScore3(t2 ? String(t2.score) : "");
+    setMultiplier3(t2?.multiplier ?? Multiplier.Single);
+  }, [dartboardThrows, inputMode]);
+
   // Reset dartboard throws when player changes
   useEffect(() => {
     setDartboardThrows([]);
@@ -137,6 +156,14 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
   // Handle undo for dartboard throw
   const handleDartboardUndo = useCallback((index: number) => {
     setDartboardThrows(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  // Handle miss click on dartboard
+  const handleDartboardMiss = useCallback(() => {
+    setDartboardThrows(prev => {
+      if (prev.length >= 3) return prev;
+      return [...prev, { score: 0, multiplier: Multiplier.Single }];
+    });
   }, []);
 
   // Clear all dartboard throws
@@ -265,103 +292,46 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     return inputMode === "dartboard" ? dartboardPreviewScore : previewScore;
   };
 
-  // Manual input form component - redesigned
-  const ManualInputForm = () => {
-    const totalManualScore = 
-      (playerScore1 ? Number(playerScore1) * multiplier1 : 0) +
-      (playerScore2 ? Number(playerScore2) * multiplier2 : 0) +
-      (playerScore3 ? Number(playerScore3) * multiplier3 : 0);
-    
-    return (
-      <div className={dartboardStyles.manualFormContainer}>
-        {/* Score Preview */}
-        <div className={dartboardStyles.manualScorePreview}>
-          <span className={dartboardStyles.manualScoreLabel}>Remaining</span>
-          <span className={`${dartboardStyles.manualScoreValue} ${
-            previewScore < 2 && previewScore !== 0 ? dartboardStyles.bust : ""
-          }`}>
-            {previewScore < 2 && previewScore !== 0 ? "BUST" : previewScore}
-          </span>
-          {totalManualScore > 0 && (
-            <span className={dartboardStyles.manualScoreDelta}>-{totalManualScore}</span>
-          )}
-        </div>
+  // Calculate total manual score
+  const totalManualScore = useMemo(() => 
+    (playerScore1 ? Number(playerScore1) * multiplier1 : 0) +
+    (playerScore2 ? Number(playerScore2) * multiplier2 : 0) +
+    (playerScore3 ? Number(playerScore3) * multiplier3 : 0),
+    [playerScore1, playerScore2, playerScore3, multiplier1, multiplier2, multiplier3]
+  );
 
-        {/* Throw inputs */}
-        <div className={dartboardStyles.manualThrowsGrid}>
-          {/* Dart 1 */}
-          <div className={dartboardStyles.manualThrowCard}>
-            <span className={dartboardStyles.manualDartLabel}>Dart 1</span>
-            <input
-              type="number"
-              placeholder="0-20, 25"
-              className={dartboardStyles.manualInput}
-              value={playerScore1}
-              onChange={(e) => setPlayerScore1(e.target.value)}
-            />
-            <MultiplierTabs
-              selectedMultiplier={multiplier1}
-              setSelectedMultiplier={setMultiplier1}
-              isDisabled={Number(playerScore1) == 25}
-            />
-          </div>
-
-          {/* Dart 2 */}
-          <div className={dartboardStyles.manualThrowCard}>
-            <span className={dartboardStyles.manualDartLabel}>Dart 2</span>
-            <input
-              type="number"
-              placeholder="0-20, 25"
-              className={dartboardStyles.manualInput}
-              value={playerScore2}
-              onChange={(e) => setPlayerScore2(e.target.value)}
-            />
-            <MultiplierTabs
-              selectedMultiplier={multiplier2}
-              setSelectedMultiplier={setMultiplier2}
-              isDisabled={Number(playerScore2) == 25}
-            />
-          </div>
-
-          {/* Dart 3 */}
-          <div className={dartboardStyles.manualThrowCard}>
-            <span className={dartboardStyles.manualDartLabel}>Dart 3</span>
-            <input
-              type="number"
-              placeholder="0-20, 25"
-              className={dartboardStyles.manualInput}
-              value={playerScore3}
-              onChange={(e) => setPlayerScore3(e.target.value)}
-            />
-            <MultiplierTabs
-              selectedMultiplier={multiplier3}
-              setSelectedMultiplier={setMultiplier3}
-              isDisabled={Number(playerScore3) == 25}
-            />
-          </div>
-        </div>
-
-        {/* Total */}
-        {totalManualScore > 0 && (
-          <div className={dartboardStyles.manualTotalRow}>
-            <span>Round total</span>
-            <span className={dartboardStyles.manualTotalValue}>{totalManualScore}</span>
-          </div>
-        )}
-
-        {/* Submit button */}
-        <Button
-          className={dartboardStyles.manualSubmitButton}
-          onPress={handleSubmitScore}
-          isDisabled={isSubmitDisabled}
-          color="primary"
-          size="lg"
-        >
-          Submit Score
-        </Button>
-      </div>
-    );
+  // Get throw color based on multiplier (matching DartboardInputPanel)
+  const getThrowColor = (multiplier: Multiplier) => {
+    switch (multiplier) {
+      case Multiplier.Tripple:
+        return "#ff6b6b";
+      case Multiplier.Double:
+        return "#4ecd92ff";
+      default:
+        return "#95e1d3";
+    }
   };
+
+  // Handle mode switching with bidirectional sync
+  const handleSwitchToDartboard = useCallback(() => {
+    // Sync manual inputs TO dartboard throws
+    const throws: DartThrow[] = [];
+    if (playerScore1 !== "") {
+      throws.push({ score: Number(playerScore1), multiplier: multiplier1 });
+    }
+    if (playerScore2 !== "") {
+      throws.push({ score: Number(playerScore2), multiplier: multiplier2 });
+    }
+    if (playerScore3 !== "") {
+      throws.push({ score: Number(playerScore3), multiplier: multiplier3 });
+    }
+    setDartboardThrows(throws);
+    setInputMode("dartboard");
+  }, [playerScore1, playerScore2, playerScore3, multiplier1, multiplier2, multiplier3]);
+
+  const handleSwitchToManual = useCallback(() => {
+    setInputMode("manual");
+  }, []);
 
   // Input mode toggle
   const InputModeToggle = () => (
@@ -370,7 +340,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
         className={`${dartboardStyles.modeButton} ${
           inputMode === "dartboard" ? dartboardStyles.active : ""
         }`}
-        onClick={() => setInputMode("dartboard")}
+        onClick={handleSwitchToDartboard}
       >
         <CursorArrowRaysIcon className="w-5 h-5" />
         Dartboard
@@ -379,7 +349,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
         className={`${dartboardStyles.modeButton} ${
           inputMode === "manual" ? dartboardStyles.active : ""
         }`}
-        onClick={() => setInputMode("manual")}
+        onClick={handleSwitchToManual}
       >
         <Squares2X2Icon className="w-5 h-5" />
         Manual
@@ -481,6 +451,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
                 >
                   <InteractiveDartboard
                     onSegmentClick={handleDartboardClick}
+                    onMiss={handleDartboardMiss}
                     disabled={dartboardThrows.length >= 3}
                   />
                 </Suspense>
@@ -498,7 +469,201 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
             </div>
           ) : (
             <div className={dartboardStyles.manualInputArea}>
-              <ManualInputForm />
+              <div className={dartboardStyles.manualFormContainer}>
+                {/* Score Preview */}
+                <div className={dartboardStyles.manualScorePreview}>
+                  <span className={dartboardStyles.manualScoreLabel}>Score</span>
+                  <span className={`${dartboardStyles.manualScoreValue} ${
+                    previewScore < 2 && previewScore !== 0 ? dartboardStyles.bust : ""
+                  }`}>
+                    {previewScore < 2 && previewScore !== 0 ? "BUST" : previewScore}
+                  </span>
+                  {totalManualScore > 0 && (
+                    <span className={dartboardStyles.manualScoreDelta}>-{totalManualScore}</span>
+                  )}
+                </div>
+
+                {/* Throw inputs */}
+                <div className={dartboardStyles.throwsContainer}>
+                  {/* Dart 1 */}
+                  <div 
+                    className={`${dartboardStyles.throwSlot} ${playerScore1 === "" ? dartboardStyles.empty : ""}`}
+                    style={playerScore1 !== "" ? {
+                      borderColor: getThrowColor(multiplier1),
+                      boxShadow: `0 0 10px ${getThrowColor(multiplier1)}40`,
+                    } : {}}
+                  >
+                    {playerScore1 !== "" ? (
+                      <>
+                        <span
+                          className={dartboardStyles.throwLabel}
+                          style={{ color: getThrowColor(multiplier1) }}
+                        >
+                          {formatScoreLabel(Number(playerScore1), multiplier1)}
+                        </span>
+                        <span className={dartboardStyles.throwPoints}>
+                          = {Number(playerScore1) * multiplier1}
+                        </span>
+                      </>
+                    ) : (
+                      <span className={dartboardStyles.emptyLabel}>Dart 1</span>
+                    )}
+                    <div className={dartboardStyles.manualInputControls}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="0-20"
+                        className={dartboardStyles.manualInputSmall}
+                        value={playerScore1}
+                        onChange={(e) => setPlayerScore1(e.target.value.replace(/[^0-9]/g, ''))}
+                      />
+                      <div className={dartboardStyles.compactMultiplier}>
+                        <button 
+                          type="button"
+                          className={`${dartboardStyles.compactMultiplierBtn} ${multiplier1 === Multiplier.Single ? dartboardStyles.active : ''}`}
+                          onClick={() => setMultiplier1(Multiplier.Single)}
+                        >1x</button>
+                        <button 
+                          type="button"
+                          className={`${dartboardStyles.compactMultiplierBtn} ${multiplier1 === Multiplier.Double ? dartboardStyles.active : ''}`}
+                          onClick={() => setMultiplier1(Multiplier.Double)}
+                        >2x</button>
+                        <button 
+                          type="button"
+                          className={`${dartboardStyles.compactMultiplierBtn} ${multiplier1 === Multiplier.Tripple ? dartboardStyles.active : ''}`}
+                          onClick={() => setMultiplier1(Multiplier.Tripple)}
+                          disabled={Number(playerScore1) === 25}
+                        >3x</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dart 2 */}
+                  <div 
+                    className={`${dartboardStyles.throwSlot} ${playerScore2 === "" ? dartboardStyles.empty : ""}`}
+                    style={playerScore2 !== "" ? {
+                      borderColor: getThrowColor(multiplier2),
+                      boxShadow: `0 0 10px ${getThrowColor(multiplier2)}40`,
+                    } : {}}
+                  >
+                    {playerScore2 !== "" ? (
+                      <>
+                        <span
+                          className={dartboardStyles.throwLabel}
+                          style={{ color: getThrowColor(multiplier2) }}
+                        >
+                          {formatScoreLabel(Number(playerScore2), multiplier2)}
+                        </span>
+                        <span className={dartboardStyles.throwPoints}>
+                          = {Number(playerScore2) * multiplier2}
+                        </span>
+                      </>
+                    ) : (
+                      <span className={dartboardStyles.emptyLabel}>Dart 2</span>
+                    )}
+                    <div className={dartboardStyles.manualInputControls}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="0-20"
+                        className={dartboardStyles.manualInputSmall}
+                        value={playerScore2}
+                        onChange={(e) => setPlayerScore2(e.target.value.replace(/[^0-9]/g, ''))}
+                      />
+                      <div className={dartboardStyles.compactMultiplier}>
+                        <button 
+                          type="button"
+                          className={`${dartboardStyles.compactMultiplierBtn} ${multiplier2 === Multiplier.Single ? dartboardStyles.active : ''}`}
+                          onClick={() => setMultiplier2(Multiplier.Single)}
+                        >1x</button>
+                        <button 
+                          type="button"
+                          className={`${dartboardStyles.compactMultiplierBtn} ${multiplier2 === Multiplier.Double ? dartboardStyles.active : ''}`}
+                          onClick={() => setMultiplier2(Multiplier.Double)}
+                        >2x</button>
+                        <button 
+                          type="button"
+                          className={`${dartboardStyles.compactMultiplierBtn} ${multiplier2 === Multiplier.Tripple ? dartboardStyles.active : ''}`}
+                          onClick={() => setMultiplier2(Multiplier.Tripple)}
+                          disabled={Number(playerScore2) === 25}
+                        >3x</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dart 3 */}
+                  <div 
+                    className={`${dartboardStyles.throwSlot} ${playerScore3 === "" ? dartboardStyles.empty : ""}`}
+                    style={playerScore3 !== "" ? {
+                      borderColor: getThrowColor(multiplier3),
+                      boxShadow: `0 0 10px ${getThrowColor(multiplier3)}40`,
+                    } : {}}
+                  >
+                    {playerScore3 !== "" ? (
+                      <>
+                        <span
+                          className={dartboardStyles.throwLabel}
+                          style={{ color: getThrowColor(multiplier3) }}
+                        >
+                          {formatScoreLabel(Number(playerScore3), multiplier3)}
+                        </span>
+                        <span className={dartboardStyles.throwPoints}>
+                          = {Number(playerScore3) * multiplier3}
+                        </span>
+                      </>
+                    ) : (
+                      <span className={dartboardStyles.emptyLabel}>Dart 3</span>
+                    )}
+                    <div className={dartboardStyles.manualInputControls}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="0-20"
+                        className={dartboardStyles.manualInputSmall}
+                        value={playerScore3}
+                        onChange={(e) => setPlayerScore3(e.target.value.replace(/[^0-9]/g, ''))}
+                      />
+                      <div className={dartboardStyles.compactMultiplier}>
+                        <button 
+                          type="button"
+                          className={`${dartboardStyles.compactMultiplierBtn} ${multiplier3 === Multiplier.Single ? dartboardStyles.active : ''}`}
+                          onClick={() => setMultiplier3(Multiplier.Single)}
+                        >1x</button>
+                        <button 
+                          type="button"
+                          className={`${dartboardStyles.compactMultiplierBtn} ${multiplier3 === Multiplier.Double ? dartboardStyles.active : ''}`}
+                          onClick={() => setMultiplier3(Multiplier.Double)}
+                        >2x</button>
+                        <button 
+                          type="button"
+                          className={`${dartboardStyles.compactMultiplierBtn} ${multiplier3 === Multiplier.Tripple ? dartboardStyles.active : ''}`}
+                          onClick={() => setMultiplier3(Multiplier.Tripple)}
+                          disabled={Number(playerScore3) === 25}
+                        >3x</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Total */}
+                {totalManualScore > 0 && (
+                  <div className={dartboardStyles.totalRow}>
+                    <span>Round total:</span>
+                    <span className={dartboardStyles.totalValue}>{totalManualScore}</span>
+                  </div>
+                )}
+
+                {/* Submit button */}
+                <Button
+                  className={dartboardStyles.confirmButton}
+                  onPress={handleSubmitScore}
+                  isDisabled={isSubmitDisabled}
+                  color="primary"
+                  size="lg"
+                >
+                  Submit Score
+                </Button>
+              </div>
             </div>
           )}
         </div>

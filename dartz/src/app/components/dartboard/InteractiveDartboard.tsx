@@ -12,6 +12,7 @@ import { Multiplier } from "@/app/utils/types";
 
 interface DartboardProps {
   onSegmentClick: (score: number, multiplier: Multiplier) => void;
+  onMiss?: () => void;
   disabled?: boolean;
 }
 
@@ -63,9 +64,14 @@ function createSectorGeometry(
 
 // Hover color based on segment type
 function getHoverColor(segment: DartboardSegment): string {
+  if (segment.score === 25){
+    if(segment.multiplier === Multiplier.Double)
+      return "#ffd93d";
+    
+    return "#43ccf5ff";
+  } 
   if (segment.multiplier === Multiplier.Tripple) return "#ff6b6b";
   if (segment.multiplier === Multiplier.Double) return "#4ecdc4";
-  if (segment.score === 25) return "#ffd93d";
   return "#95e1d3";
 }
 
@@ -191,15 +197,46 @@ const DartboardTexture = memo(function DartboardTexture({
   );
 });
 
+// Miss tooltip component
+const MissTooltip = memo(function MissTooltip() {
+  return (
+    <Html position={[0, -1.7, 0.5]} center style={{ pointerEvents: "none" }}>
+      <div
+        style={{
+          background: "rgba(0, 0, 0, 0.9)",
+          color: "#888",
+          padding: "8px 16px",
+          borderRadius: "8px",
+          fontSize: "20px",
+          fontWeight: "bold",
+          whiteSpace: "nowrap",
+          border: "2px solid #555",
+          boxShadow: "0 0 20px rgba(80,80,80,0.4)",
+          pointerEvents: "none",
+          userSelect: "none",
+        }}
+      >
+        MISS
+        <span style={{ opacity: 0.6, marginLeft: "8px", fontSize: "14px" }}>
+          = 0
+        </span>
+      </div>
+    </Html>
+  );
+});
+
 // Main dartboard scene - memoized
 const DartboardScene = memo(function DartboardScene({
   onSegmentClick,
+  onMiss,
   disabled,
 }: {
   onSegmentClick: (score: number, multiplier: Multiplier) => void;
+  onMiss?: () => void;
   disabled: boolean;
 }) {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
+  const [isHoveringMiss, setIsHoveringMiss] = useState(false);
   const boardRadius = 2;
 
   // memoize callbacks to prevent re-renders
@@ -253,10 +290,33 @@ const DartboardScene = memo(function DartboardScene({
         ))}
       </group>
 
+      {/* Miss background - detects clicks outside segments */}
+      <mesh
+        position={[0, 0, -0.01]}
+        onPointerEnter={() => !disabled && setIsHoveringMiss(true)}
+        onPointerLeave={() => setIsHoveringMiss(false)}
+        onClick={(e) => {
+          if (!disabled && onMiss) {
+            e.stopPropagation();
+            onMiss();
+          }
+        }}
+      >
+        <circleGeometry args={[boardRadius * 1.03, 64]} />
+        <meshBasicMaterial
+          color="#555"
+          transparent
+          opacity={isHoveringMiss && !disabled ? 0.15 : 0}
+        />
+      </mesh>
+
       {/* Tooltip rendered at center, above the board */}
       {hoveredSegmentData && (
         <HoverTooltip segment={hoveredSegmentData} boardRadius={boardRadius} />
       )}
+      
+      {/* Miss tooltip */}
+      {isHoveringMiss && !hoveredSegmentData && !disabled && <MissTooltip />}
 
       {/* Orbit controls for viewing */}
       <OrbitControls
@@ -273,6 +333,7 @@ const DartboardScene = memo(function DartboardScene({
 // Main exported component - memoized to prevent parent re-renders from affecting it
 const InteractiveDartboard = memo(function InteractiveDartboard({
   onSegmentClick,
+  onMiss,
   disabled = false,
 }: DartboardProps) {
   return (
@@ -294,7 +355,7 @@ const InteractiveDartboard = memo(function InteractiveDartboard({
         }}
         gl={{ alpha: true }}
       >
-        <DartboardScene onSegmentClick={onSegmentClick} disabled={disabled} />
+        <DartboardScene onSegmentClick={onSegmentClick} onMiss={onMiss} disabled={disabled} />
       </Canvas>
     </div>
   );
