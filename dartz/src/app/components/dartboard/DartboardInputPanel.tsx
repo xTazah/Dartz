@@ -5,11 +5,13 @@ import { Button } from "@nextui-org/react";
 import { XMarkIcon, ArrowUturnLeftIcon } from "@heroicons/react/24/solid";
 import { Multiplier } from "@/app/utils/types";
 import { formatScoreLabel } from "@/app/utils/dartboardSegments";
+import { DartCoordinates } from "@/app/utils/dartCoordinates";
 import styles from "@/app/styles/dartboard.module.scss";
 
 export interface DartThrow {
   score: number;
   multiplier: Multiplier;
+  coordinates?: DartCoordinates; // Optional 3D coordinates for dart rendering
 }
 
 interface DartboardInputPanelProps {

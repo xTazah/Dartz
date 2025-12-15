@@ -2,18 +2,27 @@
 
 import React, { useState, useMemo, Suspense, memo, useCallback } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Html, useTexture } from "@react-three/drei";
+import { OrbitControls, Html, useTexture, Preload } from "@react-three/drei";
 import * as THREE from "three";
 import {
   DARTBOARD_SEGMENTS,
   DartboardSegment,
 } from "@/app/utils/dartboardSegments";
 import { Multiplier } from "@/app/utils/types";
+import { DartCoordinates } from "@/app/utils/dartCoordinates";
+import AnimatedDart from "./AnimatedDart";
+
+export interface DartInstance {
+  id: string;
+  position: DartCoordinates;
+}
 
 interface DartboardProps {
-  onSegmentClick: (score: number, multiplier: Multiplier) => void;
+  onSegmentClick: (score: number, multiplier: Multiplier, coordinates: DartCoordinates) => void;
   onMiss?: () => void;
   disabled?: boolean;
+  darts?: DartInstance[];
+  onDartAnimationComplete?: (id: string) => void;
 }
 
 // Create a ring sector geometry for segment overlays
@@ -90,7 +99,7 @@ const SegmentOverlay = memo(function SegmentOverlay({
   isHovered: boolean;
   onPointerEnter: () => void;
   onPointerLeave: () => void;
-  onClick: () => void;
+  onClick: (event: any) => void; // Use any for now, Three.js event types are complex
   disabled: boolean;
 }) {
   const geometry = useMemo(() => {
@@ -126,7 +135,7 @@ const SegmentOverlay = memo(function SegmentOverlay({
       }}
       onClick={(e) => {
         e.stopPropagation();
-        if (!disabled) onClick();
+        if (!disabled) onClick(e);
       }}
     >
       <meshBasicMaterial
@@ -230,10 +239,14 @@ const DartboardScene = memo(function DartboardScene({
   onSegmentClick,
   onMiss,
   disabled,
+  darts,
+  onDartAnimationComplete,
 }: {
-  onSegmentClick: (score: number, multiplier: Multiplier) => void;
+  onSegmentClick: (score: number, multiplier: Multiplier, coordinates: DartCoordinates) => void;
   onMiss?: () => void;
   disabled: boolean;
+  darts?: DartInstance[];
+  onDartAnimationComplete?: (id: string) => void;
 }) {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
   const [isHoveringMiss, setIsHoveringMiss] = useState(false);
@@ -246,8 +259,19 @@ const DartboardScene = memo(function DartboardScene({
   );
   const handlePointerLeave = useCallback(() => setHoveredSegment(null), []);
   const handleClick = useCallback(
-    (score: number, multiplier: Multiplier) => () =>
-      onSegmentClick(score, multiplier),
+    (score: number, multiplier: Multiplier) => (event: any) => {
+      // Extract click position from the raycaster event
+      const intersection = event.intersections?.[0];
+      const clickPosition = intersection?.point || new THREE.Vector3(0, 0, 0);
+      
+      const coordinates: DartCoordinates = {
+        x: clickPosition.x,
+        y: clickPosition.y,
+        z: 0,
+      };
+      
+      onSegmentClick(score, multiplier, coordinates);
+    },
     [onSegmentClick]
   );
 
@@ -318,13 +342,30 @@ const DartboardScene = memo(function DartboardScene({
       {/* Miss tooltip */}
       {isHoveringMiss && !hoveredSegmentData && !disabled && <MissTooltip />}
 
+      {/* Render darts */}
+      {darts && darts.length > 0 && (
+        <group>
+          {darts.map((dart) => (
+            <AnimatedDart
+              key={dart.id}
+              id={dart.id}
+              targetPosition={dart.position}
+              onAnimationComplete={onDartAnimationComplete}
+            />
+          ))}
+        </group>
+      )}
+
+      {/* Preload dart model once for all darts */}
+      <Preload all />
+
       {/* Orbit controls for viewing */}
       <OrbitControls
         enablePan={false}
         enableZoom={false}
         minDistance={4}
         maxDistance={7}
-        enableRotate={false}
+        enableRotate={true}
       />
     </>
   );
@@ -335,6 +376,8 @@ const InteractiveDartboard = memo(function InteractiveDartboard({
   onSegmentClick,
   onMiss,
   disabled = false,
+  darts = [],
+  onDartAnimationComplete,
 }: DartboardProps) {
   return (
     <div
@@ -355,7 +398,13 @@ const InteractiveDartboard = memo(function InteractiveDartboard({
         }}
         gl={{ alpha: true }}
       >
-        <DartboardScene onSegmentClick={onSegmentClick} onMiss={onMiss} disabled={disabled} />
+        <DartboardScene 
+          onSegmentClick={onSegmentClick} 
+          onMiss={onMiss} 
+          disabled={disabled}
+          darts={darts}
+          onDartAnimationComplete={onDartAnimationComplete}
+        />
       </Canvas>
     </div>
   );

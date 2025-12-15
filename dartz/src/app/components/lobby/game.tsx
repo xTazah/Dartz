@@ -8,7 +8,7 @@ import {
   User,
 } from "@/app/utils/types";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
-import React, { useContext, useEffect, useState, lazy, Suspense, useCallback, useMemo } from "react";
+import React, { useContext, useEffect, useState, lazy, Suspense, useCallback, useMemo, useRef } from "react";
 import { Button } from "@nextui-org/react";
 import getCheckoutPath from "@/app/handlers/checkoutHandler";
 import { UserContext } from "../userProvider/userProvider";
@@ -32,6 +32,14 @@ const InteractiveDartboard = lazy(
 import DartboardInputPanel, {
   DartThrow,
 } from "../dartboard/DartboardInputPanel";
+import { DartInstance } from "../dartboard/InteractiveDartboard";
+import {
+  calculateDartPosition,
+  findSegmentByScore,
+  getRandomPositionInSegment,
+  type DartCoordinates,
+} from "@/app/utils/dartCoordinates";
+import { DARTBOARD_SEGMENTS } from "@/app/utils/dartboardSegments";
 
 type InputMode = "manual" | "dartboard";
 
@@ -77,6 +85,12 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
   const [dartboardThrows, setDartboardThrows] = useState<DartThrow[]>([]);
   const [dartboardPreviewScore, setDartboardPreviewScore] = useState(501);
 
+  // Dart rendering state
+  const [activeDarts, setActiveDarts] = useState<DartInstance[]>([]);
+  
+  // Cache random positions for manual input to prevent constant regeneration
+  const manualDartPositions = useRef<{[key: string]: DartCoordinates}>({});
+
   const currentPlayer = lobby.players[lobby.currentPlayerIndex];
 
   // Check if current user is the current player or a local user
@@ -117,9 +131,10 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     setMultiplier3(t2?.multiplier ?? Multiplier.Single);
   }, [dartboardThrows, inputMode]);
 
-  // Reset dartboard throws when player changes
+  // Reset dartboard throws and darts when player changes
   useEffect(() => {
     setDartboardThrows([]);
+    setActiveDarts([]);
   }, [currentPlayer.user?.id]);
 
   const handleSubmitScore = () => {
@@ -159,29 +174,62 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
   };
 
   // Handle dartboard segment click - memoized to prevent dartboard re-renders
-  const handleDartboardClick = useCallback((score: number, multiplier: Multiplier) => {
+  const handleDartboardClick = useCallback((score: number, multiplier: Multiplier, coordinates: DartCoordinates) => {
     setDartboardThrows(prev => {
       if (prev.length >= 3) return prev;
-      return [...prev, { score, multiplier }];
+      
+      const newThrow = { score, multiplier, coordinates };
+      
+      // Add dart to active darts
+      const dartId = `dart-${Date.now()}-${prev.length}`;
+      setActiveDarts(existingDarts => [
+        ...existingDarts,
+        { id: dartId, position: coordinates },
+      ]);
+      
+      return [...prev, newThrow];
     });
   }, []);
 
   // Handle undo for dartboard throw
   const handleDartboardUndo = useCallback((index: number) => {
     setDartboardThrows(prev => prev.filter((_, i) => i !== index));
+    // Remove corresponding dart
+    setActiveDarts(existingDarts => {
+      const newDarts = [...existingDarts];
+      newDarts.splice(index, 1);
+      return newDarts;
+    });
   }, []);
 
   // Handle miss click on dartboard
   const handleDartboardMiss = useCallback(() => {
     setDartboardThrows(prev => {
       if (prev.length >= 3) return prev;
-      return [...prev, { score: 0, multiplier: Multiplier.Single }];
+      
+      // Generate coordinates for a miss (outside the board)
+      const missSegment = findSegmentByScore(0, Multiplier.Single, DARTBOARD_SEGMENTS);
+      const coordinates = missSegment
+        ? getRandomPositionInSegment(missSegment, 2)
+        : { x: 0, y: 0, z: 0 };
+      
+      const newThrow = { score: 0, multiplier: Multiplier.Single, coordinates };
+      
+      // Add dart for miss
+      const dartId = `dart-${Date.now()}-${prev.length}`;
+      setActiveDarts(existingDarts => [
+        ...existingDarts,
+        { id: dartId, position: coordinates },
+      ]);
+      
+      return [...prev, newThrow];
     });
   }, []);
 
   // Clear all dartboard throws
   const handleDartboardClear = useCallback(() => {
     setDartboardThrows([]);
+    setActiveDarts([]);
   }, []);
 
   // Confirm dartboard throws
@@ -211,6 +259,8 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     console.log(updatedLobby);
     setLobby(updatedLobby);
     setDartboardThrows([]);
+    // Keep darts visible after confirmation
+    // They'll be cleared when player changes
   }, [dartboardThrows, lobby, currentPlayer, setLobby]);
 
   useEffect(() => {
@@ -251,6 +301,66 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     multiplier2,
     multiplier3,
     currentPlayer.score,
+  ]);
+
+  // Separate effect for manual input dart generation (performance fix)
+  useEffect(() => {
+    // Only generate darts in manual mode
+    if (inputMode !== "manual") return;
+    
+    const newDarts: DartInstance[] = [];
+    
+    // Generate dart for score 1 - cache the position
+    if (playerScore1 !== "") {
+      const key = `${playerScore1}-${multiplier1}`;
+      if (!manualDartPositions.current[key]) {
+        const segment = findSegmentByScore(Number(playerScore1), multiplier1, DARTBOARD_SEGMENTS);
+        if (segment) {
+          manualDartPositions.current[key] = getRandomPositionInSegment(segment, 2);
+        }
+      }
+      if (manualDartPositions.current[key]) {
+        newDarts.push({ id: `manual-dart-1`, position: manualDartPositions.current[key] });
+      }
+    }
+    
+    // Generate dart for score 2 - cache the position
+    if (playerScore2 !== "") {
+      const key = `${playerScore2}-${multiplier2}`;
+      if (!manualDartPositions.current[key]) {
+        const segment = findSegmentByScore(Number(playerScore2), multiplier2, DARTBOARD_SEGMENTS);
+        if (segment) {
+          manualDartPositions.current[key] = getRandomPositionInSegment(segment, 2);
+        }
+      }
+      if (manualDartPositions.current[key]) {
+        newDarts.push({ id: `manual-dart-2`, position: manualDartPositions.current[key] });
+      }
+    }
+    
+    // Generate dart for score 3 - cache the position
+    if (playerScore3 !== "") {
+      const key = `${playerScore3}-${multiplier3}`;
+      if (!manualDartPositions.current[key]) {
+        const segment = findSegmentByScore(Number(playerScore3), multiplier3, DARTBOARD_SEGMENTS);
+        if (segment) {
+          manualDartPositions.current[key] = getRandomPositionInSegment(segment, 2);
+        }
+      }
+      if (manualDartPositions.current[key]) {
+        newDarts.push({ id: `manual-dart-3`, position: manualDartPositions.current[key] });
+      }
+    }
+    
+    setActiveDarts(newDarts);
+  }, [
+    playerScore1,
+    playerScore2,
+    playerScore3,
+    multiplier1,
+    multiplier2,
+    multiplier3,
+    inputMode,
   ]);
 
   const handleUndo = () => {
@@ -470,6 +580,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
                     onSegmentClick={handleDartboardClick}
                     onMiss={handleDartboardMiss}
                     disabled={dartboardThrows.length >= 3}
+                    darts={activeDarts}
                   />
                 </Suspense>
               </div>
