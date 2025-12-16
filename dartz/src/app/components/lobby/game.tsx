@@ -437,18 +437,31 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
 
   // Handle mode switching with bidirectional sync
   const handleSwitchToDartboard = useCallback(() => {
-    // Sync manual inputs TO dartboard throws
+    // Sync manual inputs TO dartboard throws with fresh random coordinates
     const throws: DartThrow[] = [];
+    const newDarts: DartInstance[] = [];
+    
     if (playerScore1 !== "") {
-      throws.push({ score: Number(playerScore1), multiplier: multiplier1 });
+      const segment = findSegmentByScore(Number(playerScore1), multiplier1, DARTBOARD_SEGMENTS);
+      const coordinates = segment ? getRandomPositionInSegment(segment, 2) : { x: 0, y: 0, z: 0 };
+      throws.push({ score: Number(playerScore1), multiplier: multiplier1, coordinates });
+      newDarts.push({ id: `dart-switch-0`, position: coordinates });
     }
     if (playerScore2 !== "") {
-      throws.push({ score: Number(playerScore2), multiplier: multiplier2 });
+      const segment = findSegmentByScore(Number(playerScore2), multiplier2, DARTBOARD_SEGMENTS);
+      const coordinates = segment ? getRandomPositionInSegment(segment, 2) : { x: 0, y: 0, z: 0 };
+      throws.push({ score: Number(playerScore2), multiplier: multiplier2, coordinates });
+      newDarts.push({ id: `dart-switch-1`, position: coordinates });
     }
     if (playerScore3 !== "") {
-      throws.push({ score: Number(playerScore3), multiplier: multiplier3 });
+      const segment = findSegmentByScore(Number(playerScore3), multiplier3, DARTBOARD_SEGMENTS);
+      const coordinates = segment ? getRandomPositionInSegment(segment, 2) : { x: 0, y: 0, z: 0 };
+      throws.push({ score: Number(playerScore3), multiplier: multiplier3, coordinates });
+      newDarts.push({ id: `dart-switch-2`, position: coordinates });
     }
+    
     setDartboardThrows(throws);
+    setActiveDarts(newDarts);
     setInputMode("dartboard");
     // Save preference to cookie
     document.cookie = `inputMode=dartboard; path=/; max-age=${60 * 60 * 24 * 365}`; // 1 year

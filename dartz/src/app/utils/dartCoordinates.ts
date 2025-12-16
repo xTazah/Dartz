@@ -28,6 +28,12 @@ function polarToCartesian(
   return { x, y };
 }
 
+// Transform constants to match the segment overlay group in InteractiveDartboard
+// These must stay in sync with <group position={[-0.01, 0.08, 0]} scale={1.10}> in InteractiveDartboard.tsx
+const DARTBOARD_OFFSET_X = -0.01;
+const DARTBOARD_OFFSET_Y = 0.08;
+const DARTBOARD_SCALE = 1.10;
+
 /**
  * Generates a random position within a dartboard segment
  * @param segment - The dartboard segment
@@ -57,8 +63,13 @@ export function getRandomPositionInSegment(
 
   const { x, y } = polarToCartesian(randomAngle, randomRadius, boardRadius);
 
+  // Apply the same scale and offset transformation as the segment overlays
+  // to ensure darts land in the visually correct position on the texture
+  const scaledX = x * DARTBOARD_SCALE + DARTBOARD_OFFSET_X;
+  const scaledY = y * DARTBOARD_SCALE + DARTBOARD_OFFSET_Y;
+
   // Z position is at the board surface (0)
-  return { x, y, z: 0 };
+  return { x: scaledX, y: scaledY, z: 0 };
 }
 
 /**
