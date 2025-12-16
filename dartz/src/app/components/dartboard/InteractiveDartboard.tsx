@@ -365,7 +365,7 @@ const DartboardScene = memo(function DartboardScene({
         enableZoom={false}
         minDistance={4}
         maxDistance={7}
-        enableRotate={true}
+        enableRotate={false}
       />
     </>
   );
