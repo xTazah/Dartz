@@ -50,7 +50,7 @@ export default function DartColorPicker({
     <div className={styles.colorPickerContainer}>
       {/* 3D Dart Preview */}
       <div className={styles.dartPreview}>
-        <Canvas camera={{ position: [0, 0, 2.5], fov: 45 }}>
+        <Canvas camera={{ position: [0, 0, 1.8], fov: 45 }}>
           <ambientLight intensity={0.6} />
           <directionalLight position={[5, 5, 5]} intensity={1} />
           <pointLight position={[-5, -5, -5]} intensity={0.5} />
@@ -64,6 +64,7 @@ export default function DartColorPicker({
           <OrbitControls
             enableZoom={false}
             enablePan={false}
+            enableRotate={false}
             autoRotate
             autoRotateSpeed={2}
           />

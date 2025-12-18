@@ -12,21 +12,50 @@ export default function SettingsPage() {
   const context = useContext(UserContext);
   const user = context?.user;
   
-  const [selectedColor, setSelectedColor] = useState(user?.dartColor ?? "#C0C0C0");
+  // Settings state
+  const [dartColor, setDartColor] = useState(user?.dartColor ?? "#C0C0C0");
+  const [allowNoAuth, setAllowNoAuth] = useState(user?.allowNoAuth ?? false);
+  
+  // Original values to detect changes
+  const [originalDartColor, setOriginalDartColor] = useState(user?.dartColor ?? "#C0C0C0");
+  const [originalAllowNoAuth, setOriginalAllowNoAuth] = useState(user?.allowNoAuth ?? false);
+  
   const [isSaving, setIsSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
 
-  // Update selected color when user data loads
+  // Calculate if there are unsaved changes
+  const hasChanges = dartColor !== originalDartColor || allowNoAuth !== originalAllowNoAuth;
+
+  // Update state when user data loads
   useEffect(() => {
-    if (user?.dartColor) {
-      setSelectedColor(user.dartColor);
+    if (user) {
+      setDartColor(user.dartColor ?? "#C0C0C0");
+      setAllowNoAuth(user.allowNoAuth ?? false);
+      setOriginalDartColor(user.dartColor ?? "#C0C0C0");
+      setOriginalAllowNoAuth(user.allowNoAuth ?? false);
     }
-  }, [user?.dartColor]);
+  }, [user]);
+
+  // Browser warning for unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasChanges]);
 
   const handleColorChange = (color: string) => {
-    setSelectedColor(color);
-    setHasChanges(color !== (user?.dartColor ?? "#C0C0C0"));
+    setDartColor(color);
+    setShowSaved(false);
+  };
+
+  const handleToggleNoAuth = () => {
+    setAllowNoAuth(!allowNoAuth);
     setShowSaved(false);
   };
 
@@ -36,24 +65,26 @@ export default function SettingsPage() {
     setIsSaving(true);
     try {
       const service = new PlayerService();
-      await service.updateDartColor(user.id, selectedColor);
+      await service.updateAllSettings(user.id, dartColor, allowNoAuth);
       
-      // Update user context with new color
+      // Update user context with new values
       if (context?.setUser) {
         context.setUser({
           ...user,
-          dartColor: selectedColor,
+          dartColor,
+          allowNoAuth,
         });
       }
       
-      setShowSaved(true);
-      setHasChanges(false);
-      toast.success("Dart color updated!");
+      // Update original values
+      setOriginalDartColor(dartColor);
+      setOriginalAllowNoAuth(allowNoAuth);
       
-      // Hide saved message after 3 seconds
+      setShowSaved(true);
+      
       setTimeout(() => setShowSaved(false), 3000);
     } catch (error) {
-      toast.error("Failed to update dart color");
+      toast.error("Failed to save settings");
       console.error(error);
     } finally {
       setIsSaving(false);
@@ -64,7 +95,7 @@ export default function SettingsPage() {
     <div className={styles.settingsContainer}>
       <div className={styles.settingsHeader}>
         <h1 className={styles.settingsTitle}>
-          <Cog6ToothIcon className="w-7 h-7" style={{ display: "inline", marginRight: "8px" }} />
+          <Cog6ToothIcon className="w-6 h-6" />
           Settings
         </h1>
         <p className={styles.settingsSubtitle}>
@@ -72,17 +103,50 @@ export default function SettingsPage() {
         </p>
       </div>
 
+      {/* Dart Appearance Section */}
       <div className={styles.settingsSection}>
-        <h2 className={styles.sectionTitle}>
-          🎯 Dart Appearance
-        </h2>
+        <h2 className={styles.sectionTitle}>Dart Appearance</h2>
+        <p className={styles.sectionDescription}>
+          Choose a color for your darts that will be displayed in game lobbies.
+        </p>
         
         <DartColorPicker
-          selectedColor={selectedColor}
+          selectedColor={dartColor}
           onColorChange={handleColorChange}
         />
+      </div>
 
-        {hasChanges && (
+      {/* Privacy & Security Section */}
+      <div className={styles.settingsSection}>
+        <h2 className={styles.sectionTitle}>Privacy & Security</h2>
+        <p className={styles.sectionDescription}>
+          Control how others can interact with your account.
+        </p>
+        
+        <div className={styles.settingRow}>
+          <div className={styles.settingInfo}>
+            <h4 className={styles.settingLabel}>Allow No-Auth Local Players</h4>
+            <p className={styles.settingHint}>
+              When enabled, friends can add you as a local player without entering your password. 
+              Useful for in-person games where multiple players share one device.
+            </p>
+            <p className={`${styles.settingHint} ${styles.warningHint}`}>
+              ⚠️ Only works for friends. Enable at your own risk.
+            </p>
+          </div>
+          <button 
+            className={`${styles.toggleSwitch} ${allowNoAuth ? styles.active : ""}`}
+            onClick={handleToggleNoAuth}
+          >
+            <div className={styles.toggleKnob} />
+          </button>
+        </div>
+      </div>
+
+      {/* Floating Save Bar */}
+      {hasChanges && (
+        <div className={styles.floatingSaveBar}>
+          <span className={styles.unsavedText}>You have unsaved changes</span>
           <button
             className={styles.saveButton}
             onClick={handleSave}
@@ -90,15 +154,17 @@ export default function SettingsPage() {
           >
             {isSaving ? "Saving..." : "Save Changes"}
           </button>
-        )}
+        </div>
+      )}
 
-        {showSaved && (
+      {showSaved && (
+        <div className={styles.floatingSaveBar}>
           <div className={styles.savedMessage}>
             <CheckCircleIcon className="w-5 h-5" />
             Changes saved successfully!
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

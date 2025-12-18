@@ -127,129 +127,125 @@ export default function FriendList() {
           <div className={`${styles.circle}`}>
             <UserIcon className="size-5 " />
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative focus-visible:ring-inset ring-transparent focus-visible:ring-offset-0"
-              >
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="relative p-1 rounded hover:bg-[var(--component-background-hover)] transition-colors">
                 <BellIcon className="h-5 w-5" />
                 {numNotifications > 0 && (
                   <Badge className="absolute -top-2 -right-2 rounded-full bg-red-500 text-white px-2 py-0.5 text-xs font-medium">
                     {numNotifications}
                   </Badge>
                 )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
               sideOffset={8}
-              className={` w-auto min-w-52 p-4 rounded-md shadow-lg ${dropdownStyles.dropdownBackground}`}
+              side="left"
+              align="start"
+              className="w-72 p-4 bg-[var(--component-background)] rounded-md shadow-lg outline outline-[var(--component-background-hover)]"
             >
-              <DropdownMenuLabel className="mb-2 text-lg font-medium">
-                Notifications
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator
-                className={`${dropdownStyles.dropdownSeperator} my-2`}
-              />
-              {Object.keys(friendRequests).length > 0 && (
-                <DropdownMenuGroup className="space-y-4">
-                  {Object.entries(friendRequests).map(
-                    ([key, friendRequest]) => (
-                      <div
-                        key={friendRequest.userId}
-                        className="flex items-start gap-3"
-                      >
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#bc6c25] text-white">
-                          <UserPlusIcon className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                          <p className="text-sm font-medium">
-                            Friend Request from {friendRequest.username}
-                          </p>
-                          <div className="flex gap-2 justify-end">
-                            <NextUiButton
-                              isIconOnly
-                              onClick={() => handleDeclineFriend(key)}
-                              className=" min-w-6 h-6 w-6 flex items-center gap-1 text-sm text-white rounded-full bg-red-500"
-                            >
-                              <XMarkIcon className="size-4" />
-                            </NextUiButton>
-                            <NextUiButton
-                              onClick={() =>
-                                handleAcceptFriend(key, friendRequest.userId)
-                              }
-                              isIconOnly
-                              className={`min-w-6 h-6 w-6 flex items-center gap-1 text-sm text-white rounded-full bg-[var(--primary)]`}
-                            >
-                              <CheckIcon className="size-4" />
-                            </NextUiButton>
+              <div className="grid gap-3">
+                <h4 className="font-medium leading-none text-sm text-[var(--font-color-muted)]">
+                  Notifications
+                </h4>
+                
+                {Object.keys(friendRequests).length > 0 && (
+                  <div className="space-y-3 border-t border-[var(--component-outline)] pt-3">
+                    {Object.entries(friendRequests).map(
+                      ([key, friendRequest]) => (
+                        <div
+                          key={friendRequest.userId}
+                          className="flex items-start gap-3"
+                        >
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#bc6c25] text-white flex-shrink-0">
+                            <UserPlusIcon className="h-4 w-4" />
                           </div>
-                        </div>
-                      </div>
-                    )
-                  )}
-                  <DropdownMenuSeparator
-                    className={`${dropdownStyles.dropdownSeperator} !my-2`}
-                  />
-                </DropdownMenuGroup>
-              )}
-
-              {Object.keys(lobbyInvites).length > 0 && (
-                <DropdownMenuGroup className="space-y-4">
-                  {Object.entries(lobbyInvites).map(([key, invite]) => (
-                    <div key={key} className="flex items-start gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-white">
-                        <PlayIcon className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium">
-                          Lobby Invite from: {invite.sender?.username}
-                        </p>
-                        <div className="flex gap-2 justify-end">
-                          <NextUiButton
-                            isIconOnly
-                            onClick={() => handleDeclineInvite(key)}
-                            className="min-w-6 h-6 w-6 flex items-center gap-1 text-sm text-white rounded-full bg-red-500"
-                          >
-                            <XMarkIcon className="size-4" />
-                          </NextUiButton>
-                          <Tooltip
-                            content={"You are already in a lobby"}
-                            className="text-black"
-                            showArrow
-                            placement="top"
-                            isDisabled={!inLobby}
-                          >
-                            <span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm">
+                              Friend request from{" "}
+                              <span className="font-medium">{friendRequest.username}</span>
+                            </p>
+                            <div className="flex gap-2 mt-2">
+                              <NextUiButton
+                                isIconOnly
+                                onClick={() => handleDeclineFriend(key)}
+                                className="min-w-6 h-6 w-6 flex items-center gap-1 text-sm text-white rounded-full bg-red-500"
+                              >
+                                <XMarkIcon className="size-4" />
+                              </NextUiButton>
                               <NextUiButton
                                 onClick={() =>
-                                  handleAcceptInvite(key, invite.lobbyId)
+                                  handleAcceptFriend(key, friendRequest.userId)
                                 }
                                 isIconOnly
-                                isDisabled={inLobby}
-                                className={`min-w-6 h-6 w-6 flex items-center gap-1 text-sm text-white rounded-full bg-[var(--primary)]`}
+                                className="min-w-6 h-6 w-6 flex items-center gap-1 text-sm text-white rounded-full bg-[var(--primary)]"
                               >
                                 <CheckIcon className="size-4" />
                               </NextUiButton>
-                            </span>
-                          </Tooltip>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+
+                {Object.keys(lobbyInvites).length > 0 && (
+                  <div className="space-y-3 border-t border-[var(--component-outline)] pt-3">
+                    {Object.entries(lobbyInvites).map(([key, invite]) => (
+                      <div key={key} className="flex items-start gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#3b82f6] text-white flex-shrink-0">
+                          <PlayIcon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm">
+                            Lobby invite from{" "}
+                            <span className="font-medium">{invite.sender?.username}</span>
+                          </p>
+                          <div className="flex gap-2 mt-2">
+                            <NextUiButton
+                              isIconOnly
+                              onClick={() => handleDeclineInvite(key)}
+                              className="min-w-6 h-6 w-6 flex items-center gap-1 text-sm text-white rounded-full bg-red-500"
+                            >
+                              <XMarkIcon className="size-4" />
+                            </NextUiButton>
+                            <Tooltip
+                              content={"You are already in a lobby"}
+                              className="text-black"
+                              showArrow
+                              placement="top"
+                              isDisabled={!inLobby}
+                            >
+                              <span>
+                                <NextUiButton
+                                  onClick={() =>
+                                    handleAcceptInvite(key, invite.lobbyId)
+                                  }
+                                  isIconOnly
+                                  isDisabled={inLobby}
+                                  className="min-w-6 h-6 w-6 flex items-center gap-1 text-sm text-white rounded-full bg-[var(--primary)]"
+                                >
+                                  <CheckIcon className="size-4" />
+                                </NextUiButton>
+                              </span>
+                            </Tooltip>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </DropdownMenuGroup>
-              )}
+                    ))}
+                  </div>
+                )}
 
-              {numNotifications <= 0 && (
-                <div className="flex items-center">
-                  <BellSlashIcon className="h-5 w-5" />
-                  <p className="ml-4 text-sm">No new Notifications</p>
-                </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {numNotifications <= 0 && (
+                  <div className="flex items-center gap-3 text-[var(--font-color-muted)] py-2">
+                    <BellSlashIcon className="h-5 w-5" />
+                    <p className="text-sm">No new notifications</p>
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
 
           <div>{user?.username}</div>
         </div>

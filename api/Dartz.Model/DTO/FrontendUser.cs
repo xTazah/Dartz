@@ -14,5 +14,6 @@ namespace Dartz.Model
         public string Username { get; set; }
         public string Initial { get; set; }
         public string? DartColor { get; set; }
+        public bool AllowNoAuth { get; set; }
     }
 }
