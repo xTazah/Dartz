@@ -1,39 +1,22 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import styles from "../../styles/friendList.module.scss";
 import iconStyles from "../../styles/icon.module.scss";
-import dropdownStyles from "../../styles/dropdown.module.scss";
 import {
   UserMinusIcon,
   EllipsisHorizontalIcon,
-  PowerIcon,
 } from "@heroicons/react/24/solid";
 import { FriendlistUser } from "@/app/utils/types";
 import UserComponent from "./User";
 import { DotIcon } from "lucide-react";
 import { Tooltip } from "@nextui-org/react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import FriendsService from "@/app/services/backend/friendsService";
 import { UserContext } from "../userProvider/userProvider";
+import { useFriendsStore } from "@/app/utils/globalStore";
 
 interface FriendProps {
   friendlistUser: FriendlistUser;
@@ -42,6 +25,14 @@ interface FriendProps {
 export default function Friend({ friendlistUser }: FriendProps) {
   const friendsService = new FriendsService();
   const { user } = useContext(UserContext)!;
+  const { fetchFriends } = useFriendsStore();
+  const [open, setOpen] = useState(false);
+
+  const handleRemoveFriend = async () => {
+    setOpen(false);
+    await friendsService.removeFriend(user!.id, friendlistUser.user!.id);
+    fetchFriends(user!.id);
+  };
 
   return (
     <div className="flex items-center justify-between mb-5 text-sm">
@@ -60,38 +51,40 @@ export default function Friend({ friendlistUser }: FriendProps) {
         </Tooltip>
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <EllipsisHorizontalIcon
-            className={`size-5 ${iconStyles.icon}`}
-            color="#6F7172"
-          />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          className={`w-56 ${dropdownStyles.dropdownBackground}`}
-        >
-          <DropdownMenuLabel>{friendlistUser.user?.username}</DropdownMenuLabel>
-          <DropdownMenuSeparator
-            className={`${dropdownStyles.dropdownSeperator}`}
-          />
-
-          <DropdownMenuItem
-            className={`${dropdownStyles.dropdownItem}`}
-            onClick={() => {
-              console.log("removing friend");
-              friendsService
-                .removeFriend(user!.id, friendlistUser.user!.id)
-                .then(() => console.log("Friend removed successfully"));
-            }}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button 
+            className="p-1 rounded hover:bg-[var(--component-background-hover)] transition-colors"
+            onPointerDown={(e) => e.stopPropagation()}
           >
-            <UserMinusIcon
+            <EllipsisHorizontalIcon
               className={`size-5 ${iconStyles.icon}`}
               color="#6F7172"
             />
-            Remove Friend
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          sideOffset={5}
+          side="left"
+          align="start"
+          className="w-44 p-3 bg-[var(--component-background)] rounded-md shadow-lg outline outline-[var(--component-background-hover)]"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div className="grid gap-1">
+            <h4 className="font-medium leading-none mb-2 text-sm text-[var(--font-color-muted)]">
+              {friendlistUser.user?.username}
+            </h4>
+            
+            <button
+              onClick={handleRemoveFriend}
+              className="flex items-center gap-3 w-full px-2 py-2 rounded-md text-sm text-red-400 hover:bg-[var(--component-background-hover)] transition-colors text-left"
+            >
+              <UserMinusIcon className="size-4" />
+              Remove Friend
+            </button>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

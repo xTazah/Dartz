@@ -40,6 +40,14 @@ class PlayerService extends ApiService {
   async getSettings<T>(playerId: number): Promise<ApiResponse<T>> {
     return this.get<T>(`settings/${playerId}`);
   }
+
+  async updateAllSettings<T>(playerId: number, dartColor: string, allowNoAuth: boolean): Promise<ApiResponse<T>> {
+    return this.put("settings/all", { playerId, dartColor, allowNoAuth });
+  }
+
+  async checkAllowNoAuth(playerId: number): Promise<ApiResponse<boolean>> {
+    return this.get<boolean>(`settings/allowNoAuth/${playerId}`);
+  }
 }
 
 export default PlayerService;

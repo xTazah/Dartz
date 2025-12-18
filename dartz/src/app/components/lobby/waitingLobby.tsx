@@ -118,9 +118,37 @@ const WaitingLobby = ({
   const { friends } = useFriendsStore();
   const [open, setOpen] = React.useState(false);
 
-  const [username, setUsername] = React.useState(""); //finn ToDo: when user from friendlist is selected focus the password input
+  const [username, setUsername] = React.useState("");
   const [password, setPassword] = useState("");
   const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [selectedFriendId, setSelectedFriendId] = useState<number | null>(null);
+  const [allowNoAuth, setAllowNoAuth] = useState<boolean | null>(null);
+  const [mode, setMode] = useState<"select" | "invite" | "local">("select");
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false);
+
+  // When a friend is selected, check their AllowNoAuth setting
+  const handleFriendSelect = async (friendUsername: string) => {
+    const friend = friends?.find((f) => f.user?.username === friendUsername);
+    if (!friend?.user) return;
+
+    setUsername(friendUsername);
+    setSelectedFriendId(friend.user.id);
+    setOpen(false);
+    setMode("select");
+    setAllowNoAuth(null);
+
+    // Check if friend allows no-auth
+    setIsCheckingAuth(true);
+    try {
+      const service = new PlayerService();
+      const response = await service.checkAllowNoAuth(friend.user.id);
+      setAllowNoAuth(response.data);
+    } catch {
+      setAllowNoAuth(false);
+    } finally {
+      setIsCheckingAuth(false);
+    }
+  };
 
   const handleLogin = async () => {
     const service = new PlayerService();
@@ -136,12 +164,42 @@ const WaitingLobby = ({
         if (localUsers) setLocalUsers([...localUsers, userData]);
         else setLocalUsers([userData]);
 
-        setUsername("");
-        setPassword("");
-        setOpen(false);
+        resetPopup();
       }
     } catch (err) {
-      toast("Invalid username or password.");
+      toast("Invalid password.");
+    } finally {
+      setIsLoginLoading(false);
+    }
+  };
+
+  const handleLocalPlayerNoAuth = async () => {
+    // For no-auth users, we need to get their user data without password
+    // We'll use the friend data we already have since it contains basic user info
+    const friend = friends?.find((f) => f.user?.username === username);
+    if (!friend?.user) {
+      toast.error("User not found");
+      return;
+    }
+
+    setIsLoginLoading(true);
+    try {
+      // Add the friend as a local player using their existing data
+      const userData: User = {
+        id: friend.user.id,
+        username: friend.user.username,
+        initial: friend.user.initial || friend.user.username.charAt(0).toUpperCase(),
+        dartColor: friend.user.dartColor,
+      };
+      
+      let updatedLobby = LobbyHandler.addPlayer(lobby, userData);
+      setLobby(updatedLobby);
+      if (localUsers) setLocalUsers([...localUsers, userData]);
+      else setLocalUsers([userData]);
+
+      resetPopup();
+    } catch (err) {
+      toast.error("Failed to add local player");
     } finally {
       setIsLoginLoading(false);
     }
@@ -159,14 +217,19 @@ const WaitingLobby = ({
       }
 
       inviteUserToLobby(lobby.id, user, invited.user);
-
-      setUsername("");
-      setPassword("");
-      setOpen(false);
+      resetPopup();
     } catch (err) {
     } finally {
       setIsLoginLoading(false);
     }
+  };
+
+  const resetPopup = () => {
+    setUsername("");
+    setPassword("");
+    setSelectedFriendId(null);
+    setAllowNoAuth(null);
+    setMode("select");
   };
 
   return (
@@ -261,12 +324,7 @@ const WaitingLobby = ({
                                       key={friend.user!.id}
                                       value={friend.user!.username}
                                       onSelect={(currentValue) => {
-                                        setUsername(
-                                          currentValue === username
-                                            ? ""
-                                            : currentValue
-                                        );
-                                        setOpen(false);
+                                        handleFriendSelect(currentValue);
                                       }}
                                     >
                                       {friend.user!.username}
@@ -279,39 +337,91 @@ const WaitingLobby = ({
                       </Popover>
 
                       {username && (
-                        <div className="items-center mt-2">
-                          <div className="space-y-2">
-                            <p className="text-sm">
-                              Enter password to add{" "}
-                              <span className="font-bold">{username}</span> as
-                              local player
+                        <div className="items-center mt-4">
+                          {isCheckingAuth ? (
+                            <p className="text-sm text-[var(--font-color-muted)]">
+                              Checking settings...
                             </p>
-                          </div>
-                          <div className="mt-2">
-                            <input
-                              type="password"
-                              value={password}
-                              onChange={(e) => {
-                                setPassword(e.target.value);
-                              }}
-                              //onKeyDown={(e) => handleKeyDown(e, handleLogin)}
-                              placeholder="Password"
-                              className="focus:outline outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-                            />
-                          </div>
+                          ) : (
+                            <>
+                              {/* Mode selection buttons */}
+                              {mode === "select" && (
+                                <div className="flex flex-col gap-2">
+                                  <p className="text-sm mb-2">
+                                    What would you like to do with{" "}
+                                    <span className="font-bold">{username}</span>?
+                                  </p>
+                                  <Button
+                                    className="w-full bg-[var(--primary)]"
+                                    onClick={handleInvite}
+                                    isLoading={isLoginLoading}
+                                    color="primary"
+                                  >
+                                    📨 Invite to Lobby
+                                  </Button>
+                                  <Button
+                                    className="w-full bg-[var(--secondary)]"
+                                    onClick={() => {
+                                      if (allowNoAuth) {
+                                        handleLocalPlayerNoAuth();
+                                      } else {
+                                        setMode("local");
+                                      }
+                                    }}
+                                    isLoading={isLoginLoading}
+                                    color="secondary"
+                                  >
+                                    👤 Add as Local Player
+                                    {allowNoAuth && (
+                                      <span className="ml-1 text-xs opacity-75">
+                                        (no password needed)
+                                      </span>
+                                    )}
+                                  </Button>
+                                </div>
+                              )}
 
-                          <Button
-                            className="mt-4 w-auto bg-[var(--primary)]"
-                            onClick={
-                              password == "" ? handleInvite : handleLogin
-                            }
-                            isLoading={isLoginLoading}
-                            color="primary"
-                          >
-                            {password == ""
-                              ? "Invite to lobby"
-                              : "Add local player"}
-                          </Button>
+                              {/* Password required for local player */}
+                              {mode === "local" && !allowNoAuth && (
+                                <div className="flex flex-col gap-2">
+                                  <p className="text-sm">
+                                    Enter <span className="font-bold">{username}</span>'s password to add as local player
+                                  </p>
+                                  <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" && password) {
+                                        handleLogin();
+                                      }
+                                    }}
+                                    placeholder="Password"
+                                    className="focus:outline outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                                    autoFocus
+                                  />
+                                  <div className="flex gap-2 mt-2">
+                                    <Button
+                                      className="flex-1 bg-[var(--component-background-hover)]"
+                                      onClick={() => setMode("select")}
+                                      color="default"
+                                    >
+                                      Back
+                                    </Button>
+                                    <Button
+                                      className="flex-1 bg-[var(--primary)]"
+                                      onClick={handleLogin}
+                                      isLoading={isLoginLoading}
+                                      isDisabled={!password}
+                                      color="primary"
+                                    >
+                                      Add Player
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          )}
                         </div>
                       )}
                     </div>

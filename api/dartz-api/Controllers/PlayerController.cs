@@ -75,7 +75,8 @@ namespace Dartz_API.Controllers
             });
 
             var dartColor = _playerService.GetDartColor(player.ID);
-            return Ok(new FrontendUser { Id = player.ID, Initial = player.Initial, Username = player.Username, DartColor = dartColor });
+            var settings = _playerService.GetPlayerSettings(player.ID);
+            return Ok(new FrontendUser { Id = player.ID, Initial = player.Initial, Username = player.Username, DartColor = dartColor, AllowNoAuth = settings?.AllowNoAuth ?? false });
         }
 
         [HttpPost("login")]
@@ -103,7 +104,8 @@ namespace Dartz_API.Controllers
             });
 
             var dartColor = _playerService.GetDartColor(user.ID);
-            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, DartColor = dartColor });
+            var settings = _playerService.GetPlayerSettings(user.ID);
+            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, DartColor = dartColor, AllowNoAuth = settings?.AllowNoAuth ?? false });
         }
 
         [HttpPost("login/sessionId")]
@@ -130,7 +132,8 @@ namespace Dartz_API.Controllers
             }
 
             var dartColor = _playerService.GetDartColor(user.ID);
-            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, DartColor = dartColor });
+            var settings = _playerService.GetPlayerSettings(user.ID);
+            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, DartColor = dartColor, AllowNoAuth = settings?.AllowNoAuth ?? false });
         }
 
         [HttpPost("logout")]
@@ -162,6 +165,13 @@ namespace Dartz_API.Controllers
             return Ok(settings);
         }
 
+        [HttpGet("settings/allowNoAuth/{playerId}")]
+        public ActionResult<bool> CheckAllowNoAuth(int playerId)
+        {
+            var settings = _playerService.GetPlayerSettings(playerId);
+            return Ok(settings?.AllowNoAuth ?? false);
+        }
+
         [HttpPut("settings")]
         public ActionResult UpdateSettings([FromBody] PlayerSettings settings)
         {
@@ -183,11 +193,37 @@ namespace Dartz_API.Controllers
             _playerService.UpdatePlayerSettings(settings);
             return Ok();
         }
+
+        [HttpPut("settings/all")]
+        public ActionResult UpdateAllSettings([FromBody] UserSettingsDTO dto)
+        {
+            var settings = _playerService.GetPlayerSettings(dto.PlayerId);
+            if (settings == null)
+            {
+                // Create settings for existing users who don't have them
+                _playerService.CreatePlayerSettings(dto.PlayerId, dto.DartColor);
+                settings = _playerService.GetPlayerSettings(dto.PlayerId);
+            }
+            if (settings != null)
+            {
+                settings.DartColor = dto.DartColor;
+                settings.AllowNoAuth = dto.AllowNoAuth;
+                _playerService.UpdatePlayerSettings(settings);
+            }
+            return Ok();
+        }
     }
 
     public class DartColorDTO
     {
         public int PlayerId { get; set; }
         public string DartColor { get; set; }
+    }
+
+    public class UserSettingsDTO
+    {
+        public int PlayerId { get; set; }
+        public string? DartColor { get; set; }
+        public bool AllowNoAuth { get; set; }
     }
 }

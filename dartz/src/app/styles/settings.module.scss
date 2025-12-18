@@ -1,16 +1,16 @@
 .colorPickerContainer {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
   width: 100%;
   max-width: 400px;
 }
 
 .dartPreview {
   width: 100%;
-  height: 200px;
-  background: var(--component-background);
-  border-radius: 16px;
+  height: 180px;
+  background: var(--component-background-hover);
+  border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--component-outline);
 }
@@ -18,65 +18,65 @@
 .colorSelection {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .colorTitle {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--font-color);
   margin: 0;
 }
 
 .colorInfo {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--font-color-muted);
   margin: 0;
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: rgba(var(--primary-rgb), 0.1);
-  border-radius: 8px;
+  border-radius: 6px;
   border-left: 3px solid var(--primary);
 }
 
 .colorPresets {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
 }
 
 .colorPresetButton {
   width: 100%;
   aspect-ratio: 1;
-  border-radius: 12px;
-  border: 3px solid transparent;
+  border-radius: 8px;
+  border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 
   &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
   &.selected {
     border-color: var(--font-color);
-    box-shadow: 0 0 0 2px var(--component-background), 0 0 0 4px var(--font-color);
+    box-shadow: 0 0 0 1px var(--component-background), 0 0 0 3px var(--font-color);
   }
 }
 
 .checkmark {
   color: white;
-  font-size: 1.5rem;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  font-size: 0.9rem;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
 }
 
 .customColorContainer {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding-top: 8px;
   border-top: 1px solid var(--component-outline);
 }
@@ -84,17 +84,17 @@
 .customColorLabel {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 0.9rem;
+  gap: 10px;
+  font-size: 0.85rem;
   color: var(--font-color);
   cursor: pointer;
 }
 
 .customColorInput {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   background: transparent;
 
@@ -104,7 +104,7 @@
 
   &::-webkit-color-swatch {
     border: 2px solid var(--component-outline);
-    border-radius: 8px;
+    border-radius: 6px;
   }
 }
 
@@ -112,8 +112,9 @@
 .settingsContainer {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
   padding: 24px;
+  padding-bottom: 100px; // Space for floating save bar
   max-width: 600px;
   margin: 0 auto;
 }
@@ -129,6 +130,9 @@
   font-weight: 700;
   color: var(--font-color);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .settingsSubtitle {
@@ -140,28 +144,128 @@
 .settingsSection {
   background: var(--component-background);
   border-radius: 16px;
-  padding: 24px;
+  padding: 20px;
   border: 1px solid var(--component-outline);
 }
 
 .sectionTitle {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--font-color);
+  margin: 0 0 8px 0;
+}
+
+.sectionDescription {
+  font-size: 0.85rem;
+  color: var(--font-color-muted);
   margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.settingRow {
   display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--component-outline);
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.settingInfo {
+  flex: 1;
+}
+
+.settingLabel {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--font-color);
+  margin: 0 0 4px 0;
+}
+
+.settingHint {
+  font-size: 0.8rem;
+  color: var(--font-color-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.warningHint {
+  color: #f59e0b;
+}
+
+/* Toggle Switch */
+.toggleSwitch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  background: var(--component-background-hover);
+  border-radius: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border: 1px solid var(--component-outline);
+  flex-shrink: 0;
+
+  &.active {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+
+  .active & {
+    transform: translateX(22px);
+  }
+}
+
+/* Floating Save Bar */
+.floatingSaveBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 24px;
+  background: var(--component-background);
+  border-top: 1px solid var(--component-outline);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
+  z-index: 100;
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 .saveButton {
-  width: 100%;
-  padding: 14px 24px;
+  padding: 12px 32px;
   background: var(--primary);
   color: white;
   border: none;
-  border-radius: 12px;
-  font-size: 1rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -178,15 +282,21 @@
   }
 }
 
+.unsavedText {
+  font-size: 0.85rem;
+  color: var(--font-color-muted);
+}
+
 .savedMessage {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px;
+  padding: 10px 16px;
   background: rgba(34, 197, 94, 0.1);
   color: #22c55e;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 500;
 }
+

@@ -8,6 +8,7 @@ export type User = {
   username: string;
   initial: string;
   dartColor?: string; // Hex color code for dart customization
+  allowNoAuth?: boolean; // Allow friends to add as local player without password
 } | null;
 
 //Player Throws
