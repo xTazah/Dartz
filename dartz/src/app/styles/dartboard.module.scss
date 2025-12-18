@@ -488,6 +488,39 @@
   color: var(--font-color);
 }
 
+// Spectator status indicator (shows whose turn it is)
+.spectatorStatus {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: var(--component-background);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--font-color);
+}
+
+.spectatorStatusDot {
+  width: 10px;
+  height: 10px;
+  background: #4ecdc4;
+  border-radius: 50%;
+  animation: spectatorPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes spectatorPulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(78, 205, 196, 0.6);
+  }
+  50% {
+    opacity: 0.5;
+    box-shadow: 0 0 4px rgba(78, 205, 196, 0.3);
+  }
+}
+
 // ============================================
 // MANUAL INPUT FORM STYLES
 // ============================================
@@ -824,6 +857,23 @@
   color: #1a1a1a;
   font-size: 0.75rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.youBadge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: #4ecdc4; // Cyan to distinguish from green active player
+  border-radius: 12px;
+  color: #1a1a1a;
+  font-size: 0.7rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }

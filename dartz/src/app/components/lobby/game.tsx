@@ -2,6 +2,7 @@
 
 import {
   ConnectedPlayer,
+  CurrentTurnDarts,
   Lobby,
   Multiplier,
   Throw,
@@ -22,7 +23,7 @@ import {
   calculateLastScore,
 } from "@/app/handlers/statisticsHandler";
 
-import { SignalSlashIcon, ArrowUturnLeftIcon } from "@heroicons/react/24/solid";
+import { SignalSlashIcon, ArrowUturnLeftIcon, UserIcon } from "@heroicons/react/24/solid";
 import { Squares2X2Icon, CursorArrowRaysIcon } from "@heroicons/react/24/outline";
 
 // Lazy load the dartboard to avoid SSR issues with Three.js
@@ -88,6 +89,9 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
   // Dart rendering state
   const [activeDarts, setActiveDarts] = useState<DartInstance[]>([]);
   
+  // Spectator throws state (for displaying throw values to non-active players)
+  const [spectatorThrows, setSpectatorThrows] = useState<DartThrow[]>([]);
+  
   // Cache random positions for manual input to prevent constant regeneration
   const manualDartPositions = useRef<{[key: string]: DartCoordinates}>({});
 
@@ -135,7 +139,56 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
   useEffect(() => {
     setDartboardThrows([]);
     setActiveDarts([]);
+    setSpectatorThrows([]);
+    manualDartPositions.current = {}; // Clear cache so random positions are fresh each turn
   }, [currentPlayer.user?.id]);
+
+  // Sync dart positions to Firebase when active player throws (for real-time display to others)
+  useEffect(() => {
+    if (!isCurrentUsersTurn || dartboardThrows.length === 0) return;
+    
+    const playerId = currentPlayer.user?.id;
+    if (!playerId) return;
+    
+    // Sync both positions and throw data (score/multiplier) for spectator display
+    const dartData = dartboardThrows.map(t => ({
+      x: t.coordinates?.x ?? 0,
+      y: t.coordinates?.y ?? 0,
+      z: t.coordinates?.z ?? 0,
+      score: t.score,
+      multiplier: t.multiplier,
+    }));
+    
+    LobbyHandler.syncCurrentTurnDarts(lobby, playerId, dartData);
+  }, [dartboardThrows, isCurrentUsersTurn, currentPlayer.user?.id, lobby.id]);
+
+  // For non-active players: read synced darts from lobby.customData
+  useEffect(() => {
+    if (isCurrentUsersTurn) return; // Active player uses local state
+    
+    const syncedDarts = lobby.customData?.currentTurnDarts as CurrentTurnDarts | null;
+    if (!syncedDarts || !syncedDarts.darts || syncedDarts.darts.length === 0) {
+      // Clear darts when there's no synced data (turn was confirmed)
+      setActiveDarts([]);
+      setSpectatorThrows([]);
+      return;
+    }
+    
+    // Convert synced positions to DartInstance objects
+    const darts: DartInstance[] = syncedDarts.darts.map((pos, index) => ({
+      id: `synced-dart-${index}`,
+      position: { x: pos.x, y: pos.y, z: pos.z },
+    }));
+    setActiveDarts(darts);
+    
+    // Also update spectator throws for display
+    const throws: DartThrow[] = syncedDarts.darts.map(d => ({
+      score: d.score ?? 0,
+      multiplier: d.multiplier ?? Multiplier.Single,
+      coordinates: { x: d.x, y: d.y, z: d.z },
+    }));
+    setSpectatorThrows(throws);
+  }, [lobby.customData?.currentTurnDarts, isCurrentUsersTurn]);
 
   const handleSubmitScore = () => {
     if (playerScore1 === "" || playerScore2 === "" || playerScore3 === "")
@@ -157,20 +210,34 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
       multiplier3: multiplier3,
     };
 
+    // Clear the darts from customData BEFORE calling handlePlayerScore
+    const lobbyWithClearedDarts = {
+      ...lobby,
+      customData: {
+        ...lobby.customData,
+        currentTurnDarts: null,
+      },
+    };
+
     const updatedLobby = LobbyHandler.handlePlayerScore(
-      lobby,
+      lobbyWithClearedDarts,
       currentPlayer,
       score
     );
-    console.log(updatedLobby);
     setLobby(updatedLobby);
-    //reset States
+    
+    // Reset all states
     setPlayerScore1("");
     setPlayerScore2("");
     setPlayerScore3("");
     setMultiplier1(Multiplier.Single);
     setMultiplier2(Multiplier.Single);
     setMultiplier3(Multiplier.Single);
+    setActiveDarts([]);
+    setSpectatorThrows([]);
+    
+    // Clear the position cache so new random positions are generated next turn
+    manualDartPositions.current = {};
   };
 
   // Handle dartboard segment click - memoized to prevent dartboard re-renders
@@ -251,16 +318,26 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
       multiplier3: throws[2].multiplier,
     };
 
+    // Clear the darts from customData BEFORE calling handlePlayerScore
+    // to avoid the race condition where handlePlayerScore overwrites the clear
+    const lobbyWithClearedDarts = {
+      ...lobby,
+      customData: {
+        ...lobby.customData,
+        currentTurnDarts: null,
+      },
+    };
+    
     const updatedLobby = LobbyHandler.handlePlayerScore(
-      lobby,
+      lobbyWithClearedDarts,
       currentPlayer,
       score
     );
-    console.log(updatedLobby);
     setLobby(updatedLobby);
     setDartboardThrows([]);
-    // Keep darts visible after confirmation
-    // They'll be cleared when player changes
+    setActiveDarts([]); // Clear darts on confirm
+    setSpectatorThrows([]); // Clear spectator throws too
+    manualDartPositions.current = {}; // Clear cache so new random positions next turn
   }, [dartboardThrows, lobby, currentPlayer, setLobby]);
 
   useEffect(() => {
@@ -303,16 +380,17 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     currentPlayer.score,
   ]);
 
-  // Separate effect for manual input dart generation (performance fix)
+  // Separate effect for manual input dart generation AND Firebase sync
   useEffect(() => {
-    // Only generate darts in manual mode
-    if (inputMode !== "manual") return;
+    // Only generate darts in manual mode for the current player
+    if (inputMode !== "manual" || !isCurrentUsersTurn) return;
     
     const newDarts: DartInstance[] = [];
+    const dartData: Array<{ x: number; y: number; z: number; score: number; multiplier: number }> = [];
     
-    // Generate dart for score 1 - cache the position
-    if (playerScore1 !== "") {
-      const key = `${playerScore1}-${multiplier1}`;
+    // Generate dart for score 1 - cache key includes dart number for unique positions
+    if (playerScore1 !== "" && !isNaN(Number(playerScore1))) {
+      const key = `1-${playerScore1}-${multiplier1}`;
       if (!manualDartPositions.current[key]) {
         const segment = findSegmentByScore(Number(playerScore1), multiplier1, DARTBOARD_SEGMENTS);
         if (segment) {
@@ -320,13 +398,15 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
         }
       }
       if (manualDartPositions.current[key]) {
-        newDarts.push({ id: `manual-dart-1`, position: manualDartPositions.current[key] });
+        const pos = manualDartPositions.current[key];
+        newDarts.push({ id: `manual-dart-1`, position: pos });
+        dartData.push({ x: pos.x, y: pos.y, z: pos.z, score: Number(playerScore1), multiplier: multiplier1 });
       }
     }
     
-    // Generate dart for score 2 - cache the position
-    if (playerScore2 !== "") {
-      const key = `${playerScore2}-${multiplier2}`;
+    // Generate dart for score 2 - cache key includes dart number for unique positions
+    if (playerScore2 !== "" && !isNaN(Number(playerScore2))) {
+      const key = `2-${playerScore2}-${multiplier2}`;
       if (!manualDartPositions.current[key]) {
         const segment = findSegmentByScore(Number(playerScore2), multiplier2, DARTBOARD_SEGMENTS);
         if (segment) {
@@ -334,13 +414,15 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
         }
       }
       if (manualDartPositions.current[key]) {
-        newDarts.push({ id: `manual-dart-2`, position: manualDartPositions.current[key] });
+        const pos = manualDartPositions.current[key];
+        newDarts.push({ id: `manual-dart-2`, position: pos });
+        dartData.push({ x: pos.x, y: pos.y, z: pos.z, score: Number(playerScore2), multiplier: multiplier2 });
       }
     }
     
-    // Generate dart for score 3 - cache the position
-    if (playerScore3 !== "") {
-      const key = `${playerScore3}-${multiplier3}`;
+    // Generate dart for score 3 - cache key includes dart number for unique positions
+    if (playerScore3 !== "" && !isNaN(Number(playerScore3))) {
+      const key = `3-${playerScore3}-${multiplier3}`;
       if (!manualDartPositions.current[key]) {
         const segment = findSegmentByScore(Number(playerScore3), multiplier3, DARTBOARD_SEGMENTS);
         if (segment) {
@@ -348,11 +430,19 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
         }
       }
       if (manualDartPositions.current[key]) {
-        newDarts.push({ id: `manual-dart-3`, position: manualDartPositions.current[key] });
+        const pos = manualDartPositions.current[key];
+        newDarts.push({ id: `manual-dart-3`, position: pos });
+        dartData.push({ x: pos.x, y: pos.y, z: pos.z, score: Number(playerScore3), multiplier: multiplier3 });
       }
     }
     
     setActiveDarts(newDarts);
+    
+    // Sync to Firebase for spectators to see
+    const playerId = currentPlayer.user?.id;
+    if (playerId && dartData.length > 0) {
+      LobbyHandler.syncCurrentTurnDarts(lobby, playerId, dartData);
+    }
   }, [
     playerScore1,
     playerScore2,
@@ -361,6 +451,9 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     multiplier2,
     multiplier3,
     inputMode,
+    isCurrentUsersTurn,
+    currentPlayer.user?.id,
+    lobby.id,
   ]);
 
   const handleUndo = () => {
@@ -505,9 +598,17 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     
     const isBust = isActive && user?.id === currentPlayer.user?.id && 
       ((displayScore < 2 || displayScore > 501) && displayScore !== 0);
+    
+    const isCurrentUser = player.user?.id === user?.id;
 
     return (
       <div className={`${dartboardStyles.playerCard} ${isActive ? dartboardStyles.activePlayer : ""}`}>
+        {isCurrentUser && (
+          <div className={dartboardStyles.youBadge}>
+            <UserIcon className="w-3 h-3" />
+            You
+          </div>
+        )}
         {!player.connected && (
           <div className={dartboardStyles.disconnectedOverlay}>
             <SignalSlashIcon className="w-8 h-8 mb-2" />
@@ -810,13 +911,74 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
         </div>
       )}
 
-      {/* Waiting message for non-current players */}
+      {/* Dartboard view for non-current players (spectator mode) */}
       {!isCurrentUsersTurn && (
-        <div className={dartboardStyles.waitingPanel}>
-          <div className={dartboardStyles.waitingContent}>
-            <div className={dartboardStyles.waitingIcon}>🎯</div>
-            <h3>Waiting for {currentPlayer.user?.username}</h3>
-            <p>They are taking their turn...</p>
+        <div className={dartboardStyles.inputPanel}>
+          {/* Status indicator */}
+          <div className={dartboardStyles.spectatorStatus}>
+            <span className={dartboardStyles.spectatorStatusDot}></span>
+            <span>{currentPlayer.user?.username}&apos;s turn</span>
+          </div>
+          
+          <div className={dartboardStyles.dartboardLayout}>
+            <div className={dartboardStyles.dartboardArea}>
+              <Suspense
+                fallback={
+                  <div className={dartboardStyles.dartboardLoading}>
+                    Loading dartboard...
+                  </div>
+                }
+              >
+                <InteractiveDartboard
+                  onSegmentClick={() => {}} // Disabled, no-op
+                  disabled={true}
+                  darts={activeDarts}
+                />
+              </Suspense>
+            </div>
+            
+            {/* Show current throws from active player */}
+            <div className={dartboardStyles.throwsPanel}>
+              <div className={dartboardStyles.panel}>
+                <div className={dartboardStyles.header}>
+                  <h3 className={dartboardStyles.title}>{currentPlayer.user?.username}&apos;s Throws</h3>
+                </div>
+                
+                <div className={dartboardStyles.throwsContainer}>
+                  {[0, 1, 2].map((index) => {
+                    const dart = spectatorThrows[index];
+                    const isEmpty = !dart;
+
+                    return (
+                      <div 
+                        key={index}
+                        className={`${dartboardStyles.throwSlot} ${isEmpty ? dartboardStyles.empty : ''}`}
+                        style={dart ? {
+                          borderColor: getThrowColor(dart.multiplier),
+                          boxShadow: `0 0 10px ${getThrowColor(dart.multiplier)}40`,
+                        } : {}}
+                      >
+                        {dart ? (
+                          <>
+                            <span
+                              className={dartboardStyles.throwLabel}
+                              style={{ color: getThrowColor(dart.multiplier) }}
+                            >
+                              {formatScoreLabel(dart.score, dart.multiplier)}
+                            </span>
+                            <span className={dartboardStyles.throwPoints}>
+                              = {dart.score * dart.multiplier}
+                            </span>
+                          </>
+                        ) : (
+                          <span className={dartboardStyles.emptyLabel}>Dart {index + 1}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

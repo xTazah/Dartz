@@ -1,5 +1,5 @@
-import { GameStatus, Lobby, Player } from "@/app/utils/types";
-import React, { useEffect, useState } from "react";
+import { GameStatus, Lobby, Player, User } from "@/app/utils/types";
+import React, { useContext, useEffect, useState } from "react";
 import dartboardStyles from "@/app/styles/dartboard.module.scss";
 import {
   calculate100Plus,
@@ -10,7 +10,8 @@ import {
 import { Button } from "@nextui-org/react";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
 import { useRouter } from "next/navigation";
-import { TrophyIcon, ArrowLeftIcon, ArrowPathIcon, SignalSlashIcon } from "@heroicons/react/24/solid";
+import { TrophyIcon, ArrowLeftIcon, ArrowPathIcon, SignalSlashIcon, UserIcon } from "@heroicons/react/24/solid";
+import { UserContext } from "../userProvider/userProvider";
 
 interface WinnerScreenProps {
   lobby: Lobby;
@@ -21,6 +22,8 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
   const [isFinished, setisFinished] = useState(false);
   const [winner, setWinner] = useState<Player | undefined>(undefined);
   const router = useRouter();
+  const context = useContext(UserContext);
+  const currentUser = context?.user;
   
   const handlePlayAgain = () => {
     const updatedLobby = LobbyHandler.startGame(lobby);
@@ -45,6 +48,8 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
   }, [lobby.sets, lobby.legs, lobby.players]);
 
   const winnerName = winner?.user?.username ?? lobby.players.find((x) => x.score == 0)?.user?.username ?? "Unknown";
+  const isCurrentUserWinner = winner?.user?.id === currentUser?.id || 
+    lobby.players.find((x) => x.score == 0)?.user?.id === currentUser?.id;
 
   return (
     <div className={dartboardStyles.winnerContainer}>
@@ -57,7 +62,7 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
           {isFinished ? "Game Over!" : "Leg Complete!"}
         </h1>
         <p className={dartboardStyles.winnerName}>
-          🎯 {winnerName} {isFinished ? "wins the match!" : "wins the leg!"}
+          🎯 {isCurrentUserWinner ? "YOU" : winnerName} {isFinished ? (isCurrentUserWinner ? "win the match!" : "wins the match!") : (isCurrentUserWinner ? "win the leg!" : "wins the leg!")}
         </p>
         {lobby.sets > 0 && (
           <p className={dartboardStyles.matchInfo}>
@@ -75,15 +80,22 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
       <div className={dartboardStyles.winnerStatsGrid}>
         {lobby.players?.map((player) => {
           const isWinner = player.user?.username === winnerName;
+          const isCurrentUser = player.user?.id === currentUser?.id;
           return (
             <div 
               key={player.user?.id} 
-              className={`${dartboardStyles.winnerPlayerCard} ${isWinner ? dartboardStyles.winnerHighlight : ""}`}
+              className={`${dartboardStyles.winnerPlayerCard} ${isWinner ? dartboardStyles.winnerHighlight : ""} ${isCurrentUser ? dartboardStyles.currentUserCard : ""}`}
             >
               {isWinner && (
                 <div className={dartboardStyles.winnerBadge}>
                   <TrophyIcon className="w-4 h-4" />
                   Winner
+                </div>
+              )}
+              {isCurrentUser && (
+                <div className={dartboardStyles.youBadge}>
+                  <UserIcon className="w-3 h-3" />
+                  You
                 </div>
               )}
               {!player.connected && (
