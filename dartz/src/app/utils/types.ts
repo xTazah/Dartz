@@ -57,6 +57,18 @@ export type Lobby = {
   customData?: Record<string, any>; // game-specific data
 };
 
+// Dart position data synced for real-time display to all players
+export interface CurrentTurnDarts {
+  playerId: number;
+  darts: Array<{ 
+    x: number; 
+    y: number; 
+    z: number;
+    score?: number;
+    multiplier?: Multiplier;
+  }>;
+}
+
 export type GameMode = (typeof GAME_MODES)[number];
 
 export interface GameLogic {

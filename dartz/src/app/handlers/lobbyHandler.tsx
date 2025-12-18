@@ -208,6 +208,36 @@ class LobbyHandler {
     syncLobby(updatedLobby.id, updatedLobby);
     return updatedLobby;
   }
+
+  // Sync current turn darts to Firebase for real-time display to other players
+  static syncCurrentTurnDarts(
+    lobby: Lobby,
+    playerId: number,
+    darts: Array<{ x: number; y: number; z: number; score?: number; multiplier?: number }>
+  ): Lobby {
+    const updatedLobby = {
+      ...lobby,
+      customData: {
+        ...lobby.customData,
+        currentTurnDarts: { playerId, darts },
+      },
+    };
+    syncLobby(updatedLobby.id, updatedLobby);
+    return updatedLobby;
+  }
+
+  // Clear current turn darts from Firebase (called when turn is submitted)
+  static clearCurrentTurnDarts(lobby: Lobby): Lobby {
+    const updatedLobby = {
+      ...lobby,
+      customData: {
+        ...lobby.customData,
+        currentTurnDarts: null,
+      },
+    };
+    syncLobby(updatedLobby.id, updatedLobby);
+    return updatedLobby;
+  }
 }
 
 export default LobbyHandler;
