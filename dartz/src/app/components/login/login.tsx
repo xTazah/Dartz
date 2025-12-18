@@ -9,6 +9,8 @@ import { UserContext } from "@/app/components/userProvider/userProvider";
 import { useRouter } from "next/navigation";
 import { Button } from "@nextui-org/button";
 import Image from "next/image";
+import DartColorPicker from "../settings/DartColorPicker";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 export const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -20,6 +22,10 @@ export const LoginPage = () => {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupError, setSignupError] = useState<string | null>(null);
   const [isSignupLoading, setIsSignupLoading] = useState(false);
+  
+  // Multi-step signup state
+  const [signupStep, setSignupStep] = useState(1); // 1 = credentials, 2 = color selection
+  const [signupDartColor, setSignupDartColor] = useState("#C0C0C0");
 
   const router = useRouter();
   const context = useContext(UserContext);
@@ -44,11 +50,30 @@ export const LoginPage = () => {
     }
   };
 
+  const handleSignupStep1 = () => {
+    // Validation
+    if (!signupUsername.trim() || !signupPassword.trim()) {
+      setSignupError("Please fill in all fields");
+      return;
+    }
+    if (signupPassword.length < 4) {
+      setSignupError("Password must be at least 4 characters");
+      return;
+    }
+    // Move to step 2
+    setSignupStep(2);
+    setSignupError(null);
+  };
+
   const handleSignup = async () => {
     const service = new PlayerService();
     setIsSignupLoading(true);
     try {
-      const payload = { username: signupUsername, password: signupPassword };
+      const payload = { 
+        username: signupUsername, 
+        password: signupPassword,
+        dartColor: signupDartColor 
+      };
       const response = await service.signup(payload);
 
       if (response.status === 200) {
@@ -72,6 +97,10 @@ export const LoginPage = () => {
     }
   };
 
+  const handleBackToStep1 = () => {
+    setSignupStep(1);
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-[(var(--background))]">
       <div className="w-[400px] p-6 flex flex-col items-center justify-center shadow-lg rounded bg-[var(--component-background)] text-[var(--font-color)]">
@@ -86,7 +115,7 @@ export const LoginPage = () => {
             <TabsTrigger value="login" className="px-4 py-2">
               Login
             </TabsTrigger>
-            <TabsTrigger value="signup" className="px-4 py-2">
+            <TabsTrigger value="signup" className="px-4 py-2" onClick={() => setSignupStep(1)}>
               Sign-Up
             </TabsTrigger>
           </TabsList>
@@ -126,44 +155,77 @@ export const LoginPage = () => {
             </Button>
           </TabsContent>
           <TabsContent value="signup">
-            <div className="mt-4">
-              <input
-                type="text"
-                value={signupUsername}
-                onChange={(e) => {
-                  setSignupUsername(e.target.value);
-                  setSignupError(null);
-                }}
-                onKeyDown={(e) => handleKeyDown(e, handleSignup)}
-                placeholder="Username"
-                className="focus:outline outline-[var(--component-outline)] w-full p-2 mb-4 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-              />
-              <input
-                type="password"
-                value={signupPassword}
-                onChange={(e) => {
-                  setSignupPassword(e.target.value);
-                  setSignupError(null);
-                }}
-                onKeyDown={(e) => handleKeyDown(e, handleSignup)}
-                placeholder="Password"
-                className="focus:outline outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-              />
-            </div>
-            {signupError && (
-              <p className="text-red-500 text-sm mt-2">{signupError}</p>
+            {signupStep === 1 ? (
+              <>
+                <div className="mt-4">
+                  <input
+                    type="text"
+                    value={signupUsername}
+                    onChange={(e) => {
+                      setSignupUsername(e.target.value);
+                      setSignupError(null);
+                    }}
+                    onKeyDown={(e) => handleKeyDown(e, handleSignupStep1)}
+                    placeholder="Username"
+                    className="focus:outline outline-[var(--component-outline)] w-full p-2 mb-4 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                  />
+                  <input
+                    type="password"
+                    value={signupPassword}
+                    onChange={(e) => {
+                      setSignupPassword(e.target.value);
+                      setSignupError(null);
+                    }}
+                    onKeyDown={(e) => handleKeyDown(e, handleSignupStep1)}
+                    placeholder="Password"
+                    className="focus:outline outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
+                  />
+                </div>
+                {signupError && (
+                  <p className="text-red-500 text-sm mt-2">{signupError}</p>
+                )}
+                <Button
+                  className="mt-4 w-full bg-[var(--primary)]"
+                  onPress={handleSignupStep1}
+                  color="primary"
+                >
+                  Next: Choose Dart Color
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="mt-4">
+                  <button 
+                    className="flex items-center gap-2 text-sm text-[var(--font-color-muted)] hover:text-[var(--font-color)] mb-4 transition-colors"
+                    onClick={handleBackToStep1}
+                  >
+                    <ArrowLeftIcon className="w-4 h-4" />
+                    Back to credentials
+                  </button>
+                  
+                  <DartColorPicker
+                    selectedColor={signupDartColor}
+                    onColorChange={setSignupDartColor}
+                    showInfo={true}
+                  />
+                </div>
+                {signupError && (
+                  <p className="text-red-500 text-sm mt-2">{signupError}</p>
+                )}
+                <Button
+                  className="mt-4 w-full bg-[var(--primary)]"
+                  onPress={handleSignup}
+                  isLoading={isSignupLoading}
+                  color="primary"
+                >
+                  Create Account
+                </Button>
+              </>
             )}
-            <Button
-              className="mt-4 w-full bg-[var(--primary)]"
-              onPress={handleSignup}
-              isLoading={isSignupLoading}
-              color="primary"
-            >
-              Sign Up
-            </Button>
           </TabsContent>
         </Tabs>
       </div>
     </div>
   );
 };
+

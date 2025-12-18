@@ -11,5 +11,8 @@ namespace Dartz.Business.Interfaces
         Player GetPlayerById(int id);
         Player GetPlayerWithFriends(int id);
         IEnumerable<Player> GetAllPlayers();
+        PlayerSettings GetPlayerSettings(int playerId);
+        void UpdatePlayerSettings(PlayerSettings settings);
+        void CreatePlayerSettings(int playerId, string? dartColor = null);
     }
 }

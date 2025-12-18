@@ -6,12 +6,14 @@ import * as THREE from "three";
 interface DartModelProps {
   position: [number, number, number];
   rotation?: [number, number, number];
+  color?: string; // Hex color code for dart customization
 }
 
 /**
  * Renders the actual dart 3D model from OBJ file with materials
+ * Color prop applies a custom color to the dart barrel
  */
-export default function DartModel({ position, rotation = [0, 0, 0] }: DartModelProps) {
+export default function DartModel({ position, rotation = [0, 0, 0], color }: DartModelProps) {
   const groupRef = useRef<THREE.Group>(null);
 
   // Load MTL materials first
@@ -27,17 +29,27 @@ export default function DartModel({ position, rotation = [0, 0, 0] }: DartModelP
     loader.setMaterials(materials);
   });
   
-  // Clone to avoid sharing between instances
+  // Clone to avoid sharing between instances and apply color
   const clonedObj = useMemo(() => {
     const clone = obj.clone();
-    // Ensure materials are applied
+    // Apply color to mesh materials
     clone.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        child.material = (child.material as THREE.Material).clone();
+        const material = (child.material as THREE.Material).clone();
+        // Apply custom color if provided
+        if (color && material instanceof THREE.MeshPhongMaterial) {
+          material.color = new THREE.Color(color);
+          material.emissive = new THREE.Color(color).multiplyScalar(0.1);
+        } else if (color && material instanceof THREE.MeshStandardMaterial) {
+          material.color = new THREE.Color(color);
+        } else if (color && material instanceof THREE.MeshBasicMaterial) {
+          material.color = new THREE.Color(color);
+        }
+        child.material = material;
       }
     });
     return clone;
-  }, [obj]);
+  }, [obj, color]);
 
   // Default rotation to point the dart into the board
   const defaultRotation: [number, number, number] = [

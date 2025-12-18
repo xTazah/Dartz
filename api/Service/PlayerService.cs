@@ -19,11 +19,16 @@ namespace Dartz.Service
             _passwordService = passwordService;
         }
 
-        public int AddPlayer(Player player)
+        public int AddPlayer(Player player, string? dartColor = null)
         {
             player.PasswordHash = _passwordService.Hash(player.PasswordHash);
 
-            return _playerRepository.AddPlayer(player);
+            var playerId = _playerRepository.AddPlayer(player);
+            
+            // Create player settings with dart color
+            _playerRepository.CreatePlayerSettings(playerId, dartColor);
+            
+            return playerId;
         }
 
         public Player GetPlayerByUsername(string username)
@@ -46,5 +51,25 @@ namespace Dartz.Service
             return _playerRepository.GetAllPlayers();
         }
 
+        public PlayerSettings GetPlayerSettings(int playerId)
+        {
+            return _playerRepository.GetPlayerSettings(playerId);
+        }
+
+        public void UpdatePlayerSettings(PlayerSettings settings)
+        {
+            _playerRepository.UpdatePlayerSettings(settings);
+        }
+
+        public void CreatePlayerSettings(int playerId, string? dartColor = null)
+        {
+            _playerRepository.CreatePlayerSettings(playerId, dartColor);
+        }
+
+        public string? GetDartColor(int playerId)
+        {
+            var settings = _playerRepository.GetPlayerSettings(playerId);
+            return settings?.DartColor ?? "#C0C0C0";
+        }
     }
 }

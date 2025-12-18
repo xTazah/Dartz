@@ -23,6 +23,7 @@ interface DartboardProps {
   disabled?: boolean;
   darts?: DartInstance[];
   onDartAnimationComplete?: (id: string) => void;
+  dartColor?: string; // Hex color for dart customization
 }
 
 // Create a ring sector geometry for segment overlays
@@ -241,12 +242,14 @@ const DartboardScene = memo(function DartboardScene({
   disabled,
   darts,
   onDartAnimationComplete,
+  dartColor,
 }: {
   onSegmentClick: (score: number, multiplier: Multiplier, coordinates: DartCoordinates) => void;
   onMiss?: () => void;
   disabled: boolean;
   darts?: DartInstance[];
   onDartAnimationComplete?: (id: string) => void;
+  dartColor?: string;
 }) {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
   const [isHoveringMiss, setIsHoveringMiss] = useState(false);
@@ -351,6 +354,7 @@ const DartboardScene = memo(function DartboardScene({
               id={dart.id}
               targetPosition={dart.position}
               onAnimationComplete={onDartAnimationComplete}
+              color={dartColor}
             />
           ))}
         </group>
@@ -378,6 +382,7 @@ const InteractiveDartboard = memo(function InteractiveDartboard({
   disabled = false,
   darts = [],
   onDartAnimationComplete,
+  dartColor,
 }: DartboardProps) {
   return (
     <div
@@ -404,6 +409,7 @@ const InteractiveDartboard = memo(function InteractiveDartboard({
           disabled={disabled}
           darts={darts}
           onDartAnimationComplete={onDartAnimationComplete}
+          dartColor={dartColor}
         />
       </Canvas>
     </div>

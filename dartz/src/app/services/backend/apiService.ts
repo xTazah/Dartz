@@ -57,6 +57,26 @@ abstract class ApiService {
     }
   }
 
+  protected async put<T>(
+    endpoint: string,
+    payload?: T,
+    withCredentials: boolean = true
+  ): Promise<ApiResponse<T>> {
+    try {
+      const response = await axios.put<T>(
+        `${this.BaseURL}${endpoint}`,
+        payload,
+        {
+          withCredentials,
+        }
+      );
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      this.handleError(error);
+      throw error;
+    }
+  }
+
   protected handleError(error: unknown) {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError;
