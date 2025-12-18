@@ -11,5 +11,6 @@ namespace Dartz.Model
         public int ID { get; set; }
         public int PlayerID { get; set; }
         public bool AllowNoAuth {  get; set; }
+        public string? DartColor { get; set; } = "#e42b2bff"; // Default red
     }
 }

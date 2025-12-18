@@ -13,5 +13,6 @@ namespace Dartz.Model
         public int Id { get; set; }
         public string Username { get; set; }
         public string Initial { get; set; }
+        public string? DartColor { get; set; }
     }
 }

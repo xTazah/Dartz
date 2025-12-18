@@ -12,6 +12,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ExclamationTriangleIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import { UnderConstruction } from "../underConstruction";
 import { GAME_MODES } from "@/app/utils/constants";
@@ -134,6 +135,16 @@ export default function Navigation(props: any) {
       >
         <PlayIcon className="size-5" color="#6F7172" />
         {!props.collapsed && " Quickplay"}
+      </button>
+
+      <button
+        className={`${styles.navigationButton} ${
+          selected === 5 ? styles.selected : ""
+        }`}
+        onClick={() => handleNavigation(5, "/settings")}
+      >
+        <Cog6ToothIcon className="size-5" color="#6F7172" />
+        {!props.collapsed && " Settings"}
       </button>
 
       <LeaveGameModal 

@@ -32,6 +32,14 @@ class PlayerService extends ApiService {
   async getUserBySession<T>(): Promise<ApiResponse<T>> {
     return this.post("login/sessionId", undefined, true);
   }
+
+  async updateDartColor<T>(playerId: number, dartColor: string): Promise<ApiResponse<T>> {
+    return this.put("settings/dartColor", { playerId, dartColor });
+  }
+
+  async getSettings<T>(playerId: number): Promise<ApiResponse<T>> {
+    return this.get<T>(`settings/${playerId}`);
+  }
 }
 
 export default PlayerService;

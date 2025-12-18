@@ -53,5 +53,33 @@ namespace Dartz.Business
         {
             return dataContext.Players.ToList();
         }
+
+        public PlayerSettings GetPlayerSettings(int playerId)
+        {
+            return dataContext.PlayerSettings.FirstOrDefault(x => x.PlayerID == playerId);
+        }
+
+        public void UpdatePlayerSettings(PlayerSettings settings)
+        {
+            var existing = dataContext.PlayerSettings.FirstOrDefault(x => x.ID == settings.ID);
+            if (existing != null)
+            {
+                existing.DartColor = settings.DartColor;
+                existing.AllowNoAuth = settings.AllowNoAuth;
+                dataContext.SaveChanges();
+            }
+        }
+
+        public void CreatePlayerSettings(int playerId, string? dartColor = null)
+        {
+            var settings = new PlayerSettings
+            {
+                PlayerID = playerId,
+                DartColor = dartColor ?? "#C0C0C0",
+                AllowNoAuth = false
+            };
+            dataContext.PlayerSettings.Add(settings);
+            dataContext.SaveChanges();
+        }
     }
 }

@@ -62,7 +62,7 @@ namespace Dartz_API.Controllers
                 PasswordHash= p.Password
             };
 
-            _playerService.AddPlayer(player);
+            _playerService.AddPlayer(player, p.DartColor);
 
             //"auto" login the user by creating a session and appending a cookie to the response
             var sessionId = SessionMiddleware.CreateSession(player.Username);
@@ -74,7 +74,8 @@ namespace Dartz_API.Controllers
                 Expires = DateTimeOffset.MaxValue
             });
 
-            return Ok(new FrontendUser { Id = player.ID, Initial = player.Initial, Username = player.Username });
+            var dartColor = _playerService.GetDartColor(player.ID);
+            return Ok(new FrontendUser { Id = player.ID, Initial = player.Initial, Username = player.Username, DartColor = dartColor });
         }
 
         [HttpPost("login")]
@@ -101,7 +102,8 @@ namespace Dartz_API.Controllers
                 Path = "/"
             });
 
-            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username});
+            var dartColor = _playerService.GetDartColor(user.ID);
+            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, DartColor = dartColor });
         }
 
         [HttpPost("login/sessionId")]
@@ -127,7 +129,8 @@ namespace Dartz_API.Controllers
                 return BadRequest("User does not exist");
             }
 
-            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username });
+            var dartColor = _playerService.GetDartColor(user.ID);
+            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, DartColor = dartColor });
         }
 
         [HttpPost("logout")]
@@ -147,5 +150,44 @@ namespace Dartz_API.Controllers
             }
             return Ok();
         }
+
+        [HttpGet("settings/{playerId}")]
+        public ActionResult<PlayerSettings> GetSettings(int playerId)
+        {
+            var settings = _playerService.GetPlayerSettings(playerId);
+            if (settings == null)
+            {
+                return NotFound("Settings not found for this player");
+            }
+            return Ok(settings);
+        }
+
+        [HttpPut("settings")]
+        public ActionResult UpdateSettings([FromBody] PlayerSettings settings)
+        {
+            _playerService.UpdatePlayerSettings(settings);
+            return Ok();
+        }
+
+        [HttpPut("settings/dartColor")]
+        public ActionResult UpdateDartColor([FromBody] DartColorDTO dto)
+        {
+            var settings = _playerService.GetPlayerSettings(dto.PlayerId);
+            if (settings == null)
+            {
+                // Create settings for existing users who don't have them
+                _playerService.CreatePlayerSettings(dto.PlayerId, dto.DartColor);
+                return Ok();
+            }
+            settings.DartColor = dto.DartColor;
+            _playerService.UpdatePlayerSettings(settings);
+            return Ok();
+        }
+    }
+
+    public class DartColorDTO
+    {
+        public int PlayerId { get; set; }
+        public string DartColor { get; set; }
     }
 }

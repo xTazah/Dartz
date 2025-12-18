@@ -7,6 +7,7 @@ export type User = {
   id: number;
   username: string;
   initial: string;
+  dartColor?: string; // Hex color code for dart customization
 } | null;
 
 //Player Throws

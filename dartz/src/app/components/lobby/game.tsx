@@ -691,6 +691,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
                   }
                 >
                   <InteractiveDartboard
+                    dartColor={user?.dartColor}
                     onSegmentClick={handleDartboardClick}
                     onMiss={handleDartboardMiss}
                     disabled={dartboardThrows.length >= 3}
@@ -930,6 +931,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
                 }
               >
                 <InteractiveDartboard
+                  dartColor={user?.dartColor}
                   onSegmentClick={() => {}} // Disabled, no-op
                   disabled={true}
                   darts={activeDarts}

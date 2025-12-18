@@ -7,6 +7,7 @@ interface AnimatedDartProps {
   id: string;
   targetPosition: DartCoordinates;
   onAnimationComplete?: (id: string) => void;
+  color?: string; // Hex color for dart customization
 }
 
 // Physics constants (scaled for visual effect)
@@ -42,6 +43,7 @@ export default function AnimatedDart({
   id,
   targetPosition,
   onAnimationComplete,
+  color,
 }: AnimatedDartProps) {
   
   // Start position: in front of the board, offset based on target
@@ -115,7 +117,7 @@ export default function AnimatedDart({
 
   return (
     <animated.group position={position as any} rotation={rotation as any}>
-      <DartModel position={[0, 0, 0]} rotation={[0, 0, randomRoll]} />
+      <DartModel position={[0, 0, 0]} rotation={[0, 0, randomRoll]} color={color} />
     </animated.group>
   );
 }
