@@ -13,13 +13,12 @@ import { UserContext } from "../userProvider/userProvider";
 import React, { useContext, useEffect, useState } from "react";
 import { Button, Checkbox, Tooltip } from "@nextui-org/react";
 import DropZone from "../DragDrop/dropzone";
-import UserComponent from "../friendList/User";
 import { inviteUserToLobby } from "@/app/services/firebase/userService";
 import { toast } from "sonner";
 import { leaveLobby } from "@/app/services/firebase/lobbyService";
 import { useRouter } from "next/navigation";
-import { PlusCircleIcon, PlusIcon } from "@heroicons/react/24/solid";
-import iconStyles from "../../styles/icon.module.scss";
+import { PlusIcon, UserIcon, StarIcon, PlayIcon, ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid";
+import dartboardStyles from "../../styles/dartboard.module.scss";
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -81,12 +80,16 @@ const WaitingLobby = ({
 
   const leave = () => {
     let isSpectator = false;
-    let index = lobby.players.findIndex(
-      (player) => player.user?.id === user?.id
-    );
-    if (index === -1) {
+    let index = -1;
+    
+    if (Array.isArray(lobby.players)) {
+      index = lobby.players.findIndex(
+        (player) => player?.user?.id === user?.id
+      );
+    }
+    if (index === -1 && Array.isArray(lobby.spectators)) {
       index = lobby.spectators.findIndex(
-        (spectator) => spectator.user?.id === user?.id
+        (spectator) => spectator?.user?.id === user?.id
       );
       isSpectator = true;
     }
@@ -233,7 +236,8 @@ const WaitingLobby = ({
   };
 
   return (
-    <div>
+    <div className={dartboardStyles.lobbyContainer}>
+      {/* Game Mode Switch */}
       {lobby && (
         <GameModeSwitch
           selectedGameMode={lobby.gameMode}
@@ -241,32 +245,74 @@ const WaitingLobby = ({
           isOwner={isOwner}
         />
       )}
-      <div className="grid grid-cols-2 gap-6">
-        <DropZone
-          dropzoneId={DragDropProperties.dropzoneId}
-          allowedDataTypes={DragDropProperties.allowedDataTypes}
-          onDrop={DragDropProperties.onDrop}
-        >
-          <h2 className="text-lg mb-3 mt-4">Player</h2>
-          <div className="flex flex-col gap-4">
-            {lobby.players?.map((player) => (
-              <UserComponent
-                key={player.user?.id}
-                username={
-                  (player.user?.username == undefined
-                    ? ""
-                    : player.user?.username) +
-                  (player.user?.id == lobby.owner?.id ? " (Owner)" : "")
-                }
-              />
-            ))}
 
+      {/* Players Section */}
+      <DropZone
+        dropzoneId={DragDropProperties.dropzoneId}
+        allowedDataTypes={DragDropProperties.allowedDataTypes}
+        onDrop={DragDropProperties.onDrop}
+      >
+        <div className={dartboardStyles.lobbySection}>
+          <h3 className={dartboardStyles.lobbySectionTitle}>Players</h3>
+          <div className={dartboardStyles.lobbyPlayerGrid}>
+            {Array.isArray(lobby.players) && lobby.players.map((player) => {
+              const isCurrentUser = player?.user?.id === user?.id;
+              const isPlayerOwner = player?.user?.id === lobby.owner?.id;
+              
+              return (
+                <div 
+                  key={player.user?.id}
+                  className={cn(
+                    dartboardStyles.lobbyPlayerCard,
+                    isCurrentUser && dartboardStyles.currentUserCard,
+                    isPlayerOwner && dartboardStyles.ownerCard
+                  )}
+                >
+                  {isCurrentUser && (
+                    <div className={dartboardStyles.lobbyYouBadge}>
+                      <UserIcon className="w-3 h-3" />
+                      You
+                    </div>
+                  )}
+                  {isPlayerOwner && (
+                    <div className={dartboardStyles.lobbyOwnerBadge}>
+                      <StarIcon className="w-3 h-3" />
+                      Owner
+                    </div>
+                  )}
+                  <div 
+                    className={dartboardStyles.lobbyPlayerAvatar}
+                    style={{ 
+                      background: player.user?.dartColor 
+                        ? `linear-gradient(135deg, ${player.user.dartColor}, ${player.user.dartColor}dd)` 
+                        : undefined 
+                    }}
+                  >
+                    {player.user?.initial || player.user?.username?.charAt(0) || "?"}
+                  </div>
+                  <h4 className={dartboardStyles.lobbyPlayerName}>
+                    {player.user?.username || "Unknown"}
+                  </h4>
+                  <div className={dartboardStyles.lobbyPlayerStatus}>
+                    <span className={cn(
+                      dartboardStyles.lobbyStatusDot,
+                      !player.connected && dartboardStyles.offline
+                    )} />
+                    <span>{player.connected ? "Ready" : "Connecting..."}</span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Add Player Card */}
             <Popover>
               <PopoverTrigger asChild>
-                <PlusIcon
-                  className={`size-7 ${iconStyles.icon}`}
-                  color="#6F7172"
-                />
+                <div className={dartboardStyles.lobbyAddPlayerCard}>
+                  <div className={dartboardStyles.lobbyAddIcon}>
+                    <PlusIcon className="w-6 h-6" />
+                  </div>
+                  <span className={dartboardStyles.lobbyAddText}>Add Player</span>
+                </div>
               </PopoverTrigger>
               <PopoverContent
                 sideOffset={10}
@@ -276,7 +322,7 @@ const WaitingLobby = ({
                 <div className="grid gap-4">
                   <div className="space-y-2">
                     <h4 className="font-medium leading-none">Add Player</h4>
-                    <p className="text-sm">
+                    <p className="text-sm text-[var(--font-color-muted)]">
                       Select a player from your friendlist
                     </p>
                   </div>
@@ -430,85 +476,101 @@ const WaitingLobby = ({
               </PopoverContent>
             </Popover>
           </div>
-        </DropZone>
-        <div>
-          {isOwner && (
-            <div>
-              <h2 className="text-lg mb-3 mt-4">Settings</h2>
-              <Checkbox
-                className="mr-4"
-                isSelected={isSetsSelected}
-                onValueChange={() => {
-                  if (isLegsSelected) setIsLegsSelected(false);
-                  setIsSetsSelected(!isSetsSelected);
-                }}
-              >
-                Sets
-              </Checkbox>
-              <Checkbox
-                className="mr-4 mb-2"
-                isSelected={isLegsSelected}
-                onValueChange={() => {
-                  if (isSetsSelected) setIsSetsSelected(false);
-                  setIsLegsSelected(!isLegsSelected);
-                }}
-              >
-                Only Legs
-              </Checkbox>
-            </div>
-          )}
+        </div>
+      </DropZone>
+
+      {/* Settings Section (Owner only) */}
+      {isOwner && (
+        <div className={dartboardStyles.lobbySection}>
+          <h3 className={dartboardStyles.lobbySectionTitle}>Match Settings</h3>
+          <div className={dartboardStyles.lobbyCheckboxRow}>
+            <Checkbox
+              isSelected={isSetsSelected}
+              onValueChange={() => {
+                if (isLegsSelected) setIsLegsSelected(false);
+                setIsSetsSelected(!isSetsSelected);
+              }}
+            >
+              Sets & Legs
+            </Checkbox>
+            <Checkbox
+              isSelected={isLegsSelected}
+              onValueChange={() => {
+                if (isSetsSelected) setIsSetsSelected(false);
+                setIsLegsSelected(!isLegsSelected);
+              }}
+            >
+              Legs Only
+            </Checkbox>
+          </div>
+          
           {isSetsSelected && (
-            <div>
-              <label>Sets</label>
-              <input
-                type="number"
-                className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-                value={sets}
-                onChange={(e) => {
-                  setSets(Number(e.target.value));
-                }}
-              />
-              <label>Legs</label>
-              <input
-                type="number"
-                className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-                value={legs}
-                onChange={(e) => {
-                  setLegs(Number(e.target.value));
-                }}
-              />
+            <div className={dartboardStyles.lobbySettingsGrid}>
+              <div className={dartboardStyles.lobbySettingItem}>
+                <label className={dartboardStyles.lobbySettingLabel}>Sets</label>
+                <input
+                  type="number"
+                  className={dartboardStyles.lobbySettingInput}
+                  value={sets}
+                  onChange={(e) => setSets(Number(e.target.value))}
+                  min={1}
+                />
+              </div>
+              <div className={dartboardStyles.lobbySettingItem}>
+                <label className={dartboardStyles.lobbySettingLabel}>Legs per Set</label>
+                <input
+                  type="number"
+                  className={dartboardStyles.lobbySettingInput}
+                  value={legs}
+                  onChange={(e) => setLegs(Number(e.target.value))}
+                  min={1}
+                />
+              </div>
             </div>
           )}
+          
           {isLegsSelected && (
-            <div>
-              <label>Legs</label>
-              <input
-                type="number"
-                className="focus:outline font-bold outline-[var(--component-outline)] w-full p-2 rounded bg-[var(--component-background-hover)] text-[var(--font-color)]"
-                value={legs}
-                onChange={(e) => {
-                  setLegs(Number(e.target.value));
-                }}
-              />
+            <div className={dartboardStyles.lobbySettingsGrid}>
+              <div className={dartboardStyles.lobbySettingItem}>
+                <label className={dartboardStyles.lobbySettingLabel}>Legs</label>
+                <input
+                  type="number"
+                  className={dartboardStyles.lobbySettingInput}
+                  value={legs}
+                  onChange={(e) => setLegs(Number(e.target.value))}
+                  min={1}
+                />
+              </div>
             </div>
           )}
         </div>
+      )}
+
+      {/* Lobby Code */}
+      <div className={dartboardStyles.lobbyCodeSection}>
+        <span className={dartboardStyles.lobbyCodeLabel}>Lobby Code:</span>
+        <span className={dartboardStyles.lobbyCodeValue}>{lobby.id}</span>
       </div>
-      <div className="flex flex-end gap-10">
-        <Button
-          className="mt-4 w-full bg-[var(--secondary)]"
-          onPress={leave}
-          color="secondary"
+
+      {/* Action Buttons */}
+      <div className={dartboardStyles.lobbyActions}>
+        <button
+          className={dartboardStyles.lobbyButtonSecondary}
+          onClick={leave}
         >
+          <ArrowRightOnRectangleIcon className="w-5 h-5" />
           Leave Lobby
-        </Button>
-        <Button
-          className="mt-4 w-full bg-[var(--primary)]"
-          onPress={startGame}
-          color="primary"
-        >
-          Start Game
-        </Button>
+        </button>
+        {isOwner && (
+          <button
+            className={dartboardStyles.lobbyButtonPrimary}
+            onClick={startGame}
+            disabled={!Array.isArray(lobby.players)}
+          >
+            <PlayIcon className="w-5 h-5" />
+            Start Game
+          </button>
+        )}
       </div>
     </div>
   );

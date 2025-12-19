@@ -81,12 +81,16 @@ export default function LobbyPage() {
       
       if (currentLobby && currentUser) {
         let isSpectator = false;
-        let index = currentLobby.players.findIndex(
-          (player) => player.user?.id === currentUser?.id
-        );
-        if (index === -1) {
+        let index = -1;
+        
+        if (Array.isArray(currentLobby.players)) {
+          index = currentLobby.players.findIndex(
+            (player) => player?.user?.id === currentUser?.id
+          );
+        }
+        if (index === -1 && Array.isArray(currentLobby.spectators)) {
           index = currentLobby.spectators.findIndex(
-            (spectator) => spectator.user?.id === currentUser?.id
+            (spectator) => spectator?.user?.id === currentUser?.id
           );
           isSpectator = true;
         }
