@@ -113,10 +113,7 @@ const WaitingLobby = ({
     },
   };
 
-  let isOwner = user?.id === lobby.owner?.id;
-  useEffect(() => {
-    isOwner = user?.id === lobby.owner?.id;
-  }, [lobby.owner]);
+  const isOwner = user?.id === lobby.owner?.id;
 
   const { friends } = useFriendsStore();
   const [open, setOpen] = React.useState(false);
@@ -431,7 +428,7 @@ const WaitingLobby = ({
                               {mode === "local" && !allowNoAuth && (
                                 <div className="flex flex-col gap-2">
                                   <p className="text-sm">
-                                    Enter <span className="font-bold">{username}</span>'s password to add as local player
+                                    Enter <span className="font-bold">{username}</span>&apos;s password to add as local player
                                   </p>
                                   <input
                                     type="password"

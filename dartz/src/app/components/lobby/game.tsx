@@ -160,6 +160,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     }));
     
     LobbyHandler.syncCurrentTurnDarts(lobby, playerId, dartData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dartboardThrows, isCurrentUsersTurn, currentPlayer.user?.id, lobby.id]);
 
   // For non-active players: read synced darts from lobby.customData
@@ -443,6 +444,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     if (playerId && dartData.length > 0) {
       LobbyHandler.syncCurrentTurnDarts(lobby, playerId, dartData);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     playerScore1,
     playerScore2,

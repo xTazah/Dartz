@@ -21,9 +21,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [loading, setLoading] = useState(true);
 
-  const service = new PlayerService();
-
   useEffect(() => {
+    const service = new PlayerService();
     try {
       service
         .getUserBySession()
