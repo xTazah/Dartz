@@ -110,6 +110,15 @@
     border-color: rgba(255, 255, 255, 0.1);
     justify-content: center;
   }
+
+  @media (max-width: 1024px) {
+      display: flex;
+  }
+
+  @media (max-width: 768px) {
+      display: block;
+  }
+
 }
 
 .throwLabel {
@@ -431,6 +440,10 @@
   padding: 24px;
   background: var(--component-background);
   border-radius: 16px;
+
+    @media (max-width: 1024px) {
+    padding: 6px;
+  }
 }
 
 // Waiting panel
@@ -532,8 +545,14 @@
   padding: 32px;
   background: var(--component-background);
   border-radius: 16px;
-  min-width: 480px;
+
+  min-width: 400px;
   max-width: 600px;
+  
+  @media (max-width: 768px) {
+      min-width: 0px;
+  }
+
   margin: 0 auto;
 }
 

@@ -36,6 +36,7 @@ import {
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useFriendsStore } from "@/app/utils/globalStore";
 import PlayerService from "@/app/services/backend/playerService";
+import { Button as CustomButton } from "@/components/ui/button";
 
 interface WaitingLobbyProps {
   lobby: Lobby;
@@ -336,16 +337,15 @@ const WaitingLobby = ({
                         }}
                       >
                         <PopoverTrigger asChild>
-                          <Button
+                          <CustomButton
                             role="combobox"
-                            aria-expanded={open}
-                            className="w-[200px] text-white justify-between bg-[var(--component-background-hover)] focus:outline outline outline-[var(--component-background)]"
+                            className="z-40 w-[200px] text-white justify-between bg-[var(--component-background-hover)] focus:outline outline outline-[var(--component-background)]"
                           >
                             {username && friends
                               ? username
                               : "Select friend..."}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
+                          </CustomButton>
                         </PopoverTrigger>
                         <PopoverContent
                           sideOffset={10}
@@ -396,7 +396,7 @@ const WaitingLobby = ({
                                   </p>
                                   <Button
                                     className="w-full bg-[var(--primary)]"
-                                    onClick={handleInvite}
+                                    onPress={handleInvite}
                                     isLoading={isLoginLoading}
                                     color="primary"
                                   >
@@ -404,7 +404,7 @@ const WaitingLobby = ({
                                   </Button>
                                   <Button
                                     className="w-full bg-[var(--secondary)]"
-                                    onClick={() => {
+                                    onPress={() => {
                                       if (allowNoAuth) {
                                         handleLocalPlayerNoAuth();
                                       } else {
@@ -446,14 +446,14 @@ const WaitingLobby = ({
                                   <div className="flex gap-2 mt-2">
                                     <Button
                                       className="flex-1 bg-[var(--component-background-hover)]"
-                                      onClick={() => setMode("select")}
-                                      color="default"
+                                      onPress={() => setMode("select")}
+                                      color="primary"
                                     >
                                       Back
                                     </Button>
                                     <Button
                                       className="flex-1 bg-[var(--primary)]"
-                                      onClick={handleLogin}
+                                      onPress={handleLogin}
                                       isLoading={isLoginLoading}
                                       isDisabled={!password}
                                       color="primary"
