@@ -3,6 +3,7 @@ using System;
 using Dartz.Business;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dartz.Business.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20260223190848_MatchHistory")]
+    partial class MatchHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -242,9 +245,6 @@ namespace Dartz.Business.Migrations
                     b.Property<int?>("BestLegDarts")
                         .HasColumnType("integer");
 
-                    b.Property<double>("BestMatchAverage")
-                        .HasColumnType("double precision");
-
                     b.Property<int>("Count100Plus")
                         .HasColumnType("integer");
 
@@ -254,46 +254,16 @@ namespace Dartz.Business.Migrations
                     b.Property<int>("Count180s")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CurrentWinStreak")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("First9Average")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("HighestCheckout")
-                        .HasColumnType("integer");
-
                     b.Property<int>("HighestTurnScore")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("LastPlayedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("LongestWinStreak")
-                        .HasColumnType("integer");
-
                     b.Property<double>("OverallAverage")
                         .HasColumnType("double precision");
 
                     b.Property<int>("PlayerID")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TotalBusts")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TotalCheckoutAttempts")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TotalCheckouts")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TotalDarts")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TotalFirst9Points")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TotalFirst9Turns")
                         .HasColumnType("integer");
 
                     b.Property<int>("TotalLegs")
@@ -313,9 +283,6 @@ namespace Dartz.Business.Migrations
 
                     b.Property<int>("TotalWins")
                         .HasColumnType("integer");
-
-                    b.Property<double>("WorstMatchAverage")
-                        .HasColumnType("double precision");
 
                     b.HasKey("ID");
 

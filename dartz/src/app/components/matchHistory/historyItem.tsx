@@ -1,26 +1,59 @@
-import React from "react";
-import styles from "../../styles/matchHistory.module.scss";
-import iconStyles from "../../styles/icon.module.scss";
-import { UserIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
+"use client";
 
-export default function HistoryItem(props: any) {
+import React from "react";
+import { useRouter } from "next/navigation";
+import styles from "../../styles/matchHistory.module.scss";
+import { MatchHistoryEntry } from "@/app/utils/types";
+
+interface HistoryItemProps {
+  match: MatchHistoryEntry;
+  playerId: number;
+}
+
+const GAME_MODE_LABELS: Record<string, string> = {
+  "501": "501",
+  "around-the-clock": "ATC",
+  "double-training": "Doubles",
+};
+
+export default function HistoryItem({ match, playerId }: HistoryItemProps) {
+  const router = useRouter();
+  const isWin = match.winnerPlayerId === playerId;
+  const playerNames = match.players.map((p) => p.username).join(", ");
+
+  const currentPlayer = match.players.find((p) => p.playerId === playerId);
+  const avg = currentPlayer?.average?.toFixed(1) ?? "—";
+
+  const date = new Date(match.finishedAt);
+  const formattedDate = date.toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+  const modeLabel = GAME_MODE_LABELS[match.gameModeKey] ?? match.gameModeKey;
+
   return (
-    <div key={props.item.date} className={styles.historyEntry}>
-      <div className="flex items-center gap-2">
+    <div
+      className={styles.historyEntry}
+      onClick={() => router.push(`/match?id=${match.matchId}`)}
+      style={{ cursor: "pointer" }}
+    >
+      <div className={styles.entryLeft}>
         <div
-          className={`${styles.historyBox} ${props.item.win ? styles.win : ""}`}
+          className={`${styles.resultBadge} ${isWin ? styles.win : styles.loss}`}
         >
-          {props.item.win ? <div>W</div> : <div>L</div>}
+          {isWin ? "W" : "L"}
         </div>
-        <div className="flex flex-col ">
-          <div>{props.item.date}</div>
-          <div className={`${styles.player} `}>{props.item.player}</div>
+        <div className={styles.entryInfo}>
+          <div className={styles.entryDate}>{formattedDate}</div>
+          <div className={styles.entryPlayers}>{playerNames}</div>
         </div>
       </div>
-      <EllipsisHorizontalIcon
-        className={`size-5 ${iconStyles.icon}`}
-        color="#6F7172"
-      />
+      <div className={styles.entryRight}>
+        <span className={styles.gameModeBadge}>{modeLabel}</span>
+        <span className={styles.entryAvg}>Ø {avg}</span>
+      </div>
     </div>
   );
 }

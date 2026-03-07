@@ -1,5 +1,5 @@
-import { GameStatus, Lobby, Player, User } from "@/app/utils/types";
-import React, { useContext, useEffect, useState } from "react";
+import { GameStatus, Lobby, Player, User, MatchSubmissionPayload } from "@/app/utils/types";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import dartboardStyles from "@/app/styles/dartboard.module.scss";
 import {
   calculate100Plus,
@@ -12,6 +12,8 @@ import LobbyHandler from "@/app/handlers/lobbyHandler";
 import { useRouter } from "next/navigation";
 import { TrophyIcon, ArrowLeftIcon, ArrowPathIcon, SignalSlashIcon, UserIcon } from "@heroicons/react/24/solid";
 import { UserContext } from "../userProvider/userProvider";
+import MatchService from "@/app/services/backend/matchService";
+import { toast } from "sonner";
 
 interface WinnerScreenProps {
   lobby: Lobby;
@@ -21,6 +23,8 @@ interface WinnerScreenProps {
 export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
   const [isFinished, setisFinished] = useState(false);
   const [winner, setWinner] = useState<Player | undefined>(undefined);
+  const [matchSaved, setMatchSaved] = useState(false);
+  const submittingRef = useRef(false);
   const router = useRouter();
   const context = useContext(UserContext);
   const currentUser = context?.user;
@@ -46,6 +50,60 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
       }
     }
   }, [lobby.sets, lobby.legs, lobby.players]);
+
+  // Submit match to backend when the WinnerScreen mounts.
+  // This component is only rendered when gameStatus === Finished,
+  // so we don't need the internal isFinished check.
+  useEffect(() => {
+    if (matchSaved || submittingRef.current) return;
+    if (currentUser?.id !== lobby.owner?.id) return;
+
+    const winnerPlayer = winner ?? lobby.players.find((x) => x.score == 0);
+    if (!winnerPlayer?.user?.id) return;
+
+    submittingRef.current = true;
+
+    const payload: MatchSubmissionPayload = {
+      gameModeKey: lobby.gameMode.key,
+      sets: lobby.sets,
+      legs: lobby.legs,
+      winnerPlayerId: winnerPlayer.user.id,
+      startedAt: new Date().toISOString(),
+      finishedAt: new Date().toISOString(),
+      players: lobby.players
+        .filter((p) => p.user?.id)
+        .map((player, index) => ({
+          playerId: player.user!.id,
+          playerIndex: index,
+          finalSets: player.sets,
+          finalLegs: player.legs,
+          throws: (player.throws ?? []).map((t) => ({
+            score1: t.score1,
+            multiplier1: t.multiplier1,
+            score2: t.score2,
+            multiplier2: t.multiplier2,
+            score3: t.score3,
+            multiplier3: t.multiplier3,
+          })),
+        })),
+    };
+
+    const matchService = new MatchService();
+    matchService
+      .submitMatch(payload)
+      .then(() => {
+        setMatchSaved(true);
+        toast.success("Match saved to history!");
+      })
+      .catch((error) => {
+        console.error("Failed to save match:", error);
+        toast.error("Failed to save match to history");
+      })
+      .finally(() => {
+        submittingRef.current = false;
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchSaved, currentUser, lobby.owner, winner]);
 
   const winnerName = winner?.user?.username ?? lobby.players.find((x) => x.score == 0)?.user?.username ?? "Unknown";
   const isCurrentUserWinner = winner?.user?.id === currentUser?.id || 

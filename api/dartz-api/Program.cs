@@ -42,11 +42,13 @@ builder.Services.AddDbContext<DataContext>(options =>
 builder.Services.AddTransient<IPlayerRepository, PlayerRepository>();
 builder.Services.AddTransient<IGameSessionRepository, GameSessionRepository>();
 builder.Services.AddTransient<IFriendsRepository, FriendsRepository>();
+builder.Services.AddTransient<IMatchRepository, MatchRepository>();
 //Services
 builder.Services.AddTransient<IPlayerService, PlayerService>();
 builder.Services.AddTransient<IFriendsService, FriendsService>();
 builder.Services.AddTransient<IGameSessionService, GameSessionService>();
 builder.Services.AddTransient<IPasswordService, PasswordService>();
+builder.Services.AddTransient<IMatchService, MatchService>();
 
 builder.Services.AddCors();
 
