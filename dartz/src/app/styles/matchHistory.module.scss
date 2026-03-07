@@ -1,35 +1,256 @@
+.historySection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.historyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.historyBox {
-  min-width: 30px;
-  min-height: 30px;
-  width: 35px;
-  height: 35px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: var(--secondary);
-  border-radius: 5px;
-}
-
+/* ========== Match Entry ========== */
 .historyEntry {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  font-size: 14px;
-  margin-bottom: 20px;
-  width: 32%;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--component-background);
+  border-radius: 14px;
+  border: 1px solid var(--component-outline);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
-.player {
-  color: var(--secondary);
+.historyEntry::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--component-outline);
+  transition: background 0.2s ease, width 0.2s ease;
+}
+
+.historyEntry:hover {
+  background: var(--component-background-hover);
+  border-color: rgba(var(--primary-rgb), 0.3);
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.historyEntry:hover::before {
+  background: var(--primary);
+  width: 4px;
+}
+
+.historyEntry:active {
+  transform: translateX(2px) scale(0.995);
+}
+
+/* ========== Left Side ========== */
+.entryLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.resultBadge {
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.historyEntry:hover .resultBadge {
+  transform: scale(1.08);
 }
 
 .win {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary) 0%, rgba(var(--primary-rgb), 0.7) 100%);
+  color: white;
+  box-shadow: 0 2px 10px rgba(var(--primary-rgb), 0.35);
+}
+
+.loss {
+  background: var(--component-background-hover);
+  color: var(--font-color-muted);
+  border: 1px solid var(--component-outline);
+}
+
+.entryInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.entryDate {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--font-color);
+}
+
+.entryPlayers {
+  font-size: 0.75rem;
+  color: var(--font-color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ========== Right Side ========== */
+.entryRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.gameModeBadge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.1);
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  border: 1px solid rgba(var(--primary-rgb), 0.15);
+}
+
+.entryAvg {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--font-color);
+  min-width: 55px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========== Load More ========== */
+.loadMoreButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  background: var(--component-background);
+  border: 1px dashed var(--component-outline);
+  border-radius: 14px;
+  color: var(--font-color-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.loadMoreButton:hover {
+  background: var(--component-background-hover);
+  color: var(--primary);
+  border-color: rgba(var(--primary-rgb), 0.3);
+  border-style: solid;
+}
+
+.loadMoreButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ========== Empty ========== */
+.emptyHistory {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  color: var(--font-color-muted);
+  text-align: center;
+}
+
+.emptyHistoryIcon {
+  width: 36px;
+  height: 36px;
+  opacity: 0.3;
+}
+
+/* ========== Loading ========== */
+.loadingSkeleton {
+  height: 60px;
+  background: linear-gradient(
+    90deg,
+    var(--component-background) 25%,
+    var(--component-background-hover) 50%,
+    var(--component-background) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 14px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ========== Compact (Dashboard) ========== */
+.compact .historyEntry {
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.compact .historyEntry::before {
+  display: none;
+}
+
+.compact .resultBadge {
+  min-width: 28px;
+  height: 28px;
+  font-size: 0.7rem;
+  border-radius: 7px;
+}
+
+.compact .entryDate {
+  font-size: 0.8rem;
+}
+
+.compact .entryPlayers {
+  font-size: 0.7rem;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 480px) {
+  .historyEntry {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .resultBadge {
+    min-width: 30px;
+    height: 30px;
+    font-size: 0.7rem;
+  }
+
+  .entryAvg {
+    font-size: 0.75rem;
+    min-width: 45px;
+  }
 }

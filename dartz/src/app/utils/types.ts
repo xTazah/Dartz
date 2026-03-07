@@ -129,3 +129,153 @@ export interface ApiResponse<T> {
   status: number;
   error?: string;
 }
+
+// Match submission payload (sent to backend when game finishes)
+export interface MatchSubmissionPayload {
+  gameModeKey: string;
+  sets: number;
+  legs: number;
+  winnerPlayerId: number;
+  startedAt: string; // ISO date string
+  finishedAt: string; // ISO date string
+  players: MatchSubmissionPlayer[];
+}
+
+export interface MatchSubmissionPlayer {
+  playerId: number;
+  playerIndex: number;
+  finalSets: number;
+  finalLegs: number;
+  throws: MatchSubmissionThrow[];
+}
+
+export interface MatchSubmissionThrow {
+  score1: number;
+  multiplier1: number;
+  score2: number;
+  multiplier2: number;
+  score3: number;
+  multiplier3: number;
+}
+
+// Match history entry (received from backend)
+export interface MatchHistoryEntry {
+  matchId: number;
+  gameModeKey: string;
+  finishedAt: string;
+  winnerUsername: string;
+  winnerPlayerId: number;
+  sets: number;
+  legs: number;
+  players: MatchHistoryPlayer[];
+}
+
+export interface MatchHistoryPlayer {
+  playerId: number;
+  username: string;
+  initial: string;
+  finalSets: number;
+  finalLegs: number;
+  average: number;
+}
+
+// Full match detail (for replay)
+export interface MatchDetail {
+  matchId: number;
+  gameModeKey: string;
+  sets: number;
+  legs: number;
+  startedAt: string;
+  finishedAt: string;
+  winnerPlayerId: number;
+  winnerUsername: string;
+  players: MatchDetailPlayer[];
+  matchLegs: MatchDetailLeg[];
+}
+
+export interface MatchDetailPlayer {
+  playerId: number;
+  username: string;
+  initial: string;
+  playerIndex: number;
+  finalSets: number;
+  finalLegs: number;
+}
+
+export interface MatchDetailLeg {
+  legNumber: number;
+  winnerPlayerId: number | null;
+  turns: MatchDetailTurn[];
+}
+
+export interface MatchDetailTurn {
+  turnNumber: number;
+  playerId: number;
+  username: string;
+  scoreBefore: number;
+  scoreAfter: number;
+  totalPoints: number;
+  isBust: boolean;
+  darts: MatchDetailDart[];
+}
+
+export interface MatchDetailDart {
+  dartNumber: number;
+  baseScore: number;
+  multiplier: number;
+}
+
+// Player statistics (precomputed)
+export interface PlayerStatsResponse {
+  playerId: number;
+  username: string;
+  totalMatches: number;
+  totalWins: number;
+  winRate: number;
+  totalLegs: number;
+  totalLegsWon: number;
+  overallAverage: number;
+  totalDarts: number;
+  highestTurnScore: number;
+  count100Plus: number;
+  count140Plus: number;
+  count180s: number;
+  totalBusts: number;
+  totalCheckoutAttempts: number;
+  totalCheckouts: number;
+  checkoutRate: number;
+  highestCheckout: number;
+  bestLegDarts: number | null;
+  bestMatchAverage: number;
+  worstMatchAverage: number;
+  currentWinStreak: number;
+  longestWinStreak: number;
+  first9Average: number;
+  dartsPerLeg: number;
+  lastPlayedAt: string | null;
+}
+
+// Opponent head-to-head stats
+export interface OpponentStatsEntry {
+  opponentPlayerId: number;
+  opponentUsername: string;
+  opponentInitial: string;
+  matchesPlayed: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  lastPlayedAt: string | null;
+}
+
+// Analytics
+export interface ActivityDay {
+  date: string; // "yyyy-MM-dd"
+  count: number;
+}
+
+export interface MatchTrendPoint {
+  matchId: number;
+  date: string;
+  average: number;
+  won: boolean;
+}

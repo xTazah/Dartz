@@ -1,0 +1,338 @@
+.matchDetailContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Header */
+.matchHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.matchHeaderTop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--component-background);
+  border: 1px solid var(--component-outline);
+  color: var(--font-color-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.backButton:hover {
+  background: var(--component-background-hover);
+  color: var(--primary);
+  border-color: rgba(var(--primary-rgb), 0.3);
+}
+
+.matchTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--font-color);
+  margin: 0;
+}
+
+.matchSubtitle {
+  font-size: 0.85rem;
+  color: var(--font-color-muted);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modeBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+/* Player Summary */
+.playerSummary {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.playerCard {
+  background: var(--component-background);
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--component-outline);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.playerCardWinner {
+  border-color: rgba(var(--primary-rgb), 0.4);
+  background: linear-gradient(
+    135deg,
+    var(--component-background) 0%,
+    rgba(var(--primary-rgb), 0.06) 100%
+  );
+}
+
+.playerInitial {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: var(--component-background-hover);
+  color: var(--font-color);
+  flex-shrink: 0;
+}
+
+.playerInitialWinner {
+  background: var(--primary);
+  color: white;
+}
+
+.playerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.playerName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--font-color);
+}
+
+.playerScore {
+  font-size: 0.75rem;
+  color: var(--font-color-muted);
+}
+
+.winnerBadge {
+  margin-left: auto;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* Legs */
+.legsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.legCard {
+  background: var(--component-background);
+  border-radius: 12px;
+  border: 1px solid var(--component-outline);
+  overflow: hidden;
+}
+
+.legHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  user-select: none;
+}
+
+.legHeader:hover {
+  background: var(--component-background-hover);
+}
+
+.legTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--font-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legWinner {
+  font-size: 0.75rem;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--font-color-muted);
+  transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Turn rows */
+.turnsTable {
+  padding: 0 16px 12px;
+}
+
+.turnRow {
+  display: grid;
+  grid-template-columns: 32px 1fr 50px 70px 50px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--component-outline);
+  font-size: 0.8rem;
+}
+
+.turnRow:last-child {
+  border-bottom: none;
+}
+
+.turnRowHeader {
+  font-weight: 600;
+  color: var(--font-color-muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--component-outline);
+}
+
+.turnRowBust {
+  color: #ef4444;
+  opacity: 0.7;
+}
+
+.turnInitial {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.7rem;
+  background: var(--component-background-hover);
+  color: var(--font-color);
+}
+
+.turnPlayer {
+  font-weight: 500;
+  color: var(--font-color);
+}
+
+.turnPoints {
+  font-weight: 700;
+  color: var(--font-color);
+  text-align: center;
+}
+
+.turnScore {
+  color: var(--font-color-muted);
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+.turnDarts {
+  display: flex;
+  gap: 4px;
+}
+
+.dartChip {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--component-background-hover);
+  color: var(--font-color);
+}
+
+.dartChipDouble {
+  background: rgba(76, 175, 80, 0.15);
+  color: #4caf50;
+}
+
+.dartChipTriple {
+  background: rgba(244, 67, 54, 0.15);
+  color: #f44336;
+}
+
+.dartChipMiss {
+  background: transparent;
+  color: var(--font-color-muted);
+  opacity: 0.5;
+}
+
+.bustTag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+/* Loading */
+.skeleton {
+  height: 80px;
+  background: linear-gradient(
+    90deg,
+    var(--component-background) 25%,
+    var(--component-background-hover) 50%,
+    var(--component-background) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 12px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Empty / Error */
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--font-color-muted);
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .matchDetailContainer {
+    padding: 16px;
+  }
+
+  .turnRow {
+    grid-template-columns: 28px 1fr 40px 60px 40px 1fr;
+    gap: 4px;
+    font-size: 0.75rem;
+  }
+}
