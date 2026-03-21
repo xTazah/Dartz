@@ -54,9 +54,16 @@ export default function ActivityGraph() {
         }}
         tooltipDataAttrs={(value: any) => {
           if (!value || !value.date) return { "data-tooltip-id": "heatmap-tip", "data-tooltip-content": "No matches" } as any;
+          const d = new Date(value.date + "T00:00:00");
+          const formatted = d.toLocaleDateString("en-GB", {
+            weekday: "long",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
           return {
             "data-tooltip-id": "heatmap-tip",
-            "data-tooltip-content": `${value.date}: ${value.count} match${value.count !== 1 ? "es" : ""}`,
+            "data-tooltip-content": `${formatted}: ${value.count} match${value.count !== 1 ? "es" : ""}`,
           } as any;
         }}
         showWeekdayLabels
