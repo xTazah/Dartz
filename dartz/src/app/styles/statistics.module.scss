@@ -1,18 +1,48 @@
+/* ========== Entrance Animation ========== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ringDraw {
+  from { stroke-dashoffset: 339.292; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
 .page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 24px;
+  gap: 14px;
+  padding: 20px;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .header {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  animation: fadeIn 0.4s ease-out;
 }
 
 .title {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: white;
   margin: 0;
@@ -30,33 +60,53 @@
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
 }
 
+/* Staggered card entrance — each child fades in */
+.grid > * {
+  animation: fadeInUp 0.45s ease-out both;
+}
+.grid > *:nth-child(1) { animation-delay: 0.04s; }
+.grid > *:nth-child(2) { animation-delay: 0.08s; }
+.grid > *:nth-child(3) { animation-delay: 0.12s; }
+.grid > *:nth-child(4) { animation-delay: 0.16s; }
+.grid > *:nth-child(5) { animation-delay: 0.20s; }
+.grid > *:nth-child(6) { animation-delay: 0.24s; }
+.grid > *:nth-child(7) { animation-delay: 0.28s; }
+.grid > *:nth-child(8) { animation-delay: 0.32s; }
+
+/* ========== Ring Card ========== */
 .ringCard {
   background: var(--component-background);
   border-radius: 14px;
   border: 1px solid var(--component-outline);
-  padding: 20px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.ringCard:hover {
+  border-color: rgba(3, 176, 118, 0.35);
+  box-shadow: 0 0 20px rgba(3, 176, 118, 0.08);
 }
 
 .ringWrapper {
   position: relative;
-  width: 130px;
-  height: 130px;
+  width: 110px;
+  height: 110px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .ringSvg {
-  width: 130px;
-  height: 130px;
+  width: 110px;
+  height: 110px;
   position: absolute;
   top: 0;
   left: 0;
@@ -65,6 +115,7 @@
 
 .ringProgress {
   transition: stroke-dashoffset 1s ease-out;
+  animation: ringDraw 1.2s ease-out;
 }
 
 .ringCenter {
@@ -76,7 +127,7 @@
 }
 
 .ringValue {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--primary);
   line-height: 1;
@@ -102,22 +153,29 @@
 .ringDivider { color: var(--font-color); }
 .ringLosses { color: #ef4444; }
 
+/* ========== Numbers Card ========== */
 .numbersCard {
   background: var(--component-background);
   border-radius: 14px;
   border: 1px solid var(--component-outline);
-  padding: 16px 24px;
+  padding: 12px 18px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 0;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.numbersCard:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
 .numberItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
+  padding: 5px 0;
 }
 
 .numberLabel {
@@ -151,14 +209,20 @@
   background: var(--component-background);
   border-radius: 14px;
   border: 1px solid var(--component-outline);
-  padding: 16px 18px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
 .cardLabel {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: var(--font-color);
   text-transform: uppercase;
@@ -173,10 +237,16 @@
   background: var(--component-background);
   border-radius: 14px;
   border: 1px solid var(--component-outline);
-  padding: 16px 18px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.fullWidthCard:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
 .historyCard {
@@ -190,6 +260,7 @@
   gap: 12px;
 }
 
+/* ========== Score Bar ========== */
 .scoreBar {
   display: flex;
   flex-direction: column;
@@ -206,6 +277,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   color: white;
+  transition: color 0.2s ease;
 }
 
 .scoreBarLabelGlow {
@@ -228,39 +300,52 @@
 
 .scoreBarFill {
   height: 100%;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 4px;
-  transition: width 0.8s ease-out;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
   min-width: 6px;
 }
 
 .scoreBarFillGlow {
   background: linear-gradient(90deg, var(--primary) 0%, rgba(3, 176, 118, 0.7) 100%);
-  box-shadow: 0 0 8px rgba(3, 176, 118, 0.4);
+  box-shadow: 0 0 10px rgba(3, 176, 118, 0.35);
 }
 
+/* ========== Records ========== */
 .recordRow {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 4px 0;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.recordRow:hover {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .recordRow + .recordRow {
   border-top: 1px solid var(--component-outline);
-  padding-top: 8px;
+  padding-top: 10px;
 }
 
 .recordIcon {
-  font-size: 1.1rem;
-  width: 34px;
-  height: 34px;
+  font-size: 1rem;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--component-background-hover);
   border-radius: 8px;
   flex-shrink: 0;
+  color: var(--primary);
+  transition: transform 0.2s ease;
+}
+
+.recordRow:hover .recordIcon {
+  transform: scale(1.08);
 }
 
 .recordInfo {
@@ -278,11 +363,12 @@
 }
 
 .recordValue {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: white;
 }
 
+/* ========== Mini Grid ========== */
 .miniGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -292,12 +378,18 @@
 .miniStat {
   background: var(--component-background-hover);
   border-radius: 10px;
-  padding: 10px 8px;
+  padding: 8px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
   text-align: center;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.miniStat:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
 }
 
 .miniLabel {
@@ -310,7 +402,7 @@
 }
 
 .miniValue {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: white;
 }
@@ -319,6 +411,7 @@
 .heatmapContainer {
   width: 100%;
   overflow-x: auto;
+  padding: 4px 0;
 }
 
 .heatmapContainer :global(.react-calendar-heatmap) {
@@ -351,43 +444,38 @@
   fill: var(--primary);
 }
 
-.heatmapContainer :global(.react-calendar-heatmap) {
-  width: 100%;
-}
-
-.heatmapContainer :global(.react-calendar-heatmap text) {
-  font-size: 8px;
-  fill: var(--secondary);
-}
-
 .heatmapContainer :global(.react-calendar-heatmap rect:hover) {
-  stroke: var(--secondary);
+  stroke: var(--primary);
   stroke-width: 1;
 }
 
 .heatmapContainer :global(.react-calendar-heatmap rect) {
-  rx: 2;
+  rx: 3;
+  transition: opacity 0.15s ease;
 }
 
+/* ========== Empty State ========== */
 .emptyState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 48px 24px;
+  gap: 10px;
+  padding: 32px 16px;
   color: var(--secondary);
   text-align: center;
+  animation: fadeIn 0.5s ease-out;
 }
 
 .emptyIcon {
-  width: 48px;
-  height: 48px;
-  opacity: 0.4;
+  width: 52px;
+  height: 52px;
+  opacity: 0.3;
+  animation: pulseGlow 2.5s ease-in-out infinite;
 }
 
 .emptyTitle {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: white;
 }
@@ -395,8 +483,11 @@
 .emptySubtitle {
   font-size: 0.85rem;
   color: var(--font-color);
+  max-width: 280px;
+  line-height: 1.5;
 }
 
+/* ========== Skeleton Loading ========== */
 .skeleton {
   background: linear-gradient(
     90deg,
@@ -415,6 +506,7 @@
   100% { background-position: -200% 0; }
 }
 
+/* ========== Legacy circle (old component) ========== */
 .circle {
   aspect-ratio: 1;
   width: 75%;
@@ -425,6 +517,7 @@
 .amount { font-weight: bold; font-size: 30px; }
 .amount2 { font-weight: bold; font-size: 20px; }
 
+/* ========== Opponent Stats Grid ========== */
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -439,6 +532,12 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.statCard:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
 }
 
 .statLabel {
@@ -455,6 +554,22 @@
   color: white;
 }
 
+/* ========== Responsive ========== */
+@media (max-width: 900px) {
+  .page {
+    padding: 16px;
+  }
+
+  .grid {
+    gap: 10px;
+  }
+
+  .miniGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+}
+
 @media (max-width: 700px) {
   .grid {
     grid-template-columns: 1fr;
@@ -466,9 +581,40 @@
 
   .page {
     padding: 16px;
+    gap: 14px;
+  }
+
+  .title {
+    font-size: 1.3rem;
   }
 
   .miniGrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ringWrapper {
+    width: 95px;
+    height: 95px;
+  }
+
+  .ringSvg {
+    width: 95px;
+    height: 95px;
+  }
+
+  .ringValue {
+    font-size: 1.3rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .heatmapContainer {
+    min-height: 160px;
+  }
+
+  .heatmapContainer :global(.react-calendar-heatmap) {
+    min-height: 140px;
   }
 }

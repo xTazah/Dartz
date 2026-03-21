@@ -23,7 +23,7 @@ function ProtectedLayout({
 
   return (
     <DndContext>
-      <div className="grid grid-cols-12 gap-7 relative">
+      <div className="grid grid-cols-12 gap-7 relative min-h-screen">
         <div
           className={
             collapsed
@@ -47,7 +47,7 @@ function ProtectedLayout({
           <main className={`${inter.className} mt-4`}>{children}</main>
         </div>
 
-        <div className={` ${friendListCollapsed? "block" :"hidden"} lg:block fixed top-0 w-full col-span-12 lg:static lg:col-span-2`}>
+        <div className={`${friendListCollapsed? "block" :"hidden"} lg:block fixed top-0 w-full col-span-12 lg:static lg:col-span-2 lg:self-stretch`}>
           <FriendList />
         </div>
         <PhoneNavigation friendListCollapsed={friendListCollapsed} setFriendListCollapsed={setFriendListCollapsed} />

@@ -13,6 +13,14 @@ import {
   UsersIcon,
   CalendarDaysIcon,
 } from "@heroicons/react/24/solid";
+import {
+  TargetIcon,
+  ZapIcon,
+  CrownIcon,
+  FlameIcon,
+  SparklesIcon,
+  ClockIcon,
+} from "lucide-react";
 import OpponentStats from "@/app/components/statistics/opponentStats";
 import ActivityGraph from "@/app/components/statistics/activityGraph";
 
@@ -167,7 +175,7 @@ export default function StatisticsPage() {
             <TrophyIcon className="w-4 h-4" /> Records & Checkout
           </div>
           <div className={styles.recordRow}>
-            <div className={styles.recordIcon}>🎯</div>
+            <div className={styles.recordIcon}><TargetIcon className="w-4 h-4" /></div>
             <div className={styles.recordInfo}>
               <span className={styles.recordLabel}>Checkout %</span>
               <span className={styles.recordValue}>
@@ -177,21 +185,21 @@ export default function StatisticsPage() {
             </div>
           </div>
           <div className={styles.recordRow}>
-            <div className={styles.recordIcon}>💥</div>
+            <div className={styles.recordIcon}><SparklesIcon className="w-4 h-4" /></div>
             <div className={styles.recordInfo}>
               <span className={styles.recordLabel}>Highest Checkout</span>
               <span className={styles.recordValue}>{stats.highestCheckout || "—"}</span>
             </div>
           </div>
           <div className={styles.recordRow}>
-            <div className={styles.recordIcon}>⚡</div>
+            <div className={styles.recordIcon}><ZapIcon className="w-4 h-4" /></div>
             <div className={styles.recordInfo}>
               <span className={styles.recordLabel}>Best Leg</span>
               <span className={styles.recordValue}>{stats.bestLegDarts ? `${stats.bestLegDarts} darts` : "—"}</span>
             </div>
           </div>
           <div className={styles.recordRow}>
-            <div className={styles.recordIcon}>🏆</div>
+            <div className={styles.recordIcon}><CrownIcon className="w-4 h-4" /></div>
             <div className={styles.recordInfo}>
               <span className={styles.recordLabel}>Best Match Avg</span>
               <span className={styles.recordValue}>{stats.bestMatchAverage.toFixed(1)}</span>
@@ -202,7 +210,7 @@ export default function StatisticsPage() {
         {/* Streaks & Extra */}
         <div className={styles.card}>
           <div className={styles.cardLabel}>
-            🔥 Streaks & More
+            <FlameIcon className="w-4 h-4" /> Streaks & More
           </div>
           <div className={styles.miniGrid}>
             <div className={styles.miniStat}>
@@ -250,7 +258,7 @@ export default function StatisticsPage() {
 
         {/* Match History — full width */}
         <div className={styles.fullWidthCard}>
-          <div className={styles.cardLabel}>Match History</div>
+          <div className={styles.cardLabel}><ClockIcon className="w-4 h-4" /> Match History</div>
           <HistoryList playerId={user?.id} />
         </div>
       </div>

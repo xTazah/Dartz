@@ -120,7 +120,7 @@ export default function FriendList() {
 
   return (
     <div
-      className={` w-fill h-fill min-h-screen p-5 pt-20 lg:pt-5 bg-[var(--component-background)]`}
+      className={`w-full min-h-screen h-full p-5 pt-20 lg:pt-5 bg-[var(--component-background)] overflow-y-auto`}
     >
       <div className={styles.userProfile}>
         <div className="flex flex-row items-center gap-3">
