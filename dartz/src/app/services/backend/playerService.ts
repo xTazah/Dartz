@@ -33,6 +33,10 @@ class PlayerService extends ApiService {
     return this.post("login/sessionId", undefined, true);
   }
 
+  async updateUserProfile<T>(ID: number, username: string, profilePicture: string, bio: string): Promise<ApiResponse<T>> {
+    return this.post("editProfile", { ID, username, profilePicture, bio }, true);
+  }
+
   async updateDartColor<T>(playerId: number, dartColor: string): Promise<ApiResponse<T>> {
     return this.put("settings/dartColor", { playerId, dartColor });
   }

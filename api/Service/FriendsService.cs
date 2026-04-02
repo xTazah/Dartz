@@ -26,7 +26,7 @@ namespace Dartz.Service
             var friends = _friendsRepository.GetFriends(playerId);
             foreach (var friend in friends)
             {
-                frontendFriends.Add(new FrontendUser { Id = friend.ID, Initial = friend.Initial, Username = friend.Username });
+                frontendFriends.Add(new FrontendUser { Id = friend.ID, Initial = friend.Initial, Username = friend.Username, ProfilePicture=friend.ProfilePicture });
             }
             return frontendFriends;
         }

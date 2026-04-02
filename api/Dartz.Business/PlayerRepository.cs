@@ -70,6 +70,36 @@ namespace Dartz.Business
             }
         }
 
+        public void UpdatePlayer(Player player)
+        {
+            var existing = dataContext.Players.FirstOrDefault(x => x.ID == player.ID || x.Username == player.Username);
+            if (existing == null) return;
+
+            // Only update values that are provided (not null)
+            //if (!string.IsNullOrEmpty(player.Username) && player.Username != existing.Username)
+            //{
+            //    existing.Username = player.Username;
+            //}
+
+            //if (!string.IsNullOrEmpty(player.PasswordHash))
+            //{
+            //    // PasswordHash is expected to contain the hashed password already when passed in
+            //    existing.PasswordHash = player.PasswordHash;
+            //}
+
+            if (player.ProfilePicture != null)
+            {
+                existing.ProfilePicture = player.ProfilePicture;
+            }
+
+            if (player.Bio != null)
+            {
+                existing.Bio = player.Bio;
+            }
+
+            dataContext.SaveChanges();
+        }
+
         public void CreatePlayerSettings(int playerId, string? dartColor = null)
         {
             var settings = new PlayerSettings

@@ -191,6 +191,9 @@ const WaitingLobby = ({
         username: friend.user.username,
         initial: friend.user.initial || friend.user.username.charAt(0).toUpperCase(),
         dartColor: friend.user.dartColor,
+        profilePicture: friend.user.profilePicture,
+        bio: friend.user.bio,
+        memberSince: friend.user.memberSince,
       };
       
       let updatedLobby = LobbyHandler.addPlayer(lobby, userData);
@@ -286,7 +289,12 @@ const WaitingLobby = ({
                         : undefined 
                     }}
                   >
-                    {player.user?.initial || player.user?.username?.charAt(0) || "?"}
+                    {player.user?.profilePicture ? (
+                      <img src={player.user.profilePicture} alt={player.user.username} className={dartboardStyles.lobbyPlayerImage} />
+                    ) : (
+                      <>{player.user?.initial || player.user?.username?.charAt(0) || "?"}</>
+                    )}
+                    
                   </div>
                   <h4 className={dartboardStyles.lobbyPlayerName}>
                     {player.user?.username || "Unknown"}

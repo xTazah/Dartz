@@ -124,8 +124,14 @@ export default function FriendList() {
     >
       <div className={styles.userProfile}>
         <div className="flex flex-row items-center gap-3">
-          <div className={`${styles.circle}`}>
-            <UserIcon className="size-5 " />
+        <div className={`${styles.circle}`}>
+        {user?.profilePicture ? (
+          <img src={user.profilePicture} alt={user.username} className={`${styles.friendListImage}`} />
+          ) : (
+
+              <UserIcon className="size-5 " />
+            
+          )}
           </div>
           <Popover>
             <PopoverTrigger asChild>

@@ -37,7 +37,7 @@ export default function Friend({ friendlistUser }: FriendProps) {
   return (
     <div className="flex items-center justify-between mb-5 text-sm">
       <div className="flex items-center gap-1">
-        <UserComponent username={friendlistUser.user!.username} />
+        <UserComponent username={friendlistUser.user!.username} ProfilePicture={friendlistUser.user!.profilePicture} />
         <Tooltip
           className="text-black"
           showArrow

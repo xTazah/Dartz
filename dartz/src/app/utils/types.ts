@@ -6,6 +6,9 @@ import { ReactNode } from "react";
 export type User = {
   id: number;
   username: string;
+  profilePicture: string;
+  bio: string;
+  memberSince: Date; // ISO date string
   initial: string;
   dartColor?: string; // Hex color code for dart customization
   allowNoAuth?: boolean; // Allow friends to add as local player without password

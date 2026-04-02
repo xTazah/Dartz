@@ -105,7 +105,32 @@ namespace Dartz_API.Controllers
 
             var dartColor = _playerService.GetDartColor(user.ID);
             var settings = _playerService.GetPlayerSettings(user.ID);
-            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, DartColor = dartColor, AllowNoAuth = settings?.AllowNoAuth ?? false });
+            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, DartColor = dartColor, AllowNoAuth = settings?.AllowNoAuth ?? false, ProfilePicture=user.ProfilePicture, Bio=user.Bio, MemberSince=user.MemberSince });
+        }
+
+        [HttpPost("editProfile")]
+        public ActionResult<int> EditProfile([FromBody] PlayerDTO p)
+        {
+            if(!p.ID.HasValue)
+                return BadRequest("User does not exist");
+            var tmp = _playerService.GetPlayerById(p.ID.Value);
+            if (tmp == null)
+            {
+                return BadRequest("User does not exist");
+            }
+
+            var player = new Player()
+            {
+                ID = tmp.ID,
+                Username = p.Username,
+                //PasswordHash = string.IsNullOrEmpty(p.Password) ? null : p.Password,
+                ProfilePicture = p.ProfilePicture,
+                Bio = p.Bio
+            };
+
+            _playerService.UpdatePlayer(player);
+
+            return Ok();
         }
 
         [HttpPost("login/sessionId")]
@@ -133,7 +158,7 @@ namespace Dartz_API.Controllers
 
             var dartColor = _playerService.GetDartColor(user.ID);
             var settings = _playerService.GetPlayerSettings(user.ID);
-            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, DartColor = dartColor, AllowNoAuth = settings?.AllowNoAuth ?? false });
+            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, ProfilePicture=user.ProfilePicture, Bio=user.Bio, MemberSince=user.MemberSince, DartColor = dartColor, AllowNoAuth = settings?.AllowNoAuth ?? false });
         }
 
         [HttpPost("logout")]

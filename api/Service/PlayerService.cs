@@ -19,6 +19,16 @@ namespace Dartz.Service
             _passwordService = passwordService;
         }
 
+        public void UpdatePlayer(Player player)
+        {
+            // If password is provided (in PasswordHash field for DTO), hash it before updating
+            //if (!string.IsNullOrEmpty(player.PasswordHash))
+            //{
+            //    player.PasswordHash = _passwordService.Hash(player.PasswordHash);
+            //}
+            _playerRepository.UpdatePlayer(player);
+        }
+
         public int AddPlayer(Player player, string? dartColor = null)
         {
             player.PasswordHash = _passwordService.Hash(player.PasswordHash);

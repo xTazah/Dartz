@@ -7,6 +7,7 @@ namespace Dartz.Business.Interfaces
     public interface IPlayerRepository
     {
         int AddPlayer(Player player);
+        void UpdatePlayer(Player player);
         Player GetPlayerByUsername(string username);
         Player GetPlayerById(int id);
         Player GetPlayerWithFriends(int id);

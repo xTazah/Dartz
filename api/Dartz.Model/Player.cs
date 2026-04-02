@@ -13,6 +13,9 @@ namespace Dartz.Model
         public int ID { get; set; }
         public string Username { get; set; }
         public string PasswordHash { get; set; }
+        public string? ProfilePicture { get; set; }
+        public string? Bio { get; set; }
+        public DateOnly? MemberSince { get; set; }
         public virtual ICollection<GameSession> GameSessions { get; set; }
         public virtual ICollection<Player> Friends {get; set;}
 
