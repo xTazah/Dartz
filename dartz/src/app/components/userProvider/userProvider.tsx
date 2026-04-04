@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { User } from "@/app/utils/types";
 import PlayerService from "@/app/services/backend/playerService";
 import { LoadingSpinner } from "../loadingSpinner/loadingSpinner";
-import { handleUserLogin } from "@/app/services/firebase/userService";
+import { registerUser } from "@/app/services/gameServer/signalRClient";
 
 export const UserContext = React.createContext<{
   user: User | null;
@@ -42,7 +42,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    if (user) handleUserLogin(user);
+    if (user) registerUser(user.id, user.username);
   }, [user]);
 
   if (loading) {

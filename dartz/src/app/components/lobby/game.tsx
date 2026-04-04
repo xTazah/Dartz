@@ -2,13 +2,13 @@
 
 import {
   ConnectedPlayer,
-  CurrentTurnDarts,
   Lobby,
   Multiplier,
   Throw,
   User,
 } from "@/app/utils/types";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
+import { listenToDartPositions } from "@/app/services/gameServer/lobbyService";
 import React, { useContext, useEffect, useState, lazy, Suspense, useCallback, useMemo, useRef } from "react";
 import { Button } from "@nextui-org/react";
 import getCheckoutPath from "@/app/handlers/checkoutHandler";
@@ -159,39 +159,31 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
       multiplier: t.multiplier,
     }));
     
-    LobbyHandler.syncCurrentTurnDarts(lobby, playerId, dartData);
+    LobbyHandler.syncCurrentTurnDarts(lobby.id, playerId, dartData);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dartboardThrows, isCurrentUsersTurn, currentPlayer.user?.id, lobby.id]);
 
-  // For non-active players: read synced darts from lobby.customData
+  // For non-active players: listen for dart positions via SignalR
   useEffect(() => {
-    if (isCurrentUsersTurn) return; // Active player uses local state
-    
-    const syncedDarts = lobby.customData?.currentTurnDarts as CurrentTurnDarts | null;
-    if (!syncedDarts || !syncedDarts.darts || syncedDarts.darts.length === 0) {
-      // Clear darts when there's no synced data (turn was confirmed)
-      setActiveDarts([]);
-      setSpectatorThrows([]);
-      return;
-    }
-    
-    // Convert synced positions to DartInstance objects
-    const darts: DartInstance[] = syncedDarts.darts.map((pos, index) => ({
-      id: `synced-dart-${index}`,
-      position: { x: pos.x, y: pos.y, z: pos.z },
-    }));
-    setActiveDarts(darts);
-    
-    // Also update spectator throws for display
-    const throws: DartThrow[] = syncedDarts.darts.map(d => ({
-      score: d.score ?? 0,
-      multiplier: d.multiplier ?? Multiplier.Single,
-      coordinates: { x: d.x, y: d.y, z: d.z },
-    }));
-    setSpectatorThrows(throws);
-  }, [lobby.customData?.currentTurnDarts, isCurrentUsersTurn]);
+    const unsub = listenToDartPositions((_playerId: number, darts: any[]) => {
+      const dartInstances: DartInstance[] = darts.map((d: any, i: number) => ({
+        id: `spectator-${i}`,
+        position: { x: d.x, y: d.y, z: d.z } as DartCoordinates,
+      }));
+      setActiveDarts(dartInstances);
 
-  const handleSubmitScore = () => {
+      // Also update spectator throws for display
+      const throws: DartThrow[] = darts.map((d: any) => ({
+        score: d.score ?? 0,
+        multiplier: d.multiplier ?? Multiplier.Single,
+        coordinates: { x: d.x, y: d.y, z: d.z },
+      }));
+      setSpectatorThrows(throws);
+    });
+    return unsub;
+  }, []);
+
+  const handleSubmitScore = async () => {
     if (playerScore1 === "" || playerScore2 === "" || playerScore3 === "")
       return;
     else if (
@@ -202,7 +194,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
       return;
     else if (Number(playerScore1) < 0 || Number(playerScore2) < 0 || Number(playerScore3) < 0) return;
 
-    let score: Throw = {
+    const score: Throw = {
       score1: Number(playerScore1),
       multiplier1: multiplier1,
       score2: Number(playerScore2),
@@ -211,22 +203,8 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
       multiplier3: multiplier3,
     };
 
-    // Clear the darts from customData BEFORE calling handlePlayerScore
-    const lobbyWithClearedDarts = {
-      ...lobby,
-      customData: {
-        ...lobby.customData,
-        currentTurnDarts: null,
-      },
-    };
+    await LobbyHandler.handlePlayerScore(lobby.id, currentPlayer.user!.id, score);
 
-    const updatedLobby = LobbyHandler.handlePlayerScore(
-      lobbyWithClearedDarts,
-      currentPlayer,
-      score
-    );
-    setLobby(updatedLobby);
-    
     // Reset all states
     setPlayerScore1("");
     setPlayerScore2("");
@@ -236,7 +214,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     setMultiplier3(Multiplier.Single);
     setActiveDarts([]);
     setSpectatorThrows([]);
-    
+
     // Clear the position cache so new random positions are generated next turn
     manualDartPositions.current = {};
   };
@@ -301,7 +279,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
   }, []);
 
   // Confirm dartboard throws
-  const handleDartboardConfirm = useCallback(() => {
+  const handleDartboardConfirm = useCallback(async () => {
     if (dartboardThrows.length === 0) return;
 
     // Pad with zeros if less than 3 throws
@@ -319,27 +297,12 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
       multiplier3: throws[2].multiplier,
     };
 
-    // Clear the darts from customData BEFORE calling handlePlayerScore
-    // to avoid the race condition where handlePlayerScore overwrites the clear
-    const lobbyWithClearedDarts = {
-      ...lobby,
-      customData: {
-        ...lobby.customData,
-        currentTurnDarts: null,
-      },
-    };
-    
-    const updatedLobby = LobbyHandler.handlePlayerScore(
-      lobbyWithClearedDarts,
-      currentPlayer,
-      score
-    );
-    setLobby(updatedLobby);
+    await LobbyHandler.handlePlayerScore(lobby.id, currentPlayer.user!.id, score);
     setDartboardThrows([]);
     setActiveDarts([]); // Clear darts on confirm
     setSpectatorThrows([]); // Clear spectator throws too
     manualDartPositions.current = {}; // Clear cache so new random positions next turn
-  }, [dartboardThrows, lobby, currentPlayer, setLobby]);
+  }, [dartboardThrows, lobby.id, currentPlayer.user]);
 
   useEffect(() => {
     let s1 = playerScore1 == "" ? 0 : playerScore1;
@@ -439,10 +402,10 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     
     setActiveDarts(newDarts);
     
-    // Sync to Firebase for spectators to see
+    // Sync to server for spectators to see
     const playerId = currentPlayer.user?.id;
     if (playerId && dartData.length > 0) {
-      LobbyHandler.syncCurrentTurnDarts(lobby, playerId, dartData);
+      LobbyHandler.syncCurrentTurnDarts(lobby.id, playerId, dartData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -458,39 +421,17 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     lobby.id,
   ]);
 
-  const handleUndo = () => {
-    let updatedLobby = LobbyHandler.handleUndo(lobby);
-    console.log(updatedLobby.players)
-    console.log(updatedLobby.players[updatedLobby.currentPlayerIndex])
-    console.log(updatedLobby.currentPlayerIndex)
-    let length =
-      updatedLobby.players[updatedLobby.currentPlayerIndex].throws.length - 1;
-    setPlayerScore1(
-      ""+updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
-        .score1
-    );
-    setPlayerScore2(
-      ""+updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
-        .score2
-    );
-    setPlayerScore3(
-      ""+updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
-        .score3
-    );
-    setMultiplier1(
-      updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
-        .multiplier1
-    );
-    setMultiplier2(
-      updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
-        .multiplier2
-    );
-    setMultiplier3(
-      updatedLobby.players[updatedLobby.currentPlayerIndex].throws[length]
-        .multiplier3
-    );
-    updatedLobby = LobbyHandler.hanldeRemoveLastThrows(updatedLobby);
-    setLobby(updatedLobby);
+  const handleUndo = async () => {
+    await LobbyHandler.handleUndo(lobby.id, user!.id);
+    // Reset local input state - the lobby update will come via SignalR
+    setPlayerScore1("");
+    setPlayerScore2("");
+    setPlayerScore3("");
+    setMultiplier1(Multiplier.Single);
+    setMultiplier2(Multiplier.Single);
+    setMultiplier3(Multiplier.Single);
+    setDartboardThrows([]);
+    setActiveDarts([]);
   };
 
   const isCurrentOrLocalUser = (

@@ -30,12 +30,15 @@ import {
   User,
 } from "@/app/utils/types";
 import {
-  clearOpen,
-  getOnlineStatus,
-  sendFriendRequest,
-  setupOnlineStatusListener,
-  setupUserCallbacks,
-} from "@/app/services/firebase/userService";
+  onLobbyInviteReceived,
+  onFriendRequestReceived,
+  onPendingInvites,
+  onPendingFriendRequests,
+  clearLobbyInvite,
+  clearFriendRequest,
+  sendFriendRequest as sendFriendRequestSignalR,
+  inviteUserToLobby as inviteUserToLobbySignalR,
+} from "@/app/services/gameServer/userService";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,17 +87,28 @@ export default function FriendList() {
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = setupUserCallbacks(
-      user.id,
-      setLobbyInvites,
-      setFriendRequests
-    );
+    const unsubInvites = onLobbyInviteReceived((invite: any) => {
+      setLobbyInvites((prev: any) => ({ ...prev, [invite.key]: invite }));
+    });
+    const unsubRequests = onFriendRequestReceived((request: any) => {
+      setFriendRequests((prev: any) => ({ ...prev, [request.key]: request }));
+    });
+    const unsubPending = onPendingInvites((invites: any[]) => {
+      const mapped: Record<string, any> = {};
+      invites.forEach((i: any) => { mapped[i.key] = i; });
+      setLobbyInvites(mapped);
+    });
+    const unsubPendingFR = onPendingFriendRequests((requests: any[]) => {
+      const mapped: Record<string, any> = {};
+      requests.forEach((r: any) => { mapped[r.key] = r; });
+      setFriendRequests(mapped);
+    });
 
-    return () => unsubscribe();
+    return () => { unsubInvites(); unsubRequests(); unsubPending(); unsubPendingFR(); };
   }, [user]);
 
   const handleAcceptFriend = (key: string, userId2: number) => {
-    clearOpen("FriendRequests", key, user);
+    clearFriendRequest(user!.id, key);
     const friendService = new FriendsService();
     friendService
       .addFriend(user!.id, userId2)
@@ -103,16 +117,16 @@ export default function FriendList() {
   };
 
   const handleDeclineFriend = (key: string) => {
-    clearOpen("FriendRequests", key, user);
+    clearFriendRequest(user!.id, key);
   };
 
   const handleAcceptInvite = (key: string, lobbyId: string) => {
-    clearOpen("LobbyInvites", key, user);
+    clearLobbyInvite(user!.id, key);
     router.push(`/lobby?id=${lobbyId}`);
   };
 
   const handleDeclineInvite = (key: string) => {
-    clearOpen("LobbyInvites", key, user);
+    clearLobbyInvite(user!.id, key);
   };
 
   const numNotifications =
@@ -288,19 +302,21 @@ export default function FriendList() {
                       onChange={(e) => {
                         setFriendUsername(e.target.value);
                       }}
-                      onKeyDown={(e) => {
+                      onKeyDown={async (e) => {
                         if (e.key === "Enter") {
-                          sendFriendRequest(user, friendUsername)
-                            .then((success) => {
-                              if (success) setFriendUsername("");
-                            })
-                            .catch((error) => {
-                              if (error.status)
-                                toast(
-                                  "You are already friends with " +
-                                    friendUsername
-                                );
-                            });
+                          try {
+                            const service = new PlayerService();
+                            const response = await service.getByUsername<{ id: number }>(friendUsername);
+                            const receiver = response.data;
+                            await sendFriendRequestSignalR(receiver.id, user!.id, user!.username);
+                            setFriendUsername("");
+                          } catch (error: any) {
+                            if (error.status)
+                              toast(
+                                "You are already friends with " +
+                                  friendUsername
+                              );
+                          }
                         }
                       }}
                       placeholder="Username"

@@ -1,242 +1,140 @@
 "use client";
-import {
-  syncLobby,
-  loadLobby,
-  listenToLobby,
-  setUserConnected,
-  getLobbySnapshot,
-} from "../services/firebase/lobbyService";
-import { LobbyNotFoundError, MissingLobbyDataError } from "../utils/errors";
-import {
-  GameMode,
-  Lobby,
-  GameStatus,
-  User,
-  Player,
-  Throw,
-  ConnectedPlayer,
-} from "../utils/types";
+import * as gameServerLobby from "../services/gameServer/lobbyService";
+import { GameMode, Lobby, GameStatus, User, Player, Throw } from "../utils/types";
 import IdGenerator from "../utils/idGenerator";
 import { GAME_MODES } from "../utils/constants";
 import { toast } from "sonner";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/solid";
 
+// Maps a ServerLobby (from the game server) to a frontend Lobby with Icon/logic
+export function mapServerLobbyToLobby(serverLobby: any): Lobby {
+  const gameMode = GAME_MODES.find((gm) => gm.key === serverLobby.gameModeKey);
+  return {
+    id: serverLobby.id,
+    players: (serverLobby.players ?? []).map((p: any) => ({
+      user: {
+        id: p.userId,
+        username: p.username,
+        initial: p.initial,
+        profilePicture: p.profilePicture,
+        dartColor: p.dartColor,
+        bio: "",
+        memberSince: new Date(),
+      },
+      connected: p.connected,
+      score: p.score,
+      throws: (p.throws ?? []).map((t: any) => ({
+        score1: t.score1, multiplier1: t.multiplier1,
+        score2: t.score2, multiplier2: t.multiplier2,
+        score3: t.score3, multiplier3: t.multiplier3,
+      })),
+      legs: p.legs,
+      sets: p.sets,
+    })),
+    spectators: (serverLobby.spectators ?? []).map((s: any) => ({
+      user: {
+        id: s.userId,
+        username: s.username,
+        initial: s.initial,
+        profilePicture: s.profilePicture,
+        bio: "",
+        memberSince: new Date(),
+      },
+      connected: s.connected,
+    })),
+    owner: {
+      id: serverLobby.ownerUserId,
+      username: serverLobby.ownerUsername,
+      initial: "",
+      profilePicture: "",
+      bio: "",
+      memberSince: new Date(),
+    },
+    gameStatus: serverLobby.gameStatus as GameStatus,
+    currentPlayerIndex: serverLobby.currentPlayerIndex,
+    gameMode: gameMode ?? GAME_MODES[1], // fallback to 501
+    legs: serverLobby.targetLegs,
+    sets: serverLobby.targetSets,
+    customData: serverLobby.currentTurnDarts
+      ? { currentTurnDarts: serverLobby.currentTurnDarts }
+      : undefined,
+  };
+}
+
 class LobbyHandler {
-  static createLobby(user: User, gameMode: GameMode): Lobby {
-    const newLobby: Lobby = {
-      id: IdGenerator.generateId(),
-      currentPlayerIndex: 0,
-      gameMode,
-      gameStatus: GameStatus.Waiting,
-      players: [],
-      spectators: [],
-      owner: user,
-      legs: 0,
-      sets: 0,
-    };
-
-    syncLobby(newLobby.id, newLobby);
-    return newLobby;
+  static async getLobbyExists(lobbyId: string): Promise<boolean> {
+    return gameServerLobby.checkLobbyExists(lobbyId);
   }
 
-  static async getLobbyExists(id: string): Promise<boolean> {
-    const lobby = await getLobbySnapshot(id);
-    if (!lobby) return false;
-    return true;
-  }
-
-  static async loadLobby(id: string): Promise<Lobby> {
-    const lobby = await loadLobby(id);
-    if (!lobby) throw new LobbyNotFoundError(id);
-    return lobby;
-  }
-
-  static listenToLobby(
-    id: string,
-    callback: (updatedLobby: Lobby) => void
-  ): () => void {
-    return listenToLobby(id, callback);
-  }
-
-  static addPlayer(lobby: Lobby, user: User): Lobby {
-    let updatedLobby;
-    var isSpectator = false;
-
-    // check if player already exists (/was disconnected)
-    const existingPlayer = lobby.players?.find(
-      (player) => player.user?.id === user?.id
+  static async createLobby(user: User, gameMode: GameMode): Promise<string> {
+    const lobbyId = IdGenerator.generateId();
+    await gameServerLobby.createLobby(
+      lobbyId, user!.id, user!.username, gameMode.key
     );
-    const existingSpectator = lobby.spectators?.find(
-      (spectator) => spectator?.user?.id === user?.id
+    return lobbyId;
+  }
+
+  static async joinLobby(
+    lobbyId: string,
+    user: User
+  ): Promise<Lobby | null> {
+    const serverLobby = await gameServerLobby.joinLobby(
+      lobbyId,
+      user!.id,
+      user!.username,
+      user!.initial,
+      user!.profilePicture,
+      user!.dartColor ?? "#e42b2bff"
     );
-
-    // If player was disconnected, reconnect them
-    if (existingPlayer) {
-      updatedLobby = {
-        ...lobby,
-        players: lobby.players.map((player) =>
-          player.user?.id === user?.id
-            ? { ...player, connected: true } // update connected status to true for the player
-            : player
-        ),
-      };
-      toast("Reconnected as Player", {
-        duration: 3000,
-        icon: <ArrowPathRoundedSquareIcon />,
-      });
-    }
-    // If spectator, reconnect as a spectator
-    else if (existingSpectator) {
-      updatedLobby = {
-        ...lobby,
-        spectators: lobby.spectators.map((spectator) =>
-          spectator.user?.id === user?.id
-            ? { ...spectator, connected: true } // update connected status for the spectator
-            : spectator
-        ),
-      };
-      toast("Reconnected as Spectator", {
-        duration: 3000,
-        icon: <ArrowPathRoundedSquareIcon />,
-      });
-      isSpectator = true;
-    }
-    // If game is running, join as a spectator
-    else if (
-      lobby.gameStatus == GameStatus.Running ||
-      lobby.gameStatus == GameStatus.Finished
-    ) {
-      if (
-        !lobby.spectators?.find((spectator) => spectator?.user?.id === user?.id)
-      ) {
-        updatedLobby = {
-          ...lobby,
-          spectators: [...lobby.spectators, { user } as ConnectedPlayer],
-        };
-        toast.info("Game is already running. You are now spectating.");
-        isSpectator = true;
-      }
-    }
-    // If game is not running, join as a player
-    else {
-      updatedLobby = {
-        ...lobby,
-        players: [
-          ...lobby.players,
-          { user, score: 0, throws: [], legs: 0, sets: 0, connected: true },
-        ],
-      };
-    }
-
-    // Sync and return updated lobby if something changed
-    if (updatedLobby) {
-      let index;
-      if (isSpectator) index = updatedLobby.spectators.length - 1;
-      else index = updatedLobby.players.length - 1;
-
-      syncLobby(updatedLobby.id, updatedLobby);
-      setUserConnected(updatedLobby.id, index, isSpectator);
-      return updatedLobby;
-    }
-
-    // Return original lobby if no updates
-    return lobby;
+    if (!serverLobby) return null;
+    return mapServerLobbyToLobby(serverLobby);
   }
 
-  static startGame(lobby: Lobby): Lobby {
-    const gameModeLogic = GAME_MODES.find(
-      (gm) => gm.key === lobby.gameMode.key
-    )?.logic;
-    if (!gameModeLogic) throw new Error("Game mode logic not found!");
-
-    let updatedLobby = gameModeLogic.initialize(lobby);
-
-    return this.changeGameStatus(updatedLobby, GameStatus.Running);
+  static async leaveLobby(lobbyId: string, userId: number): Promise<void> {
+    await gameServerLobby.leaveLobby(lobbyId, userId);
   }
 
-  static handlePlayerScore(lobby: Lobby, player: Player, score: Throw): Lobby {
-    const gameModeLogic = GAME_MODES.find(
-      (gm) => gm.key === lobby.gameMode.key
-    )?.logic;
-    if (!gameModeLogic) throw new Error("Game mode logic not found!");
-
-    const updatedLobby = gameModeLogic.processTurn(lobby, player, score);
-
-    syncLobby(updatedLobby.id, updatedLobby);
-
-    return updatedLobby;
+  static async startGame(lobbyId: string): Promise<void> {
+    await gameServerLobby.startGame(lobbyId);
   }
 
-  static handleUndo(lobby: Lobby): Lobby {
-    const gameModeLogic = GAME_MODES.find(
-      (gm) => gm.key === lobby.gameMode.key
-    )?.logic;
-    if (!gameModeLogic) throw new Error("Game mode logic not found!");
-
-    const updatedLobby = gameModeLogic.undoTurn(lobby);
-
-    return updatedLobby;
+  static async handlePlayerScore(
+    lobbyId: string,
+    userId: number,
+    score: Throw
+  ): Promise<void> {
+    await gameServerLobby.submitThrow(lobbyId, userId, {
+      score1: score.score1, multiplier1: score.multiplier1,
+      score2: score.score2, multiplier2: score.multiplier2,
+      score3: score.score3, multiplier3: score.multiplier3,
+    });
   }
 
-  static hanldeRemoveLastThrows(lobby: Lobby): Lobby {
-    const gameModeLogic = GAME_MODES.find(
-      (gm) => gm.key === lobby.gameMode.key
-    )?.logic;
-    if (!gameModeLogic) throw new Error("Game mode logic not found!");
-
-    const updatedLobby = gameModeLogic.removeLastThrows(lobby);
-
-    syncLobby(updatedLobby.id, updatedLobby);
-
-    return updatedLobby;
+  static async handleUndo(lobbyId: string, userId: number): Promise<void> {
+    await gameServerLobby.undoTurn(lobbyId, userId);
   }
 
-  static changeGameMode(lobby: Lobby, gameMode: GameMode): Lobby {
-    const updatedLobby = { ...lobby, gameMode };
-    syncLobby(updatedLobby.id, updatedLobby);
-    return updatedLobby;
+  static async changeGameMode(
+    lobbyId: string,
+    gameModeKey: string
+  ): Promise<void> {
+    await gameServerLobby.changeGameMode(lobbyId, gameModeKey);
   }
 
-  static changeSetsAndLegs(lobby: Lobby, sets: number, legs: number): Lobby {
-    const updatedLobby = { ...lobby, sets, legs };
-    syncLobby(updatedLobby.id, updatedLobby);
-    return updatedLobby;
+  static async changeSetsAndLegs(
+    lobbyId: string,
+    sets: number,
+    legs: number
+  ): Promise<void> {
+    await gameServerLobby.changeSetsAndLegs(lobbyId, sets, legs);
   }
 
-  static changeGameStatus(lobby: Lobby, gameStatus: GameStatus): Lobby {
-    const updatedLobby = { ...lobby, gameStatus };
-    syncLobby(updatedLobby.id, updatedLobby);
-    return updatedLobby;
-  }
-
-  // Sync current turn darts to Firebase for real-time display to other players
-  static syncCurrentTurnDarts(
-    lobby: Lobby,
+  static async syncCurrentTurnDarts(
+    lobbyId: string,
     playerId: number,
     darts: Array<{ x: number; y: number; z: number; score?: number; multiplier?: number }>
-  ): Lobby {
-    const updatedLobby = {
-      ...lobby,
-      customData: {
-        ...lobby.customData,
-        currentTurnDarts: { playerId, darts },
-      },
-    };
-    syncLobby(updatedLobby.id, updatedLobby);
-    return updatedLobby;
-  }
-
-  // Clear current turn darts from Firebase (called when turn is submitted)
-  static clearCurrentTurnDarts(lobby: Lobby): Lobby {
-    const updatedLobby = {
-      ...lobby,
-      customData: {
-        ...lobby.customData,
-        currentTurnDarts: null,
-      },
-    };
-    syncLobby(updatedLobby.id, updatedLobby);
-    return updatedLobby;
+  ): Promise<void> {
+    await gameServerLobby.syncDartPositions(lobbyId, playerId, darts);
   }
 }
 

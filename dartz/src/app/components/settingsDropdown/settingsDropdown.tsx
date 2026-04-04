@@ -16,7 +16,7 @@ import iconStyles from "../../styles/icon.module.scss";
 import PlayerService from "@/app/services/backend/playerService";
 import { useContext, useState } from "react";
 import { UserContext } from "../userProvider/userProvider";
-import { setOnlineStatus } from "@/app/services/firebase/userService";
+import { disconnectSignalR } from "@/app/services/gameServer/signalRClient";
 import { useRouter } from "next/navigation";
 
 export function SettingsDropdown() {
@@ -33,7 +33,7 @@ export function SettingsDropdown() {
   const handleLogout = () => {
     setOpen(false);
     playerService.logout().then(() => {
-      setOnlineStatus(context!.user!.id, false);
+      disconnectSignalR();
       context?.setUser(null);
     });
   };
