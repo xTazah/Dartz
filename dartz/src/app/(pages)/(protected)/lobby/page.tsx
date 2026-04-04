@@ -21,6 +21,7 @@ export default function LobbyPage() {
     (mode: GameMode) => mode.key === String(paramMode ? paramMode : "")
   );
 
+  const router = useRouter();
   const { user, setInLobby } = React.useContext(UserContext)!;
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const lobbyRef = useRef<Lobby | null>(null);
@@ -48,42 +49,59 @@ export default function LobbyPage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     const init = async () => {
-      if (!id && gameMode) {
-        // Create new lobby
-        const newLobbyId = await LobbyHandler.createLobby(user, gameMode);
+      try {
+        if (!id && gameMode) {
+          // Create new lobby
+          const newLobbyId = await LobbyHandler.createLobby(user, gameMode);
+          if (cancelled) return;
 
-        // Start listening before joining
-        unsubscribeRef.current = gameServerLobby.listenToLobby(handleLobbyUpdate);
+          unsubscribeRef.current = gameServerLobby.listenToLobby(handleLobbyUpdate);
 
-        const joinedLobby = await LobbyHandler.joinLobby(newLobbyId, user);
-        if (joinedLobby) setLobby(joinedLobby);
+          const joinedLobby = await LobbyHandler.joinLobby(newLobbyId, user);
+          if (cancelled) return;
+          if (joinedLobby) setLobby(joinedLobby);
 
-        history.replaceState(null, "", `/lobby?id=${newLobbyId}`);
-        setInLobby(true);
-      } else if (id) {
-        // Join existing lobby
-        unsubscribeRef.current = gameServerLobby.listenToLobby(handleLobbyUpdate);
-
-        const joinedLobby = await LobbyHandler.joinLobby(id, user);
-        if (joinedLobby) {
-          setLobby(joinedLobby);
+          history.replaceState(null, "", `/lobby?id=${newLobbyId}`);
           setInLobby(true);
+        } else if (id) {
+          // Join or reconnect to existing lobby
+          unsubscribeRef.current = gameServerLobby.listenToLobby(handleLobbyUpdate);
+
+          const joinedLobby = await LobbyHandler.joinLobby(id, user);
+          if (cancelled) return;
+
+          if (joinedLobby) {
+            setLobby(joinedLobby);
+            setInLobby(true);
+          } else {
+            // Lobby doesn't exist
+            toast.error("Lobby not found or no longer exists.");
+            router.push("/");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to join lobby:", err);
+        if (!cancelled) {
+          toast.error("Failed to connect to lobby.");
+          router.push("/");
         }
       }
     };
     init();
+
+    return () => { cancelled = true; };
   }, [id, paramMode, gameMode, user, setInLobby, handleLobbyUpdate]);
 
   useEffect(() => {
     return () => {
       setInLobby(false);
-      const currentLobby = lobbyRef.current;
-      const currentUser = userRef.current;
-
-      if (currentLobby && currentUser) {
-        LobbyHandler.leaveLobby(currentLobby.id, currentUser.id);
-      }
+      // Don't call LeaveLobby on unmount - the SignalR disconnect handler
+      // will automatically mark the player as disconnected, allowing reconnection.
+      // LeaveLobby (which removes the player) should only be called from
+      // explicit "Leave" buttons in WaitingLobby/WinnerScreen.
       unsubscribeRef.current?.();
     };
   }, [setInLobby]);

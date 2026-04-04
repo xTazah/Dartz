@@ -43,13 +43,18 @@ public class GameHub : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var userId = _presence.GetUserIdByConnection(Context.ConnectionId);
+
+        // Find the lobby BEFORE clearing the connection
+        var (lobbyId, _) = _lobbies.FindLobbyByConnection(Context.ConnectionId);
+
         if (userId.HasValue)
         {
             bool wentOffline = _presence.UserDisconnected(userId.Value, Context.ConnectionId);
 
+            // Mark as disconnected (does NOT remove from lobby)
             _lobbies.DisconnectPlayer(Context.ConnectionId);
 
-            var (lobbyId, _) = _lobbies.FindLobbyByConnection(Context.ConnectionId);
+            // Notify remaining lobby members
             if (lobbyId != null)
             {
                 var lobby = _lobbies.GetLobby(lobbyId);
@@ -155,6 +160,12 @@ public class GameHub : Hub
         var lobby = _lobbies.GetLobby(lobbyId);
         if (lobby == null) return;
         if (lobby.GameStatus != GameStatus.Waiting) return;
+
+        // Apply default: if no match format configured, play single legs (first to 1)
+        if (lobby.TargetSets == 0 && lobby.TargetLegs == 0)
+        {
+            lobby.TargetLegs = 1;
+        }
 
         GameModeLogic.Initialize501(lobby);
         await Clients.Group($"lobby_{lobbyId}").SendAsync("LobbyUpdated", lobby);

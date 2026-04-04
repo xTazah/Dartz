@@ -89,20 +89,16 @@ public class LobbyManager
     {
         foreach (var lobby in _lobbies.Values)
         {
-            var player = lobby.Players.FirstOrDefault(p => p.ConnectionId == connectionId);
-            if (player != null)
+            // Mark ALL players and spectators sharing this connectionId
+            foreach (var player in lobby.Players.Where(p => p.ConnectionId == connectionId))
             {
                 player.Connected = false;
                 player.ConnectionId = null;
-                return;
             }
-
-            var spectator = lobby.Spectators.FirstOrDefault(s => s.ConnectionId == connectionId);
-            if (spectator != null)
+            foreach (var spectator in lobby.Spectators.Where(s => s.ConnectionId == connectionId))
             {
                 spectator.Connected = false;
                 spectator.ConnectionId = null;
-                return;
             }
         }
     }
