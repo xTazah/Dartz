@@ -70,10 +70,13 @@ const WaitingLobby = ({
   };
 
   const startGame = async () => {
+    if (isSetsSelected) {
+      await LobbyHandler.changeSetsAndLegs(lobby.id, sets, legs);
+    } else if (isLegsSelected) {
+      await LobbyHandler.changeSetsAndLegs(lobby.id, 0, legs);
+    }
+    // Always call startGame after config is set
     await LobbyHandler.startGame(lobby.id);
-
-    if (isSetsSelected || isLegsSelected)
-      await changeSetsAndLegs();
   };
 
   const leave = () => {

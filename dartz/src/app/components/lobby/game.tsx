@@ -95,26 +95,28 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
   // Cache random positions for manual input to prevent constant regeneration
   const manualDartPositions = useRef<{[key: string]: DartCoordinates}>({});
 
-  const currentPlayer = lobby.players[lobby.currentPlayerIndex];
+  const currentPlayer = lobby.players?.[lobby.currentPlayerIndex];
 
   // Check if current user is the current player or a local user
   const isCurrentUsersTurn = useMemo(() => {
+    if (!currentPlayer) return false;
     const playerUserId = currentPlayer.user?.id;
     if (!playerUserId) return false;
     return (
       user?.id === playerUserId ||
       localUsers?.some((localUser) => localUser?.id === playerUserId)
     );
-  }, [currentPlayer.user?.id, user?.id, localUsers]);
+  }, [currentPlayer?.user?.id, user?.id, localUsers]);
 
   // Update dartboard preview score
   useEffect(() => {
+    if (!currentPlayer) return;
     const totalThrowScore = dartboardThrows.reduce(
       (sum, t) => sum + t.score * t.multiplier,
       0
     );
     setDartboardPreviewScore(currentPlayer.score - totalThrowScore);
-  }, [dartboardThrows, currentPlayer.score]);
+  }, [dartboardThrows, currentPlayer?.score]);
 
   // Sync dartboard throws to manual input fields ONLY when in dartboard mode
   // This prevents focus loss when typing in manual mode
@@ -141,7 +143,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     setActiveDarts([]);
     setSpectatorThrows([]);
     manualDartPositions.current = {}; // Clear cache so random positions are fresh each turn
-  }, [currentPlayer.user?.id]);
+  }, [currentPlayer?.user?.id]);
 
   // Sync dart positions to Firebase when active player throws (for real-time display to others)
   useEffect(() => {
@@ -161,7 +163,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     
     LobbyHandler.syncCurrentTurnDarts(lobby.id, playerId, dartData);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dartboardThrows, isCurrentUsersTurn, currentPlayer.user?.id, lobby.id]);
+  }, [dartboardThrows, isCurrentUsersTurn, currentPlayer?.user?.id, lobby.id]);
 
   // For non-active players: listen for dart positions via SignalR
   useEffect(() => {
@@ -203,6 +205,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
       multiplier3: multiplier3,
     };
 
+    if (!currentPlayer?.user?.id) return;
     await LobbyHandler.handlePlayerScore(lobby.id, currentPlayer.user!.id, score);
 
     // Reset all states
@@ -297,14 +300,16 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
       multiplier3: throws[2].multiplier,
     };
 
+    if (!currentPlayer?.user?.id) return;
     await LobbyHandler.handlePlayerScore(lobby.id, currentPlayer.user!.id, score);
     setDartboardThrows([]);
     setActiveDarts([]); // Clear darts on confirm
     setSpectatorThrows([]); // Clear spectator throws too
     manualDartPositions.current = {}; // Clear cache so new random positions next turn
-  }, [dartboardThrows, lobby.id, currentPlayer.user]);
+  }, [dartboardThrows, lobby.id, currentPlayer?.user]);
 
   useEffect(() => {
+    if (!currentPlayer) return;
     let s1 = playerScore1 == "" ? 0 : playerScore1;
     let s2 = playerScore2 == "" ? 0 : playerScore2;
     let s3 = playerScore3 == "" ? 0 : playerScore3;
@@ -341,7 +346,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     multiplier1,
     multiplier2,
     multiplier3,
-    currentPlayer.score,
+    currentPlayer?.score,
   ]);
 
   // Separate effect for manual input dart generation AND Firebase sync
@@ -417,7 +422,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     multiplier3,
     inputMode,
     isCurrentUsersTurn,
-    currentPlayer.user?.id,
+    currentPlayer?.user?.id,
     lobby.id,
   ]);
 
@@ -594,6 +599,15 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     );
   };
 
+  // Guard against invalid state (e.g., during reconnection or disconnect)
+  if (!currentPlayer) {
+    return (
+      <div className={dartboardStyles.gameContainer}>
+        <p>Waiting for game state...</p>
+      </div>
+    );
+  }
+
   return (
     <div className={dartboardStyles.gameContainer}>
       {/* Left side: Player cards */}
@@ -601,7 +615,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
         <h3 className={dartboardStyles.panelTitle}>Players</h3>
         <div className={dartboardStyles.playersList}>
           {lobby.players?.map((player) => {
-            const isActive = lobby.players[lobby.currentPlayerIndex].user?.id === player.user?.id;
+            const isActive = currentPlayer?.user?.id === player.user?.id;
             return (
               <PlayerCard key={player.user?.id} player={player} isActive={isActive} />
             );
@@ -609,8 +623,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
         </div>
         
         {/* Undo button */}
-        {currentPlayer?.throws && currentPlayer.throws.length > 0 && 
-         lobby.players.length === 1 && currentPlayer.score !== 501 && (
+        {user?.id === lobby.owner?.id && lobby.players.some(p => p.throws && p.throws.length > 0) && (
           <button onClick={handleUndo} className={dartboardStyles.undoTurnButton}>
             <ArrowUturnLeftIcon className="w-5 h-5" />
             Undo Last Turn

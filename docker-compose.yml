@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "7128:80"
+    env_file:
+      - ./api/dartz-api/.env
+
+  gameserver:
+    build:
+      context: ./api/Dartz.GameServer
+      dockerfile: Dockerfile
+    ports:
+      - "5063:5063"

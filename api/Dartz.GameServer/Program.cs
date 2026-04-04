@@ -30,6 +30,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<LobbyManager>();
 builder.Services.AddSingleton<PresenceTracker>();
 builder.Services.AddSingleton<InviteManager>();
+builder.Services.AddHostedService<LobbyCleanupService>();
 
 var app = builder.Build();
 
