@@ -24,6 +24,7 @@ import {
 } from "@/app/handlers/statisticsHandler";
 
 import { SignalSlashIcon, ArrowUturnLeftIcon, UserIcon } from "@heroicons/react/24/solid";
+import SkipPlayerPopover from "../modals/SkipPlayerModal";
 import { Squares2X2Icon, CursorArrowRaysIcon } from "@heroicons/react/24/outline";
 
 // Lazy load the dartboard to avoid SSR issues with Three.js
@@ -172,6 +173,7 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     LobbyHandler.syncCurrentTurnDarts(lobby.id, playerId, dartData);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dartboardThrows, isCurrentUsersTurn, currentPlayer?.user?.id, lobby.id]);
+
 
   // Listen for skip vote updates
   useEffect(() => {
@@ -644,6 +646,26 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
         <div className={dartboardStyles.playersList}>
           {lobby.players?.map((player) => {
             const isActive = currentPlayer?.user?.id === player.user?.id;
+            const showSkipPopover = isActive && !player.connected && !isCurrentUsersTurn;
+
+            if (showSkipPopover) {
+              return (
+                <SkipPlayerPopover
+                  key={player.user?.id}
+                  isOpen={true}
+                  onVoteSkip={handleVoteSkip}
+                  playerName={player.user?.username ?? "Unknown"}
+                  hasVoted={hasVotedSkip}
+                  currentVotes={skipVoteCount}
+                  votesNeeded={skipVotesNeeded}
+                >
+                  <div>
+                    <PlayerCard player={player} isActive={isActive} />
+                  </div>
+                </SkipPlayerPopover>
+              );
+            }
+
             return (
               <PlayerCard key={player.user?.id} player={player} isActive={isActive} />
             );
@@ -659,37 +681,6 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
         )}
       </div>
 
-      {/* Skip vote for disconnected player's turn */}
-      {!isCurrentUsersTurn && currentPlayer && !currentPlayer.connected && (
-        <div className={dartboardStyles.inputPanel}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '1rem',
-            padding: '2rem',
-            textAlign: 'center'
-          }}>
-            <SignalSlashIcon className="w-12 h-12 text-red-400" />
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>
-              {currentPlayer.user?.username} is disconnected
-            </h3>
-            <p style={{ opacity: 0.7 }}>
-              Vote to skip their turn
-              {skipVotesNeeded > 0 && ` (${skipVoteCount}/${skipVotesNeeded} votes)`}
-            </p>
-            <Button
-              color="warning"
-              size="lg"
-              onPress={handleVoteSkip}
-              isDisabled={hasVotedSkip}
-            >
-              {hasVotedSkip ? "Vote Cast" : "Skip Turn"}
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Center: Dartboard or input area (only shown for current player) */}
       {isCurrentUsersTurn && (
