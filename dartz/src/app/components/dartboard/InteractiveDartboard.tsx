@@ -319,13 +319,19 @@ const DartboardScene = memo(function DartboardScene({
 
       {/* Miss background - detects clicks outside segments */}
       <mesh
-        position={[0, 0, -0.01]}
+        position={[0, 0, -0.02]}
         onPointerEnter={() => !disabled && setIsHoveringMiss(true)}
         onPointerLeave={() => setIsHoveringMiss(false)}
         onClick={(e) => {
           if (!disabled && onMiss) {
-            e.stopPropagation();
-            onMiss();
+            // Only register as miss if no segment overlay was hit
+            const hitSegment = e.intersections.some(
+              (intersection) => intersection.object !== e.object
+            );
+            if (!hitSegment) {
+              e.stopPropagation();
+              onMiss();
+            }
           }
         }}
       >

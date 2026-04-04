@@ -682,29 +682,21 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
       </div>
 
 
-      {/* Center: Dartboard or input area (only shown for current player) */}
+      {/* Center: Dartboard or input area */}
       {isCurrentUsersTurn && (
         <div className={dartboardStyles.inputPanel}>
           <InputModeToggle />
-          
+
           {inputMode === "dartboard" ? (
             <div className={dartboardStyles.dartboardLayout}>
               <div className={dartboardStyles.dartboardArea}>
-                <Suspense
-                  fallback={
-                    <div className={dartboardStyles.dartboardLoading}>
-                      Loading dartboard...
-                    </div>
-                  }
-                >
-                  <InteractiveDartboard
-                    dartColor={currentPlayer.user?.dartColor}
-                    onSegmentClick={handleDartboardClick}
-                    onMiss={handleDartboardMiss}
-                    disabled={dartboardThrows.length >= 3}
-                    darts={activeDarts}
-                  />
-                </Suspense>
+                <InteractiveDartboard
+                  dartColor={currentPlayer.user?.dartColor}
+                  onSegmentClick={handleDartboardClick}
+                  onMiss={handleDartboardMiss}
+                  disabled={dartboardThrows.length >= 3}
+                  darts={activeDarts}
+                />
               </div>
               <div className={dartboardStyles.throwsPanel}>
                 <DartboardInputPanel
