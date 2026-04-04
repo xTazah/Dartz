@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import LobbyHandler, { mapServerLobbyToLobby } from "@/app/handlers/lobbyHandler";
 import * as gameServerLobby from "@/app/services/gameServer/lobbyService";
+import { disconnectFromLobby } from "@/app/services/gameServer/lobbyService";
 import WaitingLobby from "@/app/components/lobby/waitingLobby";
 import { useSearchParams, useRouter } from "next/navigation";
 import { UserContext } from "@/app/components/userProvider/userProvider";
@@ -98,10 +99,14 @@ export default function LobbyPage() {
   useEffect(() => {
     return () => {
       setInLobby(false);
-      // Don't call LeaveLobby on unmount - the SignalR disconnect handler
-      // will automatically mark the player as disconnected, allowing reconnection.
-      // LeaveLobby (which removes the player) should only be called from
-      // explicit "Leave" buttons in WaitingLobby/WinnerScreen.
+      const currentLobby = lobbyRef.current;
+      const currentUser = userRef.current;
+
+      if (currentLobby && currentUser) {
+        // Mark as disconnected (not removed) so other players see the status
+        // and the user can reconnect later
+        disconnectFromLobby(currentLobby.id, currentUser.id);
+      }
       unsubscribeRef.current?.();
     };
   }, [setInLobby]);

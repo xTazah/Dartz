@@ -112,3 +112,35 @@ export function listenToGameFinished(
   conn.on("GameFinished", onFinished);
   return () => conn.off("GameFinished", onFinished);
 }
+
+export async function disconnectFromLobby(
+  lobbyId: string,
+  userId: number
+): Promise<void> {
+  const conn = await ensureConnected();
+  await conn.invoke("DisconnectFromLobby", lobbyId, userId);
+}
+
+export async function voteSkipTurn(
+  lobbyId: string,
+  voterUserId: number
+): Promise<void> {
+  const conn = await ensureConnected();
+  await conn.invoke("VoteSkipTurn", lobbyId, voterUserId);
+}
+
+export function listenToSkipVoteUpdate(
+  onUpdate: (currentVotes: number, votesNeeded: number) => void
+): () => void {
+  const conn = getConnection();
+  conn.on("SkipVoteUpdate", onUpdate);
+  return () => conn.off("SkipVoteUpdate", onUpdate);
+}
+
+export function listenToTurnSkipped(
+  onSkipped: (skippedUserId: number) => void
+): () => void {
+  const conn = getConnection();
+  conn.on("TurnSkipped", onSkipped);
+  return () => conn.off("TurnSkipped", onSkipped);
+}
