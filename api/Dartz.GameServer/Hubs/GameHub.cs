@@ -9,12 +9,14 @@ public class GameHub : Hub
     private readonly LobbyManager _lobbies;
     private readonly PresenceTracker _presence;
     private readonly InviteManager _invites;
+    private readonly MatchSubmitter _matchSubmitter;
 
-    public GameHub(LobbyManager lobbies, PresenceTracker presence, InviteManager invites)
+    public GameHub(LobbyManager lobbies, PresenceTracker presence, InviteManager invites, MatchSubmitter matchSubmitter)
     {
         _lobbies = lobbies;
         _presence = presence;
         _invites = invites;
+        _matchSubmitter = matchSubmitter;
     }
 
     // ==================== CONNECTION LIFECYCLE ====================
@@ -190,6 +192,8 @@ public class GameHub : Hub
 
         if (result == TurnResult.GameFinished)
         {
+            // Save match exactly once from the server
+            _ = _matchSubmitter.SubmitMatchAsync(updatedLobby);
             await Clients.Group($"lobby_{lobbyId}").SendAsync("GameFinished",
                 updatedLobby.WinnerUserId);
         }
@@ -289,6 +293,7 @@ public class GameHub : Hub
 
             if (result == TurnResult.GameFinished)
             {
+                _ = _matchSubmitter.SubmitMatchAsync(updatedLobby);
                 await Clients.Group($"lobby_{lobbyId}").SendAsync("GameFinished", updatedLobby.WinnerUserId);
             }
         }
