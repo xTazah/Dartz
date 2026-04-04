@@ -30,8 +30,7 @@ export default function WinnerScreen({ lobby, setLobby }: WinnerScreenProps) {
   const currentUser = context?.user;
   
   const handlePlayAgain = () => {
-    const updatedLobby = LobbyHandler.startGame(lobby);
-    setLobby(updatedLobby);
+    LobbyHandler.startGame(lobby.id);
   };
 
   useEffect(() => {

@@ -1,11 +1,11 @@
 import { create } from "zustand";
 import { FriendlistUser, User } from "./types";
-
 import FriendsService from "../services/backend/friendsService";
 import {
-  getOnlineStatus,
-  setupOnlineStatusListener,
-} from "../services/firebase/userService";
+  getBulkOnlineStatus,
+  onUserOnline,
+  onUserOffline,
+} from "../services/gameServer/userService";
 
 interface FriendsState {
   unsubscribeAll: () => void;
@@ -36,35 +36,37 @@ export const useFriendsStore = create<FriendsState>((set, get) => {
         const response = await friendService.getFriends(userId);
         const users: User[] = response.data;
 
-        let friendlistUsers: FriendlistUser[] = [];
-        const unsubscribeCallbacks: (() => void)[] = [];
+        // Get all online statuses in one call
+        const userIds = users.map((u) => u!.id);
+        const statuses = await getBulkOnlineStatus(userIds);
 
-        const promises = users.map(async (user) => {
-          const friend: FriendlistUser = {
-            user: user,
-            online: false,
-          };
+        const friendlistUsers: FriendlistUser[] = users.map((user) => ({
+          user,
+          online: statuses[user!.id] ?? false,
+        }));
 
-          const onlineStatus = await getOnlineStatus(user!.id);
-          friend.online = onlineStatus;
-
-          const unsubscribe = setupOnlineStatusListener(
-            user!.id,
-            (updatedOnlineStatus: boolean) => {
-              friend.online = updatedOnlineStatus;
-              get().updateFriend(friend);
-            }
-          );
-
-          unsubscribeCallbacks.push(unsubscribe);
-          friendlistUsers.push(friend);
-        });
-
-        await Promise.all(promises);
         set({ friends: friendlistUsers });
 
+        // Listen for online/offline events
+        const unsubOnline = onUserOnline((onlineUserId: number) => {
+          const friends = get().friends;
+          const friend = friends?.find((f) => f.user!.id === onlineUserId);
+          if (friend) {
+            get().updateFriend({ ...friend, online: true });
+          }
+        });
+
+        const unsubOffline = onUserOffline((offlineUserId: number) => {
+          const friends = get().friends;
+          const friend = friends?.find((f) => f.user!.id === offlineUserId);
+          if (friend) {
+            get().updateFriend({ ...friend, online: false });
+          }
+        });
+
         get().unsubscribeAll = () => {
-          unsubscribeCallbacks.forEach((unsubscribe) => unsubscribe());
+          unsubOnline();
+          unsubOffline();
         };
       } catch (error) {
         console.error("Error fetching friends:", error);

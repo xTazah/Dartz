@@ -13,9 +13,9 @@ import { UserContext } from "../userProvider/userProvider";
 import React, { useContext, useEffect, useState } from "react";
 import { Button, Checkbox, Tooltip } from "@nextui-org/react";
 import DropZone from "../DragDrop/dropzone";
-import { inviteUserToLobby } from "@/app/services/firebase/userService";
+import { inviteUserToLobby } from "@/app/services/gameServer/userService";
 import { toast } from "sonner";
-import { leaveLobby } from "@/app/services/firebase/lobbyService";
+import { leaveLobby } from "@/app/services/gameServer/lobbyService";
 import { useRouter } from "next/navigation";
 import { PlusIcon, UserIcon, StarIcon, PlayIcon, ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid";
 import dartboardStyles from "../../styles/dartboard.module.scss";
@@ -58,43 +58,28 @@ const WaitingLobby = ({
   const [legs, setLegs] = useState(3);
 
   const router = useRouter();
-  const changeGameMode = (gameMode: GameMode) => {
-    const updatedLobby = LobbyHandler.changeGameMode(lobby, gameMode);
-    setLobby(updatedLobby);
+  const changeGameMode = async (gameMode: GameMode) => {
+    await LobbyHandler.changeGameMode(lobby.id, gameMode.key);
   };
 
-  const changeSetsAndLegs = (lobby: Lobby) => {
+  const changeSetsAndLegs = async () => {
     if (isSetsSelected)
-      return LobbyHandler.changeSetsAndLegs(lobby, sets, legs);
+      await LobbyHandler.changeSetsAndLegs(lobby.id, sets, legs);
     else if (isLegsSelected)
-      return LobbyHandler.changeSetsAndLegs(lobby, 0, legs);
+      await LobbyHandler.changeSetsAndLegs(lobby.id, 0, legs);
   };
 
-  const startGame = () => {
-    let updatedLobby = LobbyHandler.startGame(lobby);
+  const startGame = async () => {
+    await LobbyHandler.startGame(lobby.id);
 
     if (isSetsSelected || isLegsSelected)
-      updatedLobby = changeSetsAndLegs(updatedLobby)!;
-
-    setLobby(updatedLobby);
+      await changeSetsAndLegs();
   };
 
   const leave = () => {
-    let isSpectator = false;
-    let index = -1;
-    
-    if (Array.isArray(lobby.players)) {
-      index = lobby.players.findIndex(
-        (player) => player?.user?.id === user?.id
-      );
+    if (user?.id !== undefined) {
+      leaveLobby(lobby.id, user.id);
     }
-    if (index === -1 && Array.isArray(lobby.spectators)) {
-      index = lobby.spectators.findIndex(
-        (spectator) => spectator?.user?.id === user?.id
-      );
-      isSpectator = true;
-    }
-    leaveLobby(lobby.id, index, isSpectator);
     router.push("/");
   };
 
@@ -110,7 +95,9 @@ const WaitingLobby = ({
         toast.error("Invalid drop data. Please invite player manually!");
         return;
       }
-      inviteUserToLobby(lobby.id, user, invited);
+      if (user) {
+        inviteUserToLobby(lobby.id, invited.id, user.id, user.username, user.profilePicture || null, user.initial || user.username.charAt(0));
+      }
     },
   };
 
@@ -160,8 +147,7 @@ const WaitingLobby = ({
 
       if (response.status === 200) {
         const userData: User = response.data;
-        let updatedLobby = LobbyHandler.addPlayer(lobby, userData);
-        setLobby(updatedLobby);
+        await LobbyHandler.joinLobby(lobby.id, userData);
         if (localUsers) setLocalUsers([...localUsers, userData]);
         else setLocalUsers([userData]);
 
@@ -195,9 +181,8 @@ const WaitingLobby = ({
         bio: friend.user.bio,
         memberSince: friend.user.memberSince,
       };
-      
-      let updatedLobby = LobbyHandler.addPlayer(lobby, userData);
-      setLobby(updatedLobby);
+
+      await LobbyHandler.joinLobby(lobby.id, userData);
       if (localUsers) setLocalUsers([...localUsers, userData]);
       else setLocalUsers([userData]);
 
@@ -220,7 +205,9 @@ const WaitingLobby = ({
         return;
       }
 
-      inviteUserToLobby(lobby.id, user, invited.user);
+      if (user && invited.user) {
+        await inviteUserToLobby(lobby.id, invited.user.id, user.id, user.username, user.profilePicture || null, user.initial || user.username.charAt(0));
+      }
       resetPopup();
     } catch (err) {
     } finally {
