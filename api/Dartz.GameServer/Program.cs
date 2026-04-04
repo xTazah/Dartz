@@ -32,6 +32,12 @@ builder.Services.AddSingleton<PresenceTracker>();
 builder.Services.AddSingleton<InviteManager>();
 builder.Services.AddHostedService<LobbyCleanupService>();
 
+builder.Services.AddHttpClient<MatchSubmitter>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7128");
+});
+
 var app = builder.Build();
 
 app.UseCors();
