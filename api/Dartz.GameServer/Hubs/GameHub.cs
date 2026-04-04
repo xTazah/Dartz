@@ -184,6 +184,7 @@ public class GameHub : Hub
 
         var (result, updatedLobby) = GameModeLogic.ProcessTurn501(lobby, dartThrow);
         updatedLobby.CurrentTurnDarts = null;
+        updatedLobby.SkipVotes.Clear();
 
         await Clients.Group($"lobby_{lobbyId}").SendAsync("LobbyUpdated", updatedLobby);
 
@@ -212,6 +213,7 @@ public class GameHub : Hub
             player.Score += lastThrow.TotalScore;
         }
 
+        lobby.SkipVotes.Clear();
         await Clients.Group($"lobby_{lobbyId}").SendAsync("LobbyUpdated", lobby);
     }
 
@@ -229,6 +231,73 @@ public class GameHub : Hub
 
         await Clients.OthersInGroup($"lobby_{lobbyId}")
             .SendAsync("DartPositionsUpdated", playerId, darts);
+    }
+
+    public async Task DisconnectFromLobby(string lobbyId, int userId)
+    {
+        var lobby = _lobbies.GetLobby(lobbyId);
+        if (lobby == null) return;
+
+        var player = lobby.Players.FirstOrDefault(p => p.UserId == userId);
+        if (player != null)
+        {
+            player.Connected = false;
+            player.ConnectionId = null;
+        }
+
+        var spectator = lobby.Spectators.FirstOrDefault(s => s.UserId == userId);
+        if (spectator != null)
+        {
+            spectator.Connected = false;
+            spectator.ConnectionId = null;
+        }
+
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"lobby_{lobbyId}");
+        await Clients.Group($"lobby_{lobbyId}").SendAsync("LobbyUpdated", lobby);
+    }
+
+    public async Task VoteSkipTurn(string lobbyId, int voterUserId)
+    {
+        var lobby = _lobbies.GetLobby(lobbyId);
+        if (lobby == null) return;
+        if (lobby.GameStatus != GameStatus.Running) return;
+
+        var currentPlayer = lobby.Players[lobby.CurrentPlayerIndex];
+        // Can only skip a disconnected player
+        if (currentPlayer.Connected) return;
+        // Voter must be a connected player in this lobby
+        if (!lobby.Players.Any(p => p.UserId == voterUserId && p.Connected)) return;
+        // Can't vote to skip yourself
+        if (currentPlayer.UserId == voterUserId) return;
+
+        lobby.SkipVotes.Add(voterUserId);
+
+        // Count connected players (excluding the disconnected one)
+        int connectedCount = lobby.Players.Count(p => p.Connected && p.UserId != currentPlayer.UserId);
+        int votesNeeded = (int)Math.Ceiling(connectedCount / 2.0);
+
+        if (lobby.SkipVotes.Count >= votesNeeded)
+        {
+            // Skip turn: submit an empty throw
+            var emptyThrow = new ServerThrow();
+            var (result, updatedLobby) = GameModeLogic.ProcessTurn501(lobby, emptyThrow);
+            updatedLobby.SkipVotes.Clear();
+            updatedLobby.CurrentTurnDarts = null;
+
+            await Clients.Group($"lobby_{lobbyId}").SendAsync("LobbyUpdated", updatedLobby);
+            await Clients.Group($"lobby_{lobbyId}").SendAsync("TurnSkipped", currentPlayer.UserId);
+
+            if (result == TurnResult.GameFinished)
+            {
+                await Clients.Group($"lobby_{lobbyId}").SendAsync("GameFinished", updatedLobby.WinnerUserId);
+            }
+        }
+        else
+        {
+            // Notify all clients about the vote progress
+            await Clients.Group($"lobby_{lobbyId}").SendAsync("SkipVoteUpdate", lobby.SkipVotes.Count, votesNeeded);
+            await Clients.Group($"lobby_{lobbyId}").SendAsync("LobbyUpdated", lobby);
+        }
     }
 
     // ==================== INVITES & FRIEND REQUESTS ====================

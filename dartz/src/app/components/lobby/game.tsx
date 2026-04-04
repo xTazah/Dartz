@@ -8,7 +8,7 @@ import {
   User,
 } from "@/app/utils/types";
 import LobbyHandler from "@/app/handlers/lobbyHandler";
-import { listenToDartPositions } from "@/app/services/gameServer/lobbyService";
+import { listenToDartPositions, voteSkipTurn, listenToSkipVoteUpdate, listenToTurnSkipped } from "@/app/services/gameServer/lobbyService";
 import React, { useContext, useEffect, useState, lazy, Suspense, useCallback, useMemo, useRef } from "react";
 import { Button } from "@nextui-org/react";
 import getCheckoutPath from "@/app/handlers/checkoutHandler";
@@ -92,6 +92,11 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
   // Spectator throws state (for displaying throw values to non-active players)
   const [spectatorThrows, setSpectatorThrows] = useState<DartThrow[]>([]);
   
+  // Skip vote state
+  const [skipVoteCount, setSkipVoteCount] = useState(0);
+  const [skipVotesNeeded, setSkipVotesNeeded] = useState(0);
+  const [hasVotedSkip, setHasVotedSkip] = useState(false);
+
   // Cache random positions for manual input to prevent constant regeneration
   const manualDartPositions = useRef<{[key: string]: DartCoordinates}>({});
 
@@ -143,6 +148,9 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     setActiveDarts([]);
     setSpectatorThrows([]);
     manualDartPositions.current = {}; // Clear cache so random positions are fresh each turn
+    setHasVotedSkip(false);
+    setSkipVoteCount(0);
+    setSkipVotesNeeded(0);
   }, [currentPlayer?.user?.id]);
 
   // Sync dart positions to Firebase when active player throws (for real-time display to others)
@@ -164,6 +172,20 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     LobbyHandler.syncCurrentTurnDarts(lobby.id, playerId, dartData);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dartboardThrows, isCurrentUsersTurn, currentPlayer?.user?.id, lobby.id]);
+
+  // Listen for skip vote updates
+  useEffect(() => {
+    const unsubVote = listenToSkipVoteUpdate((currentVotes: number, votesNeeded: number) => {
+      setSkipVoteCount(currentVotes);
+      setSkipVotesNeeded(votesNeeded);
+    });
+    const unsubSkipped = listenToTurnSkipped(() => {
+      setHasVotedSkip(false);
+      setSkipVoteCount(0);
+      setSkipVotesNeeded(0);
+    });
+    return () => { unsubVote(); unsubSkipped(); };
+  }, []);
 
   // For non-active players: listen for dart positions via SignalR
   useEffect(() => {
@@ -439,6 +461,12 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
     setActiveDarts([]);
   };
 
+  const handleVoteSkip = async () => {
+    if (!user?.id) return;
+    await voteSkipTurn(lobby.id, user.id);
+    setHasVotedSkip(true);
+  };
+
   const isCurrentOrLocalUser = (
     playerUserId: number | undefined,
     localUsers: User[] | null,
@@ -630,6 +658,38 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
           </button>
         )}
       </div>
+
+      {/* Skip vote for disconnected player's turn */}
+      {!isCurrentUsersTurn && currentPlayer && !currentPlayer.connected && (
+        <div className={dartboardStyles.inputPanel}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '1rem',
+            padding: '2rem',
+            textAlign: 'center'
+          }}>
+            <SignalSlashIcon className="w-12 h-12 text-red-400" />
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+              {currentPlayer.user?.username} is disconnected
+            </h3>
+            <p style={{ opacity: 0.7 }}>
+              Vote to skip their turn
+              {skipVotesNeeded > 0 && ` (${skipVoteCount}/${skipVotesNeeded} votes)`}
+            </p>
+            <Button
+              color="warning"
+              size="lg"
+              onPress={handleVoteSkip}
+              isDisabled={hasVotedSkip}
+            >
+              {hasVotedSkip ? "Vote Cast" : "Skip Turn"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Center: Dartboard or input area (only shown for current player) */}
       {isCurrentUsersTurn && (

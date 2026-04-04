@@ -16,6 +16,7 @@ public class ServerLobby
     public int TargetSets { get; set; }
     public int? WinnerUserId { get; set; }
     public CurrentTurnDarts? CurrentTurnDarts { get; set; }
+    public HashSet<int> SkipVotes { get; set; } = new(); // UserIds who voted to skip current turn
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
