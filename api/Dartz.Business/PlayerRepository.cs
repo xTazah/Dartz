@@ -72,7 +72,7 @@ namespace Dartz.Business
 
         public void UpdatePlayer(Player player)
         {
-            var existing = dataContext.Players.FirstOrDefault(x => x.ID == player.ID || x.Username == player.Username);
+            var existing = dataContext.Players.FirstOrDefault(x => x.ID == player.ID);
             if (existing == null) return;
 
             // Only update values that are provided (not null)

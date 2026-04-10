@@ -163,13 +163,7 @@ export default function ProfilePage() {
           <div className={styles.userInfoSection}>
             {isEditing ? (
               <>
-                <input
-                  type="text"
-                  value={tempUsername}
-                  onChange={(e) => setTempUsername(e.target.value)}
-                  className={styles.editInput}
-                  placeholder="Benutzername"
-                />
+                <h2 className={styles.username}>{user.username}</h2>
                 <textarea
                   value={tempBio}
                   onChange={(e) => setTempBio(e.target.value)}
@@ -188,7 +182,6 @@ export default function ProfilePage() {
                   </button>
                   <button 
                     onClick={() => {
-                      setTempUsername(user.username)
                       setTempBio(user.bio)
                       setIsEditing(false)
                     }}
