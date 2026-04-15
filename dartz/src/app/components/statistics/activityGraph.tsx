@@ -8,23 +8,23 @@ import { ActivityDay } from "@/app/utils/types";
 import { UserContext } from "../userProvider/userProvider";
 import styles from "../../styles/statistics.module.scss";
 
-export default function ActivityGraph() {
+export default function ActivityGraph({ userId }: { userId?: number }) {
   const context = useContext(UserContext);
-  const user = context?.user;
+  const playerId = userId ?? context?.user?.id ;
 
   const [activity, setActivity] = useState<ActivityDay[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!playerId) return;
 
     const matchService = new MatchService();
     matchService
-      .getActivityData(user.id)
+      .getActivityData(playerId)
       .then((res) => setActivity(res.data ?? []))
       .catch((err) => console.error("Failed to load activity:", err))
       .finally(() => setLoading(false));
-  }, [user?.id]);
+  }, [playerId]);
 
   const endDate = new Date();
   const startDate = new Date();

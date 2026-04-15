@@ -1,9 +1,11 @@
 import React, { useContext, useState } from "react";
+import { useRouter } from "next/navigation";
 import styles from "../../styles/friendList.module.scss";
 import iconStyles from "../../styles/icon.module.scss";
 import {
   UserMinusIcon,
   EllipsisHorizontalIcon,
+  UserIcon
 } from "@heroicons/react/24/solid";
 import { FriendlistUser } from "@/app/utils/types";
 import UserComponent from "./User";
@@ -23,6 +25,7 @@ interface FriendProps {
 }
 
 export default function Friend({ friendlistUser }: FriendProps) {
+  const router = useRouter();
   const friendsService = new FriendsService();
   const { user } = useContext(UserContext)!;
   const { fetchFriends } = useFriendsStore();
@@ -32,6 +35,12 @@ export default function Friend({ friendlistUser }: FriendProps) {
     setOpen(false);
     await friendsService.removeFriend(user!.id, friendlistUser.user!.id);
     fetchFriends(user!.id);
+  };
+
+  const handleShowProfile = () => {
+    setOpen(false);
+    // Navigate to friend's profile or open profile modal
+    router.push(`/profile/${friendlistUser.user!.id}`);
   };
 
   return (
@@ -74,7 +83,13 @@ export default function Friend({ friendlistUser }: FriendProps) {
             <h4 className="font-medium leading-none mb-2 text-sm text-[var(--font-color-muted)]">
               {friendlistUser.user?.username}
             </h4>
-            
+            <button
+              onClick={handleShowProfile}
+              className="flex items-center gap-3 w-full px-2 py-2 rounded-md text-sm hover:bg-[var(--component-background-hover)] transition-colors text-left"
+            >
+              <UserIcon className="size-4" />
+              Show Profile
+            </button>
             <button
               onClick={handleRemoveFriend}
               className="flex items-center gap-3 w-full px-2 py-2 rounded-md text-sm text-red-400 hover:bg-[var(--component-background-hover)] transition-colors text-left"
