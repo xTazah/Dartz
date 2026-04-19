@@ -88,15 +88,11 @@ public class GameModeLogicTests
     }
 
     [Fact]
-    public void Leg_won_in_sets_format_increments_sets_and_resets_scores()
+    public void Leg_won_in_sets_format_increments_sets_and_resets_legs_for_all()
     {
-        // NOTE: Current behaviour only resets the winning player's legs counter
-        // (not the opponent's). That looks like a latent bug in set-based play but
-        // isn't what this PR is about — this test pins existing behaviour so any
-        // future change is intentional.
         var lobby = TwoPlayerLobby(targetLegs: 3, targetSets: 2);
         lobby.Players[0].Legs = 2; // one more leg wins the set
-        lobby.Players[1].Legs = 1;
+        lobby.Players[1].Legs = 1; // opponent had won one leg this set
         lobby.Players[0].Score = 40;
 
         var (result, updated) = GameModeLogic.ProcessTurn501(lobby, Throw(20, 2));
@@ -105,7 +101,24 @@ public class GameModeLogicTests
         updated.GameStatus.Should().Be(GameStatus.Running);
         updated.Players[0].Sets.Should().Be(1);
         updated.Players[0].Legs.Should().Be(0);
+        updated.Players[1].Legs.Should().Be(0, "legs reset for everyone when a new set begins");
         updated.Players.Should().OnlyContain(p => p.Score == 501);
+    }
+
+    [Fact]
+    public void Leg_won_without_sets_format_does_not_reset_legs()
+    {
+        // Sets == 0 means "first to N legs" — crossing a leg boundary must not
+        // reset counters here or the match never ends.
+        var lobby = TwoPlayerLobby(targetLegs: 3, targetSets: 0);
+        lobby.Players[0].Legs = 1;
+        lobby.Players[0].Score = 40;
+
+        var (result, updated) = GameModeLogic.ProcessTurn501(lobby, Throw(20, 2));
+
+        result.Should().Be(TurnResult.LegWon);
+        updated.Players[0].Legs.Should().Be(2);
+        updated.Players[0].Sets.Should().Be(0);
     }
 
     [Fact]

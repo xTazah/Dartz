@@ -44,3 +44,7 @@ app.UseCors();
 app.MapHub<GameHub>("/gamehub");
 
 app.Run();
+
+// Exposed so WebApplicationFactory<Program> in Dartz.GameServer.Tests can host
+// the app in-memory for SignalR integration tests.
+public partial class Program;
