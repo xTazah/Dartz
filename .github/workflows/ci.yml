@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  gameserver-tests:
+    name: GameServer tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore Dartz.GameServer.Tests/Dartz.GameServer.Tests.csproj
+
+      - name: Build (no restore)
+        run: dotnet build Dartz.GameServer.Tests/Dartz.GameServer.Tests.csproj --no-restore --configuration Release
+
+      - name: Test
+        run: >
+          dotnet test Dartz.GameServer.Tests/Dartz.GameServer.Tests.csproj
+          --no-build
+          --configuration Release
+          --logger "trx;LogFileName=gameserver.trx"
+          --results-directory ${{ github.workspace }}/TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gameserver-test-results
+          path: ${{ github.workspace }}/TestResults/gameserver.trx
