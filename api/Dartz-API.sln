@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dartz.Business", ".\Dartz.B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dartz.GameServer", "Dartz.GameServer\Dartz.GameServer.csproj", "{4B8E769B-377C-4BFD-8C15-CA019DE61E72}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dartz.GameServer.Tests", "Dartz.GameServer.Tests\Dartz.GameServer.Tests.csproj", "{CF63688F-DDA9-477A-B221-F5966FF70C24}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{4B8E769B-377C-4BFD-8C15-CA019DE61E72}.Release|x64.Build.0 = Release|Any CPU
 		{4B8E769B-377C-4BFD-8C15-CA019DE61E72}.Release|x86.ActiveCfg = Release|Any CPU
 		{4B8E769B-377C-4BFD-8C15-CA019DE61E72}.Release|x86.Build.0 = Release|Any CPU
+		{CF63688F-DDA9-477A-B221-F5966FF70C24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF63688F-DDA9-477A-B221-F5966FF70C24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF63688F-DDA9-477A-B221-F5966FF70C24}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CF63688F-DDA9-477A-B221-F5966FF70C24}.Debug|x64.Build.0 = Debug|Any CPU
+		{CF63688F-DDA9-477A-B221-F5966FF70C24}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CF63688F-DDA9-477A-B221-F5966FF70C24}.Debug|x86.Build.0 = Debug|Any CPU
+		{CF63688F-DDA9-477A-B221-F5966FF70C24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF63688F-DDA9-477A-B221-F5966FF70C24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF63688F-DDA9-477A-B221-F5966FF70C24}.Release|x64.ActiveCfg = Release|Any CPU
+		{CF63688F-DDA9-477A-B221-F5966FF70C24}.Release|x64.Build.0 = Release|Any CPU
+		{CF63688F-DDA9-477A-B221-F5966FF70C24}.Release|x86.ActiveCfg = Release|Any CPU
+		{CF63688F-DDA9-477A-B221-F5966FF70C24}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
