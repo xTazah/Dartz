@@ -40,3 +40,23 @@ jobs:
         with:
           name: gameserver-test-results
           path: ${{ github.workspace }}/TestResults/gameserver.trx
+
+  api-build:
+    name: REST API build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # Build only. No unit tests yet
+      - name: Restore
+        run: dotnet restore dartz-api/Dartz-API.csproj
+
+      - name: Build (no restore)
+        run: dotnet build dartz-api/Dartz-API.csproj --no-restore --configuration Release

@@ -20,7 +20,9 @@ public static class GameModeLogic
                 && player.Legs >= lobby.TargetLegs)
             {
                 player.Sets++;
-                player.Legs = 0;
+                // Reset every player's leg counter when a new set begins
+                foreach (var p in lobby.Players)
+                    p.Legs = 0;
             }
 
             bool matchWon = false;
