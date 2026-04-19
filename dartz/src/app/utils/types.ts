@@ -93,8 +93,12 @@ export interface GameLogic {
 }
 
 export interface LobbyInvite {
+  key: string;
   lobbyId: string;
-  sender: User;
+  senderUserId: number;
+  senderUsername: string;
+  senderProfilePicture?: string | null;
+  senderInitial: string;
 }
 
 export interface FriendRequest {

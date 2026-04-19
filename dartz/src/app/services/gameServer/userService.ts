@@ -74,6 +74,14 @@ export function onLobbyInviteReceived(
   return () => conn.off("LobbyInviteReceived", callback);
 }
 
+export function onLobbyInviteRemoved(
+  callback: (key: string) => void
+): () => void {
+  const conn = getConnection();
+  conn.on("LobbyInviteRemoved", callback);
+  return () => conn.off("LobbyInviteRemoved", callback);
+}
+
 export function onFriendRequestReceived(
   callback: (request: any) => void
 ): () => void {

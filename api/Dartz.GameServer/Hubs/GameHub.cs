@@ -135,6 +135,20 @@ public class GameHub : Hub
         if (lobby.Players.Count == 0 && lobby.Spectators.Count == 0)
         {
             _lobbies.RemoveLobby(lobbyId);
+            await PurgeInvitesForLobby(lobbyId);
+        }
+    }
+
+    // Removes any pending invites targeting lobbyId and notifies each recipient
+    // so their invite popover drops the entries. Called whenever a lobby ceases
+    // to exist (explicit LeaveLobby emptying it, cleanup service, etc.).
+    private async Task PurgeInvitesForLobby(string lobbyId)
+    {
+        var removed = _invites.RemoveInvitesForLobby(lobbyId);
+        foreach (var (userId, key) in removed)
+        {
+            await Clients.Group($"user_{userId}")
+                .SendAsync("LobbyInviteRemoved", key);
         }
     }
 
@@ -161,7 +175,8 @@ public class GameHub : Hub
     {
         var lobby = _lobbies.GetLobby(lobbyId);
         if (lobby == null) return;
-        if (lobby.GameStatus != GameStatus.Waiting) return;
+        // Allow starting from Waiting (fresh game) or Finished ("Play Again" after a match).
+        if (lobby.GameStatus == GameStatus.Running) return;
 
         // Apply default: if no match format configured, play single legs (first to 1)
         if (lobby.TargetSets == 0 && lobby.TargetLegs == 0)
@@ -323,7 +338,11 @@ public class GameHub : Hub
 
     public async Task ClearLobbyInvite(int userId, string key)
     {
-        _invites.RemoveLobbyInvite(userId, key);
+        if (_invites.RemoveLobbyInvite(userId, key))
+        {
+            // Keep other sessions of the same user in sync (e.g. a second tab)
+            await Clients.Group($"user_{userId}").SendAsync("LobbyInviteRemoved", key);
+        }
     }
 
     public async Task SendFriendRequest(int targetUserId, int senderUserId,

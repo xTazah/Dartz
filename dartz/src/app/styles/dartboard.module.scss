@@ -404,6 +404,10 @@
   grid-template-columns: 1fr 300px;
   gap: 24px;
   flex: 1;
+  // Prevent dartboardArea from stretching as throwsPanel grows (adding a throw
+  // introduces the Clear button / Total row, enlarging the grid row and
+  // resizing the R3F canvas larger on each throw).
+  align-items: start;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
@@ -415,7 +419,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 500px;
+  height: 500px;
 }
 
 .dartboardLoading {

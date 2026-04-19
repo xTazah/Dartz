@@ -682,23 +682,42 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
       </div>
 
 
-      {/* Center: Dartboard or input area */}
-      {isCurrentUsersTurn && (
+      {/* Center: Dartboard or input area.
+          A single top-level inputPanel + dartboardLayout is rendered for both
+          the active player and spectators so the R3F Canvas keeps its WebGL
+          context when the turn switches (otherwise React unmounts one JSX
+          branch and mounts another, destroying the context). */}
+      {((isCurrentUsersTurn && inputMode === "dartboard") || !isCurrentUsersTurn) && (
         <div className={dartboardStyles.inputPanel}>
-          <InputModeToggle />
+          {isCurrentUsersTurn ? (
+            <InputModeToggle />
+          ) : (
+            <div className={dartboardStyles.spectatorStatus}>
+              <span className={dartboardStyles.spectatorStatusDot}></span>
+              <span>{currentPlayer.user?.username}&apos;s turn</span>
+            </div>
+          )}
 
-          {inputMode === "dartboard" ? (
-            <div className={dartboardStyles.dartboardLayout}>
-              <div className={dartboardStyles.dartboardArea}>
+          <div className={dartboardStyles.dartboardLayout}>
+            <div className={dartboardStyles.dartboardArea}>
+              <Suspense
+                fallback={
+                  <div className={dartboardStyles.dartboardLoading}>
+                    Loading dartboard...
+                  </div>
+                }
+              >
                 <InteractiveDartboard
                   dartColor={currentPlayer.user?.dartColor}
-                  onSegmentClick={handleDartboardClick}
-                  onMiss={handleDartboardMiss}
-                  disabled={dartboardThrows.length >= 3}
+                  onSegmentClick={isCurrentUsersTurn ? handleDartboardClick : () => {}}
+                  onMiss={isCurrentUsersTurn ? handleDartboardMiss : undefined}
+                  disabled={!isCurrentUsersTurn || dartboardThrows.length >= 3}
                   darts={activeDarts}
                 />
-              </div>
-              <div className={dartboardStyles.throwsPanel}>
+              </Suspense>
+            </div>
+            <div className={dartboardStyles.throwsPanel}>
+              {isCurrentUsersTurn ? (
                 <DartboardInputPanel
                   throws={dartboardThrows}
                   onUndoThrow={handleDartboardUndo}
@@ -707,10 +726,56 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
                   currentScore={currentPlayer.score}
                   previewScore={dartboardPreviewScore}
                 />
-              </div>
+              ) : (
+                <div className={dartboardStyles.panel}>
+                  <div className={dartboardStyles.header}>
+                    <h3 className={dartboardStyles.title}>{currentPlayer.user?.username}&apos;s Throws</h3>
+                  </div>
+                  <div className={dartboardStyles.throwsContainer}>
+                    {[0, 1, 2].map((index) => {
+                      const dart = spectatorThrows[index];
+                      const isEmpty = !dart;
+
+                      return (
+                        <div
+                          key={index}
+                          className={`${dartboardStyles.throwSlot} ${isEmpty ? dartboardStyles.empty : ''}`}
+                          style={dart ? {
+                            borderColor: getThrowColor(dart.multiplier),
+                            boxShadow: `0 0 10px ${getThrowColor(dart.multiplier)}40`,
+                          } : {}}
+                        >
+                          {dart ? (
+                            <>
+                              <span
+                                className={dartboardStyles.throwLabel}
+                                style={{ color: getThrowColor(dart.multiplier) }}
+                              >
+                                {formatScoreLabel(dart.score, dart.multiplier)}
+                              </span>
+                              <span className={dartboardStyles.throwPoints}>
+                                = {dart.score * dart.multiplier}
+                              </span>
+                            </>
+                          ) : (
+                            <span className={dartboardStyles.emptyLabel}>Dart {index + 1}</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className={dartboardStyles.manualInputArea}>
+          </div>
+        </div>
+      )}
+
+      {/* Manual input area - separate from dartboard layout */}
+      {isCurrentUsersTurn && inputMode === "manual" && (
+        <div className={dartboardStyles.inputPanel}>
+          <InputModeToggle />
+          <div className={dartboardStyles.manualInputArea}>
               <div className={dartboardStyles.manualFormContainer}>
                 {/* Score Preview */}
                 <div className={dartboardStyles.manualScorePreview}>
@@ -907,80 +972,6 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
                 </Button>
               </div>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Dartboard view for non-current players (spectator mode) */}
-      {!isCurrentUsersTurn && (
-        <div className={dartboardStyles.inputPanel}>
-          {/* Status indicator */}
-          <div className={dartboardStyles.spectatorStatus}>
-            <span className={dartboardStyles.spectatorStatusDot}></span>
-            <span>{currentPlayer.user?.username}&apos;s turn</span>
-          </div>
-          
-          <div className={dartboardStyles.dartboardLayout}>
-            <div className={dartboardStyles.dartboardArea}>
-              <Suspense
-                fallback={
-                  <div className={dartboardStyles.dartboardLoading}>
-                    Loading dartboard...
-                  </div>
-                }
-              >
-                <InteractiveDartboard
-                  dartColor={currentPlayer.user?.dartColor}
-                  onSegmentClick={() => {}} // Disabled, no-op
-                  disabled={true}
-                  darts={activeDarts}
-                />
-              </Suspense>
-            </div>
-            
-            {/* Show current throws from active player */}
-            <div className={dartboardStyles.throwsPanel}>
-              <div className={dartboardStyles.panel}>
-                <div className={dartboardStyles.header}>
-                  <h3 className={dartboardStyles.title}>{currentPlayer.user?.username}&apos;s Throws</h3>
-                </div>
-                
-                <div className={dartboardStyles.throwsContainer}>
-                  {[0, 1, 2].map((index) => {
-                    const dart = spectatorThrows[index];
-                    const isEmpty = !dart;
-
-                    return (
-                      <div 
-                        key={index}
-                        className={`${dartboardStyles.throwSlot} ${isEmpty ? dartboardStyles.empty : ''}`}
-                        style={dart ? {
-                          borderColor: getThrowColor(dart.multiplier),
-                          boxShadow: `0 0 10px ${getThrowColor(dart.multiplier)}40`,
-                        } : {}}
-                      >
-                        {dart ? (
-                          <>
-                            <span
-                              className={dartboardStyles.throwLabel}
-                              style={{ color: getThrowColor(dart.multiplier) }}
-                            >
-                              {formatScoreLabel(dart.score, dart.multiplier)}
-                            </span>
-                            <span className={dartboardStyles.throwPoints}>
-                              = {dart.score * dart.multiplier}
-                            </span>
-                          </>
-                        ) : (
-                          <span className={dartboardStyles.emptyLabel}>Dart {index + 1}</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 

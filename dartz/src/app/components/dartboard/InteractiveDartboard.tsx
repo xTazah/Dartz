@@ -78,7 +78,7 @@ function getHoverColor(segment: DartboardSegment): string {
     if(segment.multiplier === Multiplier.Double)
       return "#ffd93d";
     
-    return "#43ccf5ff";
+    return "#43ccf5";
   } 
   if (segment.multiplier === Multiplier.Tripple) return "#ff6b6b";
   if (segment.multiplier === Multiplier.Double) return "#4ecdc4";
