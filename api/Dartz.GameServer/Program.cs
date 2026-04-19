@@ -43,7 +43,10 @@ var app = builder.Build();
 app.UseCors();
 app.MapHub<GameHub>("/gamehub");
 
-app.Run();
+// Render injects PORT at runtime; locally we default to 5063 so existing
+// NEXT_PUBLIC_GAME_SERVER_URL=http://localhost:5063 keeps working.
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5063";
+app.Run($"http://0.0.0.0:{port}");
 
 // Exposed so WebApplicationFactory<Program> in Dartz.GameServer.Tests can host
 // the app in-memory for SignalR integration tests.

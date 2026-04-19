@@ -8,6 +8,6 @@ RUN dotnet publish -c Release -o /app
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=build /app ./
+# Local default; Render injects PORT at runtime and Program.cs reads it.
 EXPOSE 5063
-ENV ASPNETCORE_URLS=http://+:5063
 ENTRYPOINT ["dotnet", "Dartz.GameServer.dll"]
