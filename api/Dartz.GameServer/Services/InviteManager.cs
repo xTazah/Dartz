@@ -55,6 +55,25 @@ public class InviteManager
         }
     }
 
+    // Returns the (userId, key) pairs removed so callers can notify each recipient.
+    public List<(int userId, string key)> RemoveInvitesForLobby(string lobbyId)
+    {
+        var removed = new List<(int, string)>();
+        foreach (var (userId, invites) in _lobbyInvites)
+        {
+            lock (invites)
+            {
+                var matching = invites.Where(i => i.LobbyId == lobbyId).ToList();
+                foreach (var invite in matching)
+                {
+                    invites.Remove(invite);
+                    removed.Add((userId, invite.Key));
+                }
+            }
+        }
+        return removed;
+    }
+
     public List<LobbyInvite> GetLobbyInvites(int userId)
     {
         if (!_lobbyInvites.TryGetValue(userId, out var invites))

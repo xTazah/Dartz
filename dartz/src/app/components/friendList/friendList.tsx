@@ -31,6 +31,7 @@ import {
 } from "@/app/utils/types";
 import {
   onLobbyInviteReceived,
+  onLobbyInviteRemoved,
   onFriendRequestReceived,
   onPendingInvites,
   onPendingFriendRequests,
@@ -90,6 +91,14 @@ export default function FriendList() {
     const unsubInvites = onLobbyInviteReceived((invite: any) => {
       setLobbyInvites((prev: any) => ({ ...prev, [invite.key]: invite }));
     });
+    const unsubRemoved = onLobbyInviteRemoved((key: string) => {
+      setLobbyInvites((prev) => {
+        if (!(key in prev)) return prev;
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    });
     const unsubRequests = onFriendRequestReceived((request: any) => {
       setFriendRequests((prev: any) => ({ ...prev, [request.key]: request }));
     });
@@ -104,7 +113,7 @@ export default function FriendList() {
       setFriendRequests(mapped);
     });
 
-    return () => { unsubInvites(); unsubRequests(); unsubPending(); unsubPendingFR(); };
+    return () => { unsubInvites(); unsubRemoved(); unsubRequests(); unsubPending(); unsubPendingFR(); };
   }, [user]);
 
   const handleAcceptFriend = (key: string, userId2: number) => {
@@ -120,13 +129,23 @@ export default function FriendList() {
     clearFriendRequest(user!.id, key);
   };
 
+  const removeInviteLocal = (key: string) => {
+    setLobbyInvites((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
   const handleAcceptInvite = (key: string, lobbyId: string) => {
     clearLobbyInvite(user!.id, key);
+    removeInviteLocal(key);
     router.push(`/lobby?id=${lobbyId}`);
   };
 
   const handleDeclineInvite = (key: string) => {
     clearLobbyInvite(user!.id, key);
+    removeInviteLocal(key);
   };
 
   const numNotifications =
@@ -220,7 +239,7 @@ export default function FriendList() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm">
                             Lobby invite from{" "}
-                            <span className="font-medium">{invite.sender?.username}</span>
+                            <span className="font-medium">{invite.senderUsername}</span>
                           </p>
                           <div className="flex gap-2 mt-2">
                             <NextUiButton
