@@ -32,10 +32,27 @@ builder.Services.AddSingleton<PresenceTracker>();
 builder.Services.AddSingleton<InviteManager>();
 builder.Services.AddHostedService<LobbyCleanupService>();
 
+// Parse ApiBaseUrl once at startup. A missing or malformed value used to
+// crash GameHub construction on every connection (because the HttpClient
+// configuration lambda threw UriFormatException), which took down lobby
+// and game actions entirely even though MatchSubmitter is only used at
+// end-of-match. Validate up front and fall back instead.
+const string DefaultApiBaseUrl = "https://localhost:7128";
+var configuredApiBaseUrl = builder.Configuration["ApiBaseUrl"];
+if (!Uri.TryCreate(configuredApiBaseUrl, UriKind.Absolute, out var apiBaseUri))
+{
+    apiBaseUri = new Uri(DefaultApiBaseUrl);
+    if (!string.IsNullOrWhiteSpace(configuredApiBaseUrl))
+    {
+        Console.Error.WriteLine(
+            $"[startup] ApiBaseUrl='{configuredApiBaseUrl}' is not an absolute URI; " +
+            $"falling back to {DefaultApiBaseUrl}. Match submission will fail until fixed.");
+    }
+}
+
 builder.Services.AddHttpClient<MatchSubmitter>(client =>
 {
-    client.BaseAddress = new Uri(
-        builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7128");
+    client.BaseAddress = apiBaseUri;
 });
 
 var app = builder.Build();
