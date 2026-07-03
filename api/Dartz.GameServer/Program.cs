@@ -1,7 +1,15 @@
+using System.Text;
 using Dartz.GameServer.Hubs;
 using Dartz.GameServer.Services;
+using dotenv.net;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load local .env for development (JWT_KEY, GAMESERVER_API_KEY, ApiBaseUrl, ...).
+// In production (Render) these come from injected environment variables.
+DotEnv.Load();
 
 builder.Services.AddSignalR(options =>
 {
@@ -9,6 +17,53 @@ builder.Services.AddSignalR(options =>
     options.KeepAliveInterval = TimeSpan.FromSeconds(15);
     options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
 });
+
+// ==================== Authentication ====================
+// Validate the same JWTs the API issues (shared signing key via JWT_KEY).
+// SignalR connections present the token via the access_token query string
+// (set by the client's accessTokenFactory), since browsers can't attach
+// Authorization headers to the WebSocket handshake.
+var jwtKey = builder.Configuration["JWT_KEY"] ?? Environment.GetEnvironmentVariable("JWT_KEY");
+if (string.IsNullOrWhiteSpace(jwtKey) || Encoding.UTF8.GetByteCount(jwtKey) < 32)
+{
+    throw new InvalidOperationException(
+        "JWT_KEY is not configured (or is shorter than 32 bytes). It must match the API's JWT_KEY.");
+}
+var jwtIssuer = builder.Configuration["JWT_ISSUER"] ?? Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "dartz-api";
+var jwtAudience = builder.Configuration["JWT_AUDIENCE"] ?? Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "dartz-clients";
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtIssuer,
+            ValidateAudience = true,
+            ValidAudience = jwtAudience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/gamehub"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
 {
@@ -50,14 +105,24 @@ if (!Uri.TryCreate(configuredApiBaseUrl, UriKind.Absolute, out var apiBaseUri))
     }
 }
 
+// Shared secret used to authenticate this server's match submissions to the API.
+var gameServerApiKey = builder.Configuration["GAMESERVER_API_KEY"]
+    ?? Environment.GetEnvironmentVariable("GAMESERVER_API_KEY");
+
 builder.Services.AddHttpClient<MatchSubmitter>(client =>
 {
     client.BaseAddress = apiBaseUri;
+    if (!string.IsNullOrEmpty(gameServerApiKey))
+    {
+        client.DefaultRequestHeaders.Add("X-Service-Key", gameServerApiKey);
+    }
 });
 
 var app = builder.Build();
 
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapHub<GameHub>("/gamehub");
 
 // Render injects PORT at runtime; locally we default to 5063 so existing
