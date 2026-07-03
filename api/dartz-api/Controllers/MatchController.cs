@@ -1,29 +1,56 @@
 using Dartz.Model.DTO;
 using Dartz.Service.Interfaces;
+using Dartz_API.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dartz_API.Controllers
 {
     [ApiController]
     [Route("match")]
+    [Authorize]
     public class MatchController : ControllerBase
     {
         private readonly ILogger<MatchController> _logger;
         private readonly IMatchService _matchService;
+        private readonly ServiceKeyValidator _serviceKey;
 
-        public MatchController(ILogger<MatchController> logger, IMatchService matchService)
+        public MatchController(ILogger<MatchController> logger, IMatchService matchService, ServiceKeyValidator serviceKey)
         {
             _logger = logger;
             _matchService = matchService;
+            _serviceKey = serviceKey;
         }
 
         /// <summary>
         /// Submit a completed match for historization.
-        /// Called by the lobby owner's client when a game finishes.
+        /// This mutates every listed player's lifetime stats, so it is only accepted from:
+        ///  - the trusted game server (presenting the X-Service-Key shared secret), which
+        ///    is the authoritative game-state owner, OR
+        ///  - an authenticated user who is themselves a participant in the submitted match.
+        /// This prevents anonymous clients from forging matches/stats for arbitrary players.
         /// </summary>
         [HttpPost("")]
+        [AllowAnonymous] // auth is enforced manually below (service key OR participant JWT)
         public async Task<ActionResult> SubmitMatch([FromBody] MatchSubmissionDto submission)
         {
+            var fromGameServer = _serviceKey.IsValid(
+                Request.Headers[AuthConstants.ServiceKeyHeader].FirstOrDefault());
+
+            if (!fromGameServer)
+            {
+                var callerId = User.GetPlayerId();
+                if (callerId == null)
+                {
+                    return Unauthorized();
+                }
+                // A user may only submit a match they actually played in.
+                if (submission.Players == null || !submission.Players.Any(p => p.PlayerId == callerId.Value))
+                {
+                    return Forbid();
+                }
+            }
+
             try
             {
                 var match = await _matchService.SubmitMatch(submission);

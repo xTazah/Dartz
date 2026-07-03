@@ -1,11 +1,13 @@
 using Dartz.Service.Interfaces;
 using Dartz.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dartz_API.Controllers
 {
     [ApiController]
     [Route("gameSession")]
+    [Authorize]
     public class GameSessionController : ControllerBase
     {
 

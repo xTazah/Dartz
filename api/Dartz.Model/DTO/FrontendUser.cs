@@ -18,5 +18,13 @@ namespace Dartz.Model
         public string? Bio { get; set; }
         public DateOnly? MemberSince { get; set; }
         public bool AllowNoAuth { get; set; }
+
+        /// <summary>
+        /// JWT access token. Also set as an HttpOnly cookie for REST calls; this copy
+        /// is for the SignalR client, which must pass the token via accessTokenFactory
+        /// because browsers cannot attach it to the WebSocket handshake. Kept in memory
+        /// on the client (never localStorage).
+        /// </summary>
+        public string? Token { get; set; }
     }
 }

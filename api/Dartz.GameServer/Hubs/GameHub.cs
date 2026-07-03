@@ -1,9 +1,12 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Dartz.GameServer.Models;
 using Dartz.GameServer.Services;
 
 namespace Dartz.GameServer.Hubs;
 
+[Authorize]
 public class GameHub : Hub
 {
     private readonly LobbyManager _lobbies;
@@ -19,6 +22,19 @@ public class GameHub : Hub
         _matchSubmitter = matchSubmitter;
     }
 
+    /// <summary>
+    /// The authenticated player id, taken from the validated JWT on the connection.
+    /// Never trust user/sender ids passed as method arguments — bind to this instead.
+    /// </summary>
+    private int? AuthUserId
+    {
+        get
+        {
+            var raw = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(raw, out var id) ? id : null;
+        }
+    }
+
     // ==================== CONNECTION LIFECYCLE ====================
 
     public override async Task OnConnectedAsync()
@@ -28,6 +44,11 @@ public class GameHub : Hub
 
     public async Task Register(int userId, string username)
     {
+        // Identity comes from the JWT, not the client-supplied userId.
+        var authId = AuthUserId;
+        if (authId == null) return;
+        userId = authId.Value;
+
         bool cameOnline = _presence.UserConnected(userId, Context.ConnectionId);
         await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");
 
@@ -95,6 +116,9 @@ public class GameHub : Hub
     public async Task<ServerLobby> CreateLobby(string lobbyId, int ownerUserId,
         string ownerUsername, string gameModeKey)
     {
+        var authId = AuthUserId;
+        if (authId != null) ownerUserId = authId.Value;
+
         var lobby = _lobbies.CreateLobby(lobbyId, ownerUserId, ownerUsername, gameModeKey);
         await Groups.AddToGroupAsync(Context.ConnectionId, $"lobby_{lobbyId}");
         return lobby;
@@ -103,6 +127,10 @@ public class GameHub : Hub
     public async Task<ServerLobby?> JoinLobby(string lobbyId, int userId, string username,
         string initial, string? profilePicture, string dartColor)
     {
+        var authId = AuthUserId;
+        if (authId == null) return null;
+        userId = authId.Value;
+
         var lobby = _lobbies.GetLobby(lobbyId);
         if (lobby == null) return null;
 
@@ -123,6 +151,10 @@ public class GameHub : Hub
 
     public async Task LeaveLobby(string lobbyId, int userId)
     {
+        var authId = AuthUserId;
+        if (authId == null) return;
+        userId = authId.Value;
+
         var lobby = _lobbies.GetLobby(lobbyId);
         if (lobby == null) return;
 
@@ -190,6 +222,10 @@ public class GameHub : Hub
 
     public async Task SubmitThrow(string lobbyId, int userId, ServerThrow dartThrow)
     {
+        var authId = AuthUserId;
+        if (authId == null) return;
+        userId = authId.Value;
+
         var lobby = _lobbies.GetLobby(lobbyId);
         if (lobby == null) return;
         if (lobby.GameStatus != GameStatus.Running) return;
@@ -216,6 +252,10 @@ public class GameHub : Hub
 
     public async Task UndoTurn(string lobbyId, int requestingUserId)
     {
+        var authId = AuthUserId;
+        if (authId == null) return;
+        requestingUserId = authId.Value;
+
         var lobby = _lobbies.GetLobby(lobbyId);
         if (lobby == null) return;
         if (lobby.OwnerUserId != requestingUserId) return;
@@ -230,6 +270,10 @@ public class GameHub : Hub
     public async Task SyncDartPositions(string lobbyId, int playerId,
         List<DartPosition> darts)
     {
+        var authId = AuthUserId;
+        if (authId == null) return;
+        playerId = authId.Value;
+
         var lobby = _lobbies.GetLobby(lobbyId);
         if (lobby == null) return;
 
@@ -245,6 +289,10 @@ public class GameHub : Hub
 
     public async Task DisconnectFromLobby(string lobbyId, int userId)
     {
+        var authId = AuthUserId;
+        if (authId == null) return;
+        userId = authId.Value;
+
         var lobby = _lobbies.GetLobby(lobbyId);
         if (lobby == null) return;
 
@@ -268,6 +316,10 @@ public class GameHub : Hub
 
     public async Task VoteSkipTurn(string lobbyId, int voterUserId)
     {
+        var authId = AuthUserId;
+        if (authId == null) return;
+        voterUserId = authId.Value;
+
         var lobby = _lobbies.GetLobby(lobbyId);
         if (lobby == null) return;
         if (lobby.GameStatus != GameStatus.Running) return;
@@ -317,6 +369,10 @@ public class GameHub : Hub
         int senderUserId, string senderUsername, string? senderProfilePicture,
         string senderInitial)
     {
+        var authId = AuthUserId;
+        if (authId == null) return;
+        senderUserId = authId.Value;
+
         var (added, invite) = _invites.AddLobbyInvite(targetUserId, lobbyId,
             senderUserId, senderUsername, senderProfilePicture, senderInitial);
 
@@ -329,6 +385,10 @@ public class GameHub : Hub
 
     public async Task ClearLobbyInvite(int userId, string key)
     {
+        var authId = AuthUserId;
+        if (authId == null) return;
+        userId = authId.Value;
+
         if (_invites.RemoveLobbyInvite(userId, key))
         {
             // Keep other sessions of the same user in sync (e.g. a second tab)
@@ -339,6 +399,10 @@ public class GameHub : Hub
     public async Task SendFriendRequest(int targetUserId, int senderUserId,
         string senderUsername)
     {
+        var authId = AuthUserId;
+        if (authId == null) return;
+        senderUserId = authId.Value;
+
         var (added, request) = _invites.AddFriendRequest(targetUserId,
             senderUserId, senderUsername);
 
@@ -351,6 +415,10 @@ public class GameHub : Hub
 
     public async Task ClearFriendRequest(int userId, string key)
     {
+        var authId = AuthUserId;
+        if (authId == null) return;
+        userId = authId.Value;
+
         _invites.RemoveFriendRequest(userId, key);
     }
 }

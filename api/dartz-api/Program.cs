@@ -1,9 +1,13 @@
+using System.Text;
 using Dartz.Business;
 using Dartz.Business.Interfaces;
 using Dartz.Service;
 using Dartz.Service.Interfaces;
+using Dartz_API.Auth;
 using dotenv.net;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,14 +17,6 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options =>
-{
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-});
 
 // Render.com puts the .env variables into the Configuration when running a Docker container. Use the standard .env approach we used previously for local development
 DotEnv.Load();
@@ -37,6 +33,47 @@ var connectionString = $"Server={server}; Port={port}; Database={database}; User
 
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseNpgsql(connectionString));
+
+// ==================== Authentication / Authorization ====================
+var jwtOptions = JwtOptions.FromConfiguration(builder.Configuration);
+builder.Services.AddSingleton(jwtOptions);
+builder.Services.AddSingleton<JwtTokenService>();
+builder.Services.AddSingleton<ServiceKeyValidator>();
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+        };
+
+        // The token is delivered in the HttpOnly "SessionId" cookie (not JS-readable),
+        // so it cannot be exfiltrated via XSS. Pull it out of the cookie into the
+        // bearer pipeline. An Authorization header is still honoured if present.
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (string.IsNullOrEmpty(context.Token) &&
+                    context.Request.Cookies.TryGetValue(AuthConstants.TokenCookieName, out var cookieToken))
+                {
+                    context.Token = cookieToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 //Repositories
 builder.Services.AddTransient<IPlayerRepository, PlayerRepository>();
@@ -68,12 +105,11 @@ app.UseCors(x => x
     //.SetIsOriginAllowed(origin => true) // allow any origin
     .WithOrigins("http://localhost:3000", "https://localhost:3000", "https://dartz.onrender.com", "https://dartz.finn-koehler.de", "https://dartz.finn-koehler.com", "dartz.finn-koehler.de", "dartz.finn-koehler.com", "finn-koehler.de", "finn-koehler.com") // Allow only this origin can also have multiple origins separated with comma
     .AllowCredentials()// allow credentials
-    .WithExposedHeaders()); 
+    .WithExposedHeaders());
 
 app.UseHttpsRedirection();
 
-app.UseMiddleware<SessionMiddleware>();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

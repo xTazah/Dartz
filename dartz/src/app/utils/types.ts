@@ -12,6 +12,7 @@ export type User = {
   initial: string;
   dartColor?: string; // Hex color code for dart customization
   allowNoAuth?: boolean; // Allow friends to add as local player without password
+  token?: string; // JWT for the SignalR connection (kept in memory only)
 } | null;
 
 //Player Throws

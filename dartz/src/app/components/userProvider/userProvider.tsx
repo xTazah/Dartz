@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { User } from "@/app/utils/types";
 import PlayerService from "@/app/services/backend/playerService";
 import { LoadingSpinner } from "../loadingSpinner/loadingSpinner";
-import { registerUser } from "@/app/services/gameServer/signalRClient";
+import { registerUser, setGameServerToken } from "@/app/services/gameServer/signalRClient";
 
 export const UserContext = React.createContext<{
   user: User | null;
@@ -42,6 +42,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
+    // Make the JWT available to the SignalR client before connecting.
+    setGameServerToken(user?.token ?? null);
     if (user) registerUser(user.id, user.username);
   }, [user]);
 

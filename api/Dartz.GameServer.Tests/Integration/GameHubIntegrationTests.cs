@@ -30,7 +30,7 @@ public class GameHubIntegrationTests : IAsyncLifetime
 
     private async Task<HubConnection> ConnectAsync(int userId, string username)
     {
-        var conn = _factory.CreateHubConnection();
+        var conn = _factory.CreateHubConnection(userId, username);
         await conn.StartAsync();
         await conn.InvokeAsync("Register", userId, username);
         return conn;

@@ -11,10 +11,20 @@ const GAME_SERVER_URL =
 let connection: HubConnection | null = null;
 let startPromise: Promise<void> | null = null;
 
+// JWT for the game-server connection, kept in memory only (never localStorage,
+// so it isn't exposed to XSS). Set from the login/session response.
+let accessToken: string | null = null;
+
+export function setGameServerToken(token: string | null): void {
+  accessToken = token;
+}
+
 export function getConnection(): HubConnection {
   if (!connection) {
     connection = new HubConnectionBuilder()
-      .withUrl(`${GAME_SERVER_URL}/gamehub`)
+      .withUrl(`${GAME_SERVER_URL}/gamehub`, {
+        accessTokenFactory: () => accessToken ?? "",
+      })
       .withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 30000])
       .configureLogging(LogLevel.Information)
       .build();

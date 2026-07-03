@@ -85,6 +85,33 @@ The REST API persists to PostgreSQL. The Game Server posts completed matches
 to the REST API via `ApiBaseUrl` for historization, so the authoritative game
 logic and the history store stay consistent.
 
+### Authentication
+
+Players authenticate with a username/password. On login/signup the REST API
+issues a signed **JWT** that is:
+
+- set as an `HttpOnly`, `Secure` cookie (`SessionId`) for REST calls — not
+  readable from JavaScript, so it can't be exfiltrated via XSS, and
+- returned in the response body so the SignalR client can present it to the
+  Game Server via `accessTokenFactory` (browsers can't attach an
+  `Authorization` header to the WebSocket handshake). The frontend keeps this
+  copy in memory only.
+
+Both services validate the same token, so **`JWT_KEY` must be identical on the
+REST API and the Game Server**. All endpoints require a valid token and derive
+the acting user's identity from the token's claims — never from request bodies
+or client-supplied ids. The Game Server authenticates its server-to-server
+match submissions to the REST API with a shared `GAMESERVER_API_KEY`.
+
+Required environment variables (set on each service / `.env`):
+
+| Variable             | REST API | Game Server | Notes                                            |
+| -------------------- | :------: | :---------: | ------------------------------------------------ |
+| `JWT_KEY`            |    ✓     |      ✓      | ≥ 32 bytes, **must match** across both services. |
+| `JWT_ISSUER`         |    ✓     |      ✓      | Optional, defaults to `dartz-api`.               |
+| `JWT_AUDIENCE`       |    ✓     |      ✓      | Optional, defaults to `dartz-clients`.           |
+| `GAMESERVER_API_KEY` |    ✓     |      ✓      | Shared secret for match submission.              |
+
 ## Running locally
 
 Prerequisites: .NET 8 SDK, Node.js 20+, a PostgreSQL instance.

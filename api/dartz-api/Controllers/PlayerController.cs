@@ -1,23 +1,44 @@
 using Dartz.Service.Interfaces;
 using Dartz.Model;
+using Dartz_API.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dartz_API.Controllers
 {
     [ApiController]
     [Route("player")]
+    [Authorize]
     public class PlayerController : ControllerBase
     {
 
         private readonly ILogger<PlayerController> _logger;
         private readonly IPlayerService _playerService;
         private readonly IPasswordService _passwordService;
+        private readonly JwtTokenService _tokenService;
 
-        public PlayerController(ILogger<PlayerController> logger, IPlayerService playerService, IPasswordService passwordService)
+        public PlayerController(ILogger<PlayerController> logger, IPlayerService playerService, IPasswordService passwordService, JwtTokenService tokenService)
         {
             _logger = logger;
             _playerService = playerService;
             _passwordService = passwordService;
+            _tokenService = tokenService;
+        }
+
+        // Issues the JWT into the HttpOnly cookie used for subsequent REST requests and
+        // returns it so it can also be handed to the SignalR client.
+        private string IssueAuthCookie(int playerId, string username)
+        {
+            var token = _tokenService.CreateToken(playerId, username);
+            Response.Cookies.Append(AuthConstants.TokenCookieName, token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddDays(30),
+                Path = "/"
+            });
+            return token;
         }
 
         [HttpGet("")]
@@ -49,6 +70,7 @@ namespace Dartz_API.Controllers
         }
 
         [HttpPost("signup")]
+        [AllowAnonymous]
         public ActionResult<int> AddPlayer([FromBody] PlayerDTO p)
         {
             var tmp = _playerService.GetPlayerByUsername(p.Username);
@@ -64,22 +86,16 @@ namespace Dartz_API.Controllers
 
             _playerService.AddPlayer(player, p.DartColor);
 
-            //"auto" login the user by creating a session and appending a cookie to the response
-            var sessionId = SessionMiddleware.CreateSession(player.Username);
-            Response.Cookies.Append("SessionId", sessionId, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.MaxValue
-            });
+            // "auto" login the user by issuing a JWT in the HttpOnly cookie
+            var token = IssueAuthCookie(player.ID, player.Username);
 
             var dartColor = _playerService.GetDartColor(player.ID);
             var settings = _playerService.GetPlayerSettings(player.ID);
-            return Ok(new FrontendUser { Id = player.ID, Initial = player.Initial, Username = player.Username, DartColor = dartColor, AllowNoAuth = settings?.AllowNoAuth ?? false });
+            return Ok(new FrontendUser { Id = player.ID, Initial = player.Initial, Username = player.Username, DartColor = dartColor, AllowNoAuth = settings?.AllowNoAuth ?? false, Token = token });
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public ActionResult<FrontendUser> LoginPlayer([FromBody] PlayerDTO p)
         {
             var user = _playerService.GetPlayerByUsername(p.Username);
@@ -93,30 +109,30 @@ namespace Dartz_API.Controllers
                 return Unauthorized("Wrong password");
             }
 
-            var sessionId = SessionMiddleware.CreateSession(user.Username);
-            Response.Cookies.Append("SessionId", sessionId, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.MaxValue,
-                Path = "/"
-            });
+            var token = IssueAuthCookie(user.ID, user.Username);
 
             var dartColor = _playerService.GetDartColor(user.ID);
             var settings = _playerService.GetPlayerSettings(user.ID);
-            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, DartColor = dartColor, AllowNoAuth = settings?.AllowNoAuth ?? false, ProfilePicture=user.ProfilePicture, Bio=user.Bio, MemberSince=user.MemberSince });
+            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, DartColor = dartColor, AllowNoAuth = settings?.AllowNoAuth ?? false, ProfilePicture=user.ProfilePicture, Bio=user.Bio, MemberSince=user.MemberSince, Token = token });
         }
 
         [HttpPost("editProfile")]
         public ActionResult<int> EditProfile([FromBody] PlayerDTO p)
         {
-            if(!p.ID.HasValue)
-                return BadRequest("User does not exist");
-            var tmp = _playerService.GetPlayerById(p.ID.Value);
+            // Identity comes from the authenticated token, never from the request body.
+            var callerId = User.GetPlayerId();
+            if (callerId == null)
+                return Unauthorized();
+
+            var tmp = _playerService.GetPlayerById(callerId.Value);
             if (tmp == null)
             {
                 return BadRequest("User does not exist");
+            }
+
+            if (!ProfileInputValidator.IsAllowedProfilePicture(p.ProfilePicture))
+            {
+                return BadRequest("Invalid profile picture URL");
             }
 
             var player = new Player()
@@ -133,49 +149,43 @@ namespace Dartz_API.Controllers
             return Ok();
         }
 
+        // Returns the current user based on the JWT in the cookie. Replaces the old
+        // server-side session lookup.
         [HttpPost("login/sessionId")]
         public ActionResult<FrontendUser> LoginPlayerBySessionID()
         {
-            var sessionId = Request.Cookies["SessionId"];
-            if (string.IsNullOrEmpty(sessionId))
+            var callerId = User.GetPlayerId();
+            if (callerId == null)
             {
-                return Unauthorized("No SessionID found in cookies. Please login manually");
-
-            }
-            var username = SessionMiddleware.GetUsernameFromSession(sessionId);
-
-            if (username == null)
-            {
-                return BadRequest("Session for this user does not exist");
+                return Unauthorized("Not authenticated. Please login manually");
             }
 
-            var user = _playerService.GetPlayerByUsername(username);
+            var user = _playerService.GetPlayerById(callerId.Value);
 
             if (user == null)
             {
                 return BadRequest("User does not exist");
             }
 
+            // Re-issue a fresh token so the SignalR client (which can't read the
+            // HttpOnly cookie) has one in memory after a page reload.
+            var token = IssueAuthCookie(user.ID, user.Username);
+
             var dartColor = _playerService.GetDartColor(user.ID);
             var settings = _playerService.GetPlayerSettings(user.ID);
-            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, ProfilePicture=user.ProfilePicture, Bio=user.Bio, MemberSince=user.MemberSince, DartColor = dartColor, AllowNoAuth = settings?.AllowNoAuth ?? false });
+            return Ok(new FrontendUser { Id = user.ID, Initial = user.Initial, Username = user.Username, ProfilePicture=user.ProfilePicture, Bio=user.Bio, MemberSince=user.MemberSince, DartColor = dartColor, AllowNoAuth = settings?.AllowNoAuth ?? false, Token = token });
         }
 
         [HttpPost("logout")]
         public ActionResult LogoutPlayer()
         {
-            var sessionId = Request.Cookies["SessionId"];
-            if (!string.IsNullOrEmpty(sessionId))
+            Response.Cookies.Delete(AuthConstants.TokenCookieName, new CookieOptions
             {
-                SessionMiddleware.RemoveSession(sessionId); 
-                Response.Cookies.Delete("SessionId", new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.None,
-                    Path = "/",
-                });
-            }
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Path = "/",
+            });
             return Ok();
         }
 
@@ -191,6 +201,7 @@ namespace Dartz_API.Controllers
         }
 
         [HttpGet("settings/allowNoAuth/{playerId}")]
+        [AllowAnonymous]
         public ActionResult<bool> CheckAllowNoAuth(int playerId)
         {
             var settings = _playerService.GetPlayerSettings(playerId);
@@ -200,6 +211,16 @@ namespace Dartz_API.Controllers
         [HttpPut("settings")]
         public ActionResult UpdateSettings([FromBody] PlayerSettings settings)
         {
+            var callerId = User.GetPlayerId();
+            if (callerId == null) return Unauthorized();
+
+            // Only allow editing your own settings.
+            var existing = _playerService.GetPlayerSettings(callerId.Value);
+            if (existing == null || existing.ID != settings.ID || existing.PlayerID != callerId.Value)
+            {
+                return Forbid();
+            }
+
             _playerService.UpdatePlayerSettings(settings);
             return Ok();
         }
@@ -207,6 +228,10 @@ namespace Dartz_API.Controllers
         [HttpPut("settings/dartColor")]
         public ActionResult UpdateDartColor([FromBody] DartColorDTO dto)
         {
+            var callerId = User.GetPlayerId();
+            if (callerId == null) return Unauthorized();
+            if (dto.PlayerId != callerId.Value) return Forbid();
+
             var settings = _playerService.GetPlayerSettings(dto.PlayerId);
             if (settings == null)
             {
@@ -222,6 +247,10 @@ namespace Dartz_API.Controllers
         [HttpPut("settings/all")]
         public ActionResult UpdateAllSettings([FromBody] UserSettingsDTO dto)
         {
+            var callerId = User.GetPlayerId();
+            if (callerId == null) return Unauthorized();
+            if (dto.PlayerId != callerId.Value) return Forbid();
+
             var settings = _playerService.GetPlayerSettings(dto.PlayerId);
             if (settings == null)
             {
