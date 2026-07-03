@@ -24,7 +24,12 @@ Test it live at [dartz.finn-koehler.com](https://dartz.finn-koehler.com).
 - **Undo** — the lobby owner can revert the most recent turn.
 - **Play Again** after a match resets scores, legs, and sets for the same
   lobby without requiring everyone to re-join.
-- Multiple game modes configured: 501, Around the Clock, Double Training.
+- Three game modes, all played with the same legs/sets match format:
+  - **501** — classic countdown; first to exactly zero wins the leg.
+  - **Around the Clock** — hit 1 through 20 in order (any multiplier counts),
+    then finish on the Bull.
+  - **Double Training** — hit D1 through D20 in order; only doubles on the
+    current target count.
 
 ### Lobbies and presence
 

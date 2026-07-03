@@ -285,20 +285,38 @@ namespace Dartz.Service
                         var throwDto = playerDto.Throws[idx];
                         throwIndices[playerDto.PlayerId] = idx + 1;
 
-                        int totalPoints =
-                            throwDto.Score1 * throwDto.Multiplier1 +
-                            throwDto.Score2 * throwDto.Multiplier2 +
-                            throwDto.Score3 * throwDto.Multiplier3;
-
                         int scoreBefore = scores[playerDto.PlayerId];
-                        int scoreAfter = scoreBefore - totalPoints;
-                        bool isBust = scoreAfter < 0 || scoreAfter == 1;
+                        int scoreAfter;
+                        int totalPoints;
+                        bool isBust = false;
 
-                        if (isBust)
+                        if (IsSequenceMode(submission.GameModeKey))
                         {
-                            // Bust: score stays the same, and the throw was empty/invalid
-                            scoreAfter = scoreBefore;
-                            totalPoints = 0;
+                            // Sequence modes (around the clock / double training):
+                            // "score" is the current target. TotalPoints = targets hit
+                            // this turn. ScoreAfter == 0 marks the completed sequence
+                            // (leg won), matching the 501 leg-boundary sentinel.
+                            var (hits, targetAfter, completed) = ReplaySequenceThrow(
+                                submission.GameModeKey, scoreBefore, throwDto);
+                            totalPoints = hits;
+                            scoreAfter = completed ? 0 : targetAfter;
+                        }
+                        else
+                        {
+                            totalPoints =
+                                throwDto.Score1 * throwDto.Multiplier1 +
+                                throwDto.Score2 * throwDto.Multiplier2 +
+                                throwDto.Score3 * throwDto.Multiplier3;
+
+                            scoreAfter = scoreBefore - totalPoints;
+                            isBust = scoreAfter < 0 || scoreAfter == 1;
+
+                            if (isBust)
+                            {
+                                // Bust: score stays the same, and the throw was empty/invalid
+                                scoreAfter = scoreBefore;
+                                totalPoints = 0;
+                            }
                         }
 
                         scores[playerDto.PlayerId] = scoreAfter;
@@ -356,8 +374,69 @@ namespace Dartz.Service
             {
                 "501" => 501,
                 "301" => 301,
+                // Sequence modes start at target 1
+                "around-the-clock" => 1,
+                "double-training" => 1,
                 _ => 501, // Default to 501
             };
+        }
+
+        /// <summary>
+        /// True for modes where players work through a sequence of targets
+        /// instead of counting down points.
+        /// </summary>
+        private static bool IsSequenceMode(string gameModeKey) =>
+            gameModeKey is "around-the-clock" or "double-training";
+
+        /// <summary>
+        /// Replays one throw of a sequence mode. Mirrors the authoritative
+        /// GameServer logic: around-the-clock targets 1-20 then Bull (any
+        /// multiplier counts); double-training targets D1-D20 (doubles only).
+        /// </summary>
+        private static (int hits, int targetAfter, bool completed) ReplaySequenceThrow(
+            string gameModeKey, int targetBefore, MatchSubmissionThrowDto throwDto)
+        {
+            bool doublesOnly = gameModeKey == "double-training";
+            bool endWithBull = gameModeKey == "around-the-clock";
+            const int bull = 25;
+
+            var darts = new (int Score, int Multiplier)[]
+            {
+                (throwDto.Score1, throwDto.Multiplier1),
+                (throwDto.Score2, throwDto.Multiplier2),
+                (throwDto.Score3, throwDto.Multiplier3),
+            };
+
+            int target = targetBefore;
+            int hits = 0;
+            bool completed = false;
+
+            foreach (var (score, multiplier) in darts)
+            {
+                if (completed) break;
+
+                bool hit = doublesOnly
+                    ? score == target && multiplier == 2
+                    : score == target;
+                if (!hit) continue;
+
+                hits++;
+                if (target == 20)
+                {
+                    if (endWithBull) target = bull;
+                    else completed = true;
+                }
+                else if (target == bull)
+                {
+                    completed = true;
+                }
+                else
+                {
+                    target++;
+                }
+            }
+
+            return (hits, target, completed);
         }
 
         /// <summary>
@@ -507,40 +586,57 @@ namespace Dartz.Service
                 double matchAverage = matchTurns > 0 ? (double)matchPoints / matchTurns : 0;
 
                 // ── Update aggregate stats ──
+                // Match/leg/win counters apply to every game mode. Scoring
+                // stats (averages, 100+/140+/180s, busts, checkouts, first 9,
+                // best leg darts) only make sense for point-countdown modes
+                // like 501 and would be polluted by training modes, where
+                // "points" are target hits.
+                bool isScoringMode = !IsSequenceMode(match.GameModeKey);
+
                 stats.TotalMatches++;
                 stats.TotalWins += isWinner ? 1 : 0;
                 stats.TotalLegs += legsPlayed;
                 stats.TotalLegsWon += legsWon;
-                stats.TotalTurns += matchTurns;
-                stats.TotalPoints += matchPoints;
-                stats.TotalDarts += matchDarts;
-                stats.OverallAverage = stats.TotalTurns > 0 ? (double)stats.TotalPoints / stats.TotalTurns : 0;
-                stats.HighestTurnScore = Math.Max(stats.HighestTurnScore, matchHighest);
-                stats.Count100Plus += match100Plus;
-                stats.Count140Plus += match140Plus;
-                stats.Count180s += match180s;
 
-                // Busts
-                stats.TotalBusts += matchBusts;
-
-                // Checkouts
-                stats.TotalCheckoutAttempts += matchCheckoutAttempts;
-                stats.TotalCheckouts += matchCheckouts;
-                stats.HighestCheckout = Math.Max(stats.HighestCheckout, matchHighestCheckout);
-
-                // Best leg darts
-                if (bestLegDartsThisMatch.HasValue)
+                if (isScoringMode)
                 {
-                    stats.BestLegDarts = stats.BestLegDarts.HasValue
-                        ? Math.Min(stats.BestLegDarts.Value, bestLegDartsThisMatch.Value)
-                        : bestLegDartsThisMatch.Value;
-                }
+                    stats.TotalTurns += matchTurns;
+                    stats.TotalPoints += matchPoints;
+                    stats.TotalDarts += matchDarts;
+                    stats.OverallAverage = stats.TotalTurns > 0 ? (double)stats.TotalPoints / stats.TotalTurns : 0;
+                    stats.HighestTurnScore = Math.Max(stats.HighestTurnScore, matchHighest);
+                    stats.Count100Plus += match100Plus;
+                    stats.Count140Plus += match140Plus;
+                    stats.Count180s += match180s;
 
-                // Best/Worst match average
-                if (matchTurns > 0)
-                {
-                    stats.BestMatchAverage = Math.Max(stats.BestMatchAverage, matchAverage);
-                    stats.WorstMatchAverage = Math.Min(stats.WorstMatchAverage, matchAverage);
+                    // Busts
+                    stats.TotalBusts += matchBusts;
+
+                    // Checkouts
+                    stats.TotalCheckoutAttempts += matchCheckoutAttempts;
+                    stats.TotalCheckouts += matchCheckouts;
+                    stats.HighestCheckout = Math.Max(stats.HighestCheckout, matchHighestCheckout);
+
+                    // Best leg darts
+                    if (bestLegDartsThisMatch.HasValue)
+                    {
+                        stats.BestLegDarts = stats.BestLegDarts.HasValue
+                            ? Math.Min(stats.BestLegDarts.Value, bestLegDartsThisMatch.Value)
+                            : bestLegDartsThisMatch.Value;
+                    }
+
+                    // Best/Worst match average
+                    if (matchTurns > 0)
+                    {
+                        stats.BestMatchAverage = Math.Max(stats.BestMatchAverage, matchAverage);
+                        stats.WorstMatchAverage = Math.Min(stats.WorstMatchAverage, matchAverage);
+                    }
+
+                    // First 9 average
+                    stats.TotalFirst9Turns += first9Turns;
+                    stats.TotalFirst9Points += first9Points;
+                    stats.First9Average = stats.TotalFirst9Turns > 0
+                        ? (double)stats.TotalFirst9Points / stats.TotalFirst9Turns : 0;
                 }
 
                 // Win streaks
@@ -553,12 +649,6 @@ namespace Dartz.Service
                 {
                     stats.CurrentWinStreak = 0;
                 }
-
-                // First 9 average
-                stats.TotalFirst9Turns += first9Turns;
-                stats.TotalFirst9Points += first9Points;
-                stats.First9Average = stats.TotalFirst9Turns > 0
-                    ? (double)stats.TotalFirst9Points / stats.TotalFirst9Turns : 0;
 
                 stats.LastPlayedAt = DateTime.UtcNow;
 

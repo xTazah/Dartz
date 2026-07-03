@@ -22,6 +22,13 @@ import {
   calculateHighestScore,
   calculateLastScore,
 } from "@/app/handlers/statisticsHandler";
+import {
+  isSequenceMode,
+  simulateSequenceThrow,
+  formatTargetLabel,
+  sequenceProgress,
+  SequenceDart,
+} from "@/app/gameLogic/sequenceLogic";
 
 import { SignalSlashIcon, ArrowUturnLeftIcon, UserIcon } from "@heroicons/react/24/solid";
 import SkipPlayerPopover from "../modals/SkipPlayerModal";
@@ -103,6 +110,11 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
 
   const currentPlayer = lobby.players?.[lobby.currentPlayerIndex];
 
+  // Sequence modes (Around the Clock / Double Training): player.score is the
+  // current target, not a points countdown.
+  const modeKey = lobby.gameMode.key;
+  const sequenceModeKey = isSequenceMode(modeKey) ? modeKey : null;
+
   // Check if current user is the current player or a local user
   const isCurrentUsersTurn = useMemo(() => {
     if (!currentPlayer) return false;
@@ -113,6 +125,24 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
       localUsers?.some((localUser) => localUser?.id === playerUserId)
     );
   }, [currentPlayer?.user?.id, user?.id, localUsers]);
+
+  // Darts currently being entered (either input mode), used for previews
+  const pendingDarts: SequenceDart[] = useMemo(() => {
+    if (inputMode === "dartboard") {
+      return dartboardThrows.map((t) => ({ score: t.score, multiplier: t.multiplier }));
+    }
+    const list: SequenceDart[] = [];
+    if (playerScore1 !== "") list.push({ score: Number(playerScore1), multiplier: multiplier1 });
+    if (playerScore2 !== "") list.push({ score: Number(playerScore2), multiplier: multiplier2 });
+    if (playerScore3 !== "") list.push({ score: Number(playerScore3), multiplier: multiplier3 });
+    return list;
+  }, [inputMode, dartboardThrows, playerScore1, playerScore2, playerScore3, multiplier1, multiplier2, multiplier3]);
+
+  // Live target progression preview for sequence modes
+  const sequenceSim = useMemo(() => {
+    if (!sequenceModeKey || !currentPlayer) return null;
+    return simulateSequenceThrow(sequenceModeKey, currentPlayer.score, pendingDarts);
+  }, [sequenceModeKey, currentPlayer?.score, pendingDarts]);
 
   // Update dartboard preview score
   useEffect(() => {
@@ -570,14 +600,17 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
 
   // Player card component for non-active players
   const PlayerCard = ({ player, isActive }: { player: typeof currentPlayer; isActive: boolean }) => {
-    const displayScore = isActive && user?.id === currentPlayer.user?.id
-      ? getDisplayPreviewScore()
-      : player.score;
-    
-    const isBust = isActive && user?.id === currentPlayer.user?.id && 
+    const isSelfActive = isActive && user?.id === currentPlayer.user?.id;
+    const displayScore = isSelfActive ? getDisplayPreviewScore() : player.score;
+
+    const isBust = !sequenceModeKey && isSelfActive &&
       ((displayScore < 2 || displayScore > 501) && displayScore !== 0);
-    
+
     const isCurrentUser = player.user?.id === user?.id;
+
+    // Sequence modes: show the current (or previewed) target instead of a score
+    const previewTarget = isSelfActive && sequenceSim ? sequenceSim.target : player.score;
+    const previewCompleted = isSelfActive && !!sequenceSim?.completed;
 
     return (
       <div className={`${dartboardStyles.playerCard} ${isActive ? dartboardStyles.activePlayer : ""}`}>
@@ -593,27 +626,45 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
             <span>Disconnected</span>
           </div>
         )}
-        
+
         <div className={dartboardStyles.playerHeader}>
           <span className={dartboardStyles.playerName}>{player.user?.username}</span>
           <span className={dartboardStyles.playerLegs}>{player.legs} legs</span>
         </div>
-        
-        <div className={`${dartboardStyles.playerScore} ${isBust ? dartboardStyles.bust : ""}`}>
-          {isBust ? "BUST" : displayScore}
-        </div>
-        
-        {/* Checkout suggestion */}
-        {(() => {
-          const checkout = getCheckoutPath(displayScore);
-          if (checkout) {
-            return <div className={dartboardStyles.checkoutHint}>{checkout}</div>;
-          }
-          return null;
-        })()}
-        
-        {/* Stats for non-active players */}
-        {!isActive && player.throws && player.throws.length > 0 && (
+
+        {sequenceModeKey ? (
+          <>
+            <div className={dartboardStyles.playerScore}>
+              {previewCompleted ? "🎯" : formatTargetLabel(sequenceModeKey, previewTarget)}
+            </div>
+            <div className={dartboardStyles.checkoutHint}>
+              {previewCompleted
+                ? "Finished!"
+                : (() => {
+                    const { step, total } = sequenceProgress(sequenceModeKey, previewTarget);
+                    return `Target ${step} of ${total}`;
+                  })()}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className={`${dartboardStyles.playerScore} ${isBust ? dartboardStyles.bust : ""}`}>
+              {isBust ? "BUST" : displayScore}
+            </div>
+
+            {/* Checkout suggestion */}
+            {(() => {
+              const checkout = getCheckoutPath(displayScore);
+              if (checkout) {
+                return <div className={dartboardStyles.checkoutHint}>{checkout}</div>;
+              }
+              return null;
+            })()}
+          </>
+        )}
+
+        {/* Stats for non-active players (point-based, 501 only) */}
+        {!sequenceModeKey && !isActive && player.throws && player.throws.length > 0 && (
           <div className={dartboardStyles.playerStats}>
             <div className={dartboardStyles.statRow}>
               <span>Avg</span>
@@ -725,6 +776,16 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
                   onClear={handleDartboardClear}
                   currentScore={currentPlayer.score}
                   previewScore={dartboardPreviewScore}
+                  sequence={
+                    sequenceModeKey && sequenceSim
+                      ? {
+                          modeKey: sequenceModeKey,
+                          previewTarget: sequenceSim.target,
+                          hits: sequenceSim.hits,
+                          completed: sequenceSim.completed,
+                        }
+                      : undefined
+                  }
                 />
               ) : (
                 <div className={dartboardStyles.panel}>
@@ -777,18 +838,34 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
           <InputModeToggle />
           <div className={dartboardStyles.manualInputArea}>
               <div className={dartboardStyles.manualFormContainer}>
-                {/* Score Preview */}
-                <div className={dartboardStyles.manualScorePreview}>
-                  <span className={dartboardStyles.manualScoreLabel}>Score</span>
-                  <span className={`${dartboardStyles.manualScoreValue} ${
-                    previewScore < 2 && previewScore !== 0 ? dartboardStyles.bust : ""
-                  }`}>
-                    {previewScore < 2 && previewScore !== 0 ? "BUST" : previewScore}
-                  </span>
-                  {totalManualScore > 0 && (
-                    <span className={dartboardStyles.manualScoreDelta}>-{totalManualScore}</span>
-                  )}
-                </div>
+                {/* Score / target preview */}
+                {sequenceModeKey ? (
+                  <div className={dartboardStyles.manualScorePreview}>
+                    <span className={dartboardStyles.manualScoreLabel}>Target</span>
+                    <span className={dartboardStyles.manualScoreValue}>
+                      {sequenceSim?.completed
+                        ? "Done!"
+                        : formatTargetLabel(sequenceModeKey, sequenceSim?.target ?? currentPlayer.score)}
+                    </span>
+                    {(sequenceSim?.hits ?? 0) > 0 && (
+                      <span className={dartboardStyles.manualScoreDelta}>
+                        +{sequenceSim!.hits} hit{sequenceSim!.hits > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className={dartboardStyles.manualScorePreview}>
+                    <span className={dartboardStyles.manualScoreLabel}>Score</span>
+                    <span className={`${dartboardStyles.manualScoreValue} ${
+                      previewScore < 2 && previewScore !== 0 ? dartboardStyles.bust : ""
+                    }`}>
+                      {previewScore < 2 && previewScore !== 0 ? "BUST" : previewScore}
+                    </span>
+                    {totalManualScore > 0 && (
+                      <span className={dartboardStyles.manualScoreDelta}>-{totalManualScore}</span>
+                    )}
+                  </div>
+                )}
 
                 {/* Throw inputs */}
                 <div className={dartboardStyles.throwsContainer}>
@@ -953,11 +1030,20 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
                 </div>
 
                 {/* Total */}
-                {totalManualScore > 0 && (
-                  <div className={dartboardStyles.totalRow}>
-                    <span>Round total:</span>
-                    <span className={dartboardStyles.totalValue}>{totalManualScore}</span>
-                  </div>
+                {sequenceModeKey ? (
+                  pendingDarts.length > 0 && (
+                    <div className={dartboardStyles.totalRow}>
+                      <span>Targets hit:</span>
+                      <span className={dartboardStyles.totalValue}>{sequenceSim?.hits ?? 0}</span>
+                    </div>
+                  )
+                ) : (
+                  totalManualScore > 0 && (
+                    <div className={dartboardStyles.totalRow}>
+                      <span>Round total:</span>
+                      <span className={dartboardStyles.totalValue}>{totalManualScore}</span>
+                    </div>
+                  )
                 )}
 
                 {/* Submit button */}

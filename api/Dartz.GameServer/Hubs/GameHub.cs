@@ -184,7 +184,7 @@ public class GameHub : Hub
             lobby.TargetLegs = 1;
         }
 
-        GameModeLogic.Initialize501(lobby);
+        GameModeLogic.Initialize(lobby);
         await Clients.Group($"lobby_{lobbyId}").SendAsync("LobbyUpdated", lobby);
     }
 
@@ -199,7 +199,7 @@ public class GameHub : Hub
 
         if (!dartThrow.IsValid()) return;
 
-        var (result, updatedLobby) = GameModeLogic.ProcessTurn501(lobby, dartThrow);
+        var (result, updatedLobby) = GameModeLogic.ProcessTurn(lobby, dartThrow);
         updatedLobby.CurrentTurnDarts = null;
         updatedLobby.SkipVotes.Clear();
 
@@ -221,16 +221,7 @@ public class GameHub : Hub
         if (lobby.OwnerUserId != requestingUserId) return;
         if (lobby.GameStatus != GameStatus.Running) return;
 
-        int playerCount = lobby.Players.Count;
-        lobby.CurrentPlayerIndex = (lobby.CurrentPlayerIndex - 1 + playerCount) % playerCount;
-
-        var player = lobby.Players[lobby.CurrentPlayerIndex];
-        if (player.Throws.Count > 0)
-        {
-            var lastThrow = player.Throws[^1];
-            player.Throws.RemoveAt(player.Throws.Count - 1);
-            player.Score += lastThrow.TotalScore;
-        }
+        GameModeLogic.UndoLastTurn(lobby);
 
         lobby.SkipVotes.Clear();
         await Clients.Group($"lobby_{lobbyId}").SendAsync("LobbyUpdated", lobby);
@@ -299,7 +290,7 @@ public class GameHub : Hub
         {
             // Skip turn: submit an empty throw
             var emptyThrow = new ServerThrow();
-            var (result, updatedLobby) = GameModeLogic.ProcessTurn501(lobby, emptyThrow);
+            var (result, updatedLobby) = GameModeLogic.ProcessTurn(lobby, emptyThrow);
             updatedLobby.SkipVotes.Clear();
             updatedLobby.CurrentTurnDarts = null;
 

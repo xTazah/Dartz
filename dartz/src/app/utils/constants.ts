@@ -1,12 +1,13 @@
 import { ClockIcon, PlayIcon, Square2StackIcon, ArchiveBoxIcon} from '@heroicons/react/24/solid';
 import { fiveHundredOneLogic } from '../gameLogic/501Logic';
+import { createSequenceLogic } from '../gameLogic/sequenceLogic';
 
 export const GAME_MODES = [
   {
     key: "around-the-clock",
     name: "Around the Clock",
     Icon: ClockIcon,
-    logic: fiveHundredOneLogic,
+    logic: createSequenceLogic("around-the-clock"),
   },
   {
     key: "501",
@@ -18,7 +19,7 @@ export const GAME_MODES = [
     key: "double-training",
     name: "Double Training",
     Icon: Square2StackIcon,
-    logic: fiveHundredOneLogic,
+    logic: createSequenceLogic("double-training"),
   },
   // {
   //   key: "test-mode",
@@ -26,7 +27,7 @@ export const GAME_MODES = [
   //   Icon: ArchiveBoxIcon,
   //   logic: fiveHundredOneLogic,
   // },
-] as const; //for type safety
+] as const; // for type safety
 
 export const IconsMap = {
   // "test-mode": ArchiveBoxIcon,
