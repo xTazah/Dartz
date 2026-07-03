@@ -22,6 +22,15 @@ const GAME_MODE_LABELS: Record<string, string> = {
   "double-training": "Double Training",
 };
 
+// Sequence modes track target progression instead of a points countdown
+const SEQUENCE_MODES = new Set(["around-the-clock", "double-training"]);
+
+function formatSequenceScore(gameModeKey: string, value: number): string {
+  if (value === 0) return "✓"; // sequence completed (leg won)
+  if (value === 25) return "Bull";
+  return gameModeKey === "double-training" ? `D${value}` : `${value}`;
+}
+
 function formatDart(dart: MatchDetailDart): { label: string; style: string } {
   if (dart.baseScore === 0)
     return { label: "MISS", style: styles.dartChipMiss };
@@ -122,6 +131,7 @@ export default function MatchDetailPage() {
   });
   const modeLabel =
     GAME_MODE_LABELS[match.gameModeKey] ?? match.gameModeKey;
+  const isSequenceMode = SEQUENCE_MODES.has(match.gameModeKey);
 
   return (
     <div className={styles.matchDetailContainer}>
@@ -212,8 +222,12 @@ export default function MatchDetailPage() {
                   <div className={`${styles.turnRow} ${styles.turnRowHeader}`}>
                     <div></div>
                     <div>Player</div>
-                    <div style={{ textAlign: "center" }}>Pts</div>
-                    <div style={{ textAlign: "center" }}>Score</div>
+                    <div style={{ textAlign: "center" }}>
+                      {isSequenceMode ? "Hits" : "Pts"}
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      {isSequenceMode ? "Target" : "Score"}
+                    </div>
                     <div></div>
                     <div>Darts</div>
                   </div>
@@ -239,7 +253,9 @@ export default function MatchDetailPage() {
                         )}
                       </div>
                       <div className={styles.turnScore}>
-                        {turn.scoreBefore} → {turn.scoreAfter}
+                        {isSequenceMode
+                          ? `${formatSequenceScore(match.gameModeKey, turn.scoreBefore)} → ${formatSequenceScore(match.gameModeKey, turn.scoreAfter)}`
+                          : `${turn.scoreBefore} → ${turn.scoreAfter}`}
                       </div>
                       <div></div>
                       <div className={styles.turnDarts}>
