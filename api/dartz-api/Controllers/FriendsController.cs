@@ -49,6 +49,11 @@ namespace Dartz_API.Controllers
         [HttpPost("isFriend")]
         public ActionResult IsFriend([FromBody] Relationship rs)
         {
+            // Only allow querying relationships the caller is part of.
+            var callerId = User.GetPlayerId();
+            if (callerId == null) return Unauthorized();
+            if (rs.userId1 != callerId.Value && rs.userId2 != callerId.Value) return Forbid();
+
             var isFriend = _friendsService.CheckFriendship(rs.userId1, rs.userId2);
             if (!isFriend)
                 return Ok();
