@@ -41,38 +41,49 @@ namespace Dartz_API.Controllers
             return token;
         }
 
+        // Player lookups return PublicPlayer, never the raw entity, so PasswordHash
+        // and navigation properties are never serialized to clients.
         [HttpGet("")]
-        public ActionResult<IEnumerable<Player>> GetAll()
+        public ActionResult<IEnumerable<PublicPlayer>> GetAll()
         {
-            return Ok(_playerService.GetAllPlayers());
+            return Ok(_playerService.GetAllPlayers().Select(PublicPlayer.FromPlayer));
         }
 
         [HttpGet("username/{username}")]
-        public ActionResult<Player> GetByUsername(string username)
+        public ActionResult<PublicPlayer> GetByUsername(string username)
         {
             var result = _playerService.GetPlayerByUsername(username);
             if(result == null)
             {
                 return NotFound();
             }
-            return Ok(result);
+            return Ok(PublicPlayer.FromPlayer(result));
         }
 
         [HttpGet("{id}")]
-        public ActionResult<Player> GetById(int id)
+        public ActionResult<PublicPlayer> GetById(int id)
         {
             var result = _playerService.GetPlayerById(id);
             if (result == null)
             {
                 return NotFound();
             }
-            return Ok(result);
+            return Ok(PublicPlayer.FromPlayer(result));
         }
 
         [HttpPost("signup")]
         [AllowAnonymous]
         public ActionResult<int> AddPlayer([FromBody] PlayerDTO p)
         {
+            if (string.IsNullOrWhiteSpace(p.Username) || p.Username.Length > 32)
+            {
+                return BadRequest("Username must be between 1 and 32 characters");
+            }
+            if (string.IsNullOrEmpty(p.Password) || p.Password.Length > 128)
+            {
+                return BadRequest("Password must be between 1 and 128 characters");
+            }
+
             var tmp = _playerService.GetPlayerByUsername(p.Username);
             if (tmp != null)
             {
@@ -135,6 +146,11 @@ namespace Dartz_API.Controllers
                 return BadRequest("Invalid profile picture URL");
             }
 
+            if (p.Bio != null && p.Bio.Length > 1000)
+            {
+                return BadRequest("Bio must be at most 1000 characters");
+            }
+
             var player = new Player()
             {
                 ID = tmp.ID,
@@ -192,6 +208,11 @@ namespace Dartz_API.Controllers
         [HttpGet("settings/{playerId}")]
         public ActionResult<PlayerSettings> GetSettings(int playerId)
         {
+            // Settings are private to their owner.
+            var callerId = User.GetPlayerId();
+            if (callerId == null) return Unauthorized();
+            if (playerId != callerId.Value) return Forbid();
+
             var settings = _playerService.GetPlayerSettings(playerId);
             if (settings == null)
             {

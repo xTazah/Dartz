@@ -16,10 +16,11 @@ namespace Dartz_API.Auth
 
             if (value.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
             {
-                return true;
+                // Cap inline images (~1.5 MB decoded) to prevent DB bloat / oversized payloads.
+                return value.Length <= 2_000_000;
             }
 
-            if (Uri.TryCreate(value, UriKind.Absolute, out var uri))
+            if (value.Length <= 2048 && Uri.TryCreate(value, UriKind.Absolute, out var uri))
             {
                 return uri.Scheme == Uri.UriSchemeHttps;
             }

@@ -116,8 +116,11 @@ public class GameHub : Hub
     public async Task<ServerLobby> CreateLobby(string lobbyId, int ownerUserId,
         string ownerUsername, string gameModeKey)
     {
+        // Consistent with the other hub methods: reject rather than fall back to
+        // the client-supplied id when the token has no usable player id.
         var authId = AuthUserId;
-        if (authId != null) ownerUserId = authId.Value;
+        if (authId == null) throw new HubException("Unauthorized");
+        ownerUserId = authId.Value;
 
         var lobby = _lobbies.CreateLobby(lobbyId, ownerUserId, ownerUsername, gameModeKey);
         await Groups.AddToGroupAsync(Context.ConnectionId, $"lobby_{lobbyId}");
