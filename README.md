@@ -18,7 +18,10 @@ Test it live at [dartz.finn-koehler.com](https://dartz.finn-koehler.com).
   Three.js / react-three-fiber, or enter scores manually with multiplier
   toggles. Switch freely between them mid-turn.
 - **Live checkout suggestions** appear under your score whenever a finish is
-  possible from your current total.
+  possible. Routes are solved rather than looked up, so every suggestion adds
+  up exactly and ends on a double, and the hint shrinks to what the darts you
+  have left can actually reach — on 100 with one dart in hand it shows nothing,
+  on 40 it shows `D20`.
 - **Bust detection** — busts preserve the starting score and record a zero
   throw so averages stay consistent.
 - **Undo** — the lobby owner can revert the most recent turn.
@@ -147,14 +150,24 @@ driven by real `HubConnection` clients against an in-memory TestServer.
 dotnet test api/Dartz.GameServer.Tests/Dartz.GameServer.Tests.csproj
 ```
 
+Client-side tests run with Vitest and cover the pure game logic that lives in
+the frontend — currently the checkout solver, which is checked exhaustively
+against every score from 2 to 170.
+
+```bash
+cd dartz
+npm test
+```
+
 ## CI and deployment
 
 GitHub Actions (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml))
 runs on every pull request and on pushes to `master`:
 
 - `GameServer tests` — restore, build, run the xUnit suite, upload results.
+- `Web tests` — install frontend dependencies and run the Vitest suite.
 - `REST API build` — restore and build the REST API project.
 
 Pushes to `master` trigger auto-deploys on Render (REST API, Game Server) and
-Vercel (frontend). Branch protection on `master` requires both CI checks to
+Vercel (frontend). Branch protection on `master` requires the CI checks to
 pass before a PR can merge, so red CI blocks a deploy.
