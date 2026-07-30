@@ -11,7 +11,7 @@ import LobbyHandler from "@/app/handlers/lobbyHandler";
 import { listenToDartPositions, voteSkipTurn, listenToSkipVoteUpdate, listenToTurnSkipped } from "@/app/services/gameServer/lobbyService";
 import React, { useContext, useEffect, useState, lazy, Suspense, useCallback, useMemo, useRef } from "react";
 import { Button } from "@nextui-org/react";
-import getCheckoutPath from "@/app/handlers/checkoutHandler";
+import { getCheckoutPath } from "@/app/gameLogic/checkout";
 import { UserContext } from "../userProvider/userProvider";
 import styles from "@/app/styles/game.module.scss";
 import dartboardStyles from "@/app/styles/dartboard.module.scss";
@@ -652,9 +652,10 @@ const Game = ({ lobby, setLobby, localUsers }: GameProps) => {
               {isBust ? "BUST" : displayScore}
             </div>
 
-            {/* Checkout suggestion */}
+            {/* Checkout suggestion, limited to the darts left in the turn */}
             {(() => {
-              const checkout = getCheckoutPath(displayScore);
+              const dartsLeft = isSelfActive ? 3 - pendingDarts.length : 3;
+              const checkout = getCheckoutPath(displayScore, dartsLeft);
               if (checkout) {
                 return <div className={dartboardStyles.checkoutHint}>{checkout}</div>;
               }
